@@ -1,0 +1,31 @@
+.staff-security-page { min-height: 100svh; color: #1c333b; background: #f4f7f7; }
+.staff-security-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 17px clamp(20px, 5vw, 70px); border-bottom: 1px solid #dce6e7; background: #fff; }
+.staff-security-brand { display: inline-flex; align-items: center; gap: 10px; color: #1c4248; font-size: 14px; font-weight: 760; }
+.staff-security-brand span { display: grid; place-items: center; width: 37px; height: 37px; border-radius: 10px; color: #fff; background: #217d79; font-size: 12px; }
+.staff-security-top button { color: #527274; background: transparent; font-size: 13px; font-weight: 700; }
+.staff-security-content { width: min(590px, calc(100% - 34px)); margin: clamp(40px, 7vw, 82px) auto 70px; }
+.staff-security-eyebrow { color: #21776e; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.staff-security-content h1 { margin: 12px 0; font-size: clamp(32px, 5vw, 48px); line-height: 1.1; letter-spacing: -.045em; }
+.staff-security-intro { margin: 0 0 28px; color: #637a7e; font-size: 16px; line-height: 1.55; }
+.staff-security-card { padding: clamp(22px, 5vw, 34px); border: 1px solid #dce6e7; border-radius: 18px; background: #fff; box-shadow: 0 8px 30px #193e460b; }
+.staff-security-card h2 { margin: 0 0 10px; font-size: 23px; letter-spacing: -.035em; }
+.staff-security-card > p { margin: 0 0 22px; color: #61787d; font-size: 15px; line-height: 1.55; }
+.staff-security-card .staff-security-error { padding: 12px 14px; border: 1px solid #edcfca; border-radius: 9px; color: #9a4a40; background: #fff3f0; font-size: 13px; }
+.staff-security-form { display: grid; gap: 10px; margin-top: 22px; }
+.staff-security-form label { margin-top: 6px; color: #34565b; font-size: 13px; font-weight: 750; }
+.staff-security-form input, .staff-security-form select { width: 100%; min-height: 49px; padding: 0 14px; border: 1px solid #cbdadd; border-radius: 10px; color: #1c333b; background: #fff; font-size: 18px; }
+.staff-security-form button, .staff-security-primary, .staff-security-secondary { min-height: 48px; padding: 0 18px; border-radius: 10px; font-size: 14px; font-weight: 750; }
+.staff-security-form button, .staff-security-primary { color: #fff; background: #216f67; }
+.staff-security-secondary { border: 1px solid #a8c7c3; color: #176960; background: #f0f8f6; }
+.staff-security-form button:disabled, .staff-security-primary:disabled, .staff-security-secondary:disabled { opacity: .6; cursor: wait; }
+.staff-security-qr { display: block; width: min(230px, 100%); height: auto; margin: 20px auto; }
+.staff-security-secret { display: grid; gap: 7px; padding: 14px; border: 1px solid #dce6e7; border-radius: 10px; background: #f8fbfa; }
+.staff-security-secret span { color: #60777a; font-size: 12px; }
+.staff-security-secret code { color: #213f44; font-size: 14px; letter-spacing: .08em; overflow-wrap: anywhere; }
+.staff-security-card .staff-security-hint { margin: 18px 0 0; font-size: 12px; }
+.staff-security-help { margin: 20px 0; color: #6d8385; font-size: 13px; line-height: 1.55; }
+.staff-security-factors { display: grid; gap: 8px; margin: 0 0 20px; padding: 0; list-style: none; }
+.staff-security-factors li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid #e0e9e8; border-radius: 10px; font-size: 14px; }
+.staff-security-factors button { color: #9a5547; background: transparent; font-size: 12px; font-weight: 700; }
+.staff-security-return { display: block; width: fit-content; margin-top: 23px; color: #176f65; font-size: 14px; font-weight: 750; }
+@media (max-width: 600px) { .staff-security-content { margin-top: 45px; } .staff-security-card { padding: 22px; } }

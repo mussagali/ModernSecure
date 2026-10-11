@@ -1,0 +1,79 @@
+/* The conversation is a full workspace, not another card inside the case page. */
+.case-conversation-screen {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  border-top: 1px solid #e2e9eb;
+  background: #fff;
+}
+
+.staff-workspace:has(.case-conversation-screen) {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.staff-workspace:has(.case-conversation-screen) .staff-topbar,
+.staff-workspace:has(.case-conversation-screen) .staff-mobile-nav {
+  flex: none;
+}
+.staff-page:has(.case-conversation-screen) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.staff-page:has(.case-conversation-screen) > .staff-case-nav {
+  flex: none;
+  margin: 0;
+  padding: 9px 25px;
+  border-bottom: 0;
+  background: #fff;
+}
+
+.account-page:has(.case-conversation-screen) {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.account-page:has(.case-conversation-screen) > .account-header { flex: none; }
+.account-content.account-detail:has(.case-conversation-screen) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+}
+.account-detail:has(.case-conversation-screen) > .account-case-topline,
+.account-detail:has(.case-conversation-screen) > .auth-eyebrow,
+.account-detail:has(.case-conversation-screen) > h1,
+.account-detail:has(.case-conversation-screen) > .account-case-status { display: none; }
+.account-detail:has(.case-conversation-screen) > .case-nav {
+  flex: none;
+  margin: 0;
+  padding: 9px clamp(20px, 5vw, 72px);
+  border-bottom: 0;
+  background: #fff;
+}
+
+@media (max-width: 800px) {
+  .staff-workspace:has(.case-conversation-screen) .staff-topbar,
+  .staff-workspace:has(.case-conversation-screen) .staff-mobile-nav,
+  .staff-page:has(.case-conversation-screen) > .staff-case-nav { display: none; }
+  .account-page:has(.case-conversation-screen) > .account-header,
+  .account-detail:has(.case-conversation-screen) > .case-nav { display: none; }
+  .case-conversation-screen { border-top: 0; }
+}
