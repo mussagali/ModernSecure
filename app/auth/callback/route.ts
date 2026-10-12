@@ -9,7 +9,12 @@ export async function GET(request: Request) {
 
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) return NextResponse.redirect(new URL("/login?error=invalid-link", url.origin));
+  // Email confirmation happens in Supabase before the user returns here. When
+  // the link is opened in another browser (for example, Gmail's in-app
+  // browser), that browser does not have the PKCE verifier cookie created at
+  // registration. In that case only automatic sign-in fails; the email is
+  // already confirmed, so do not tell the user that the link is invalid.
+  if (error) return NextResponse.redirect(new URL("/login?notice=email-confirmed", url.origin));
   const { error: inviteError } = await supabase.rpc("claim_staff_invite");
   if (inviteError) return NextResponse.redirect(new URL("/account?inviteError=1", url.origin));
   const { data: auth } = await supabase.auth.getClaims();
