@@ -9,3 +9,4 @@ supabase/.temp/
 supabase/.branches/
 *.log
 .test-accounts.local.json
+.vercel
