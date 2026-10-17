@@ -1,0 +1,48 @@
+{
+  "project": "bdkrihsiprkmukyjyspv",
+  "status": "ready",
+  "createdAt": "2026-10-17T10:14:43.948Z",
+  "accounts": {
+    "owner": {
+      "name": "Главный администратор",
+      "role": "admin",
+      "is_primary_admin": true,
+      "email": "owner@modernsecure.test",
+      "password": "-t_WkzByp_0dJ2R6NaoqybMYqjsD6Ei3",
+      "id": "6ada1f33-5960-43f3-ae7e-3f56e99c74e9"
+    },
+    "admin": {
+      "name": "Администратор",
+      "role": "admin",
+      "is_primary_admin": false,
+      "email": "admin@modernsecure.test",
+      "password": "aiP659o2p7E2ctW6Va-yOG04LrPzcNkZ",
+      "id": "cbe9c450-2321-4ff0-9a7d-b35ea0c193b7"
+    },
+    "lawyer": {
+      "name": "Юрист",
+      "role": "lawyer",
+      "is_primary_admin": false,
+      "email": "lawyer@modernsecure.test",
+      "password": "EWl7oqaqkQEXhnGUcc8Y2-Jov4Y5lMi6",
+      "id": "aaf7a209-0d82-4a35-b106-6506df8341a1"
+    },
+    "manager": {
+      "name": "Менеджер",
+      "role": "manager",
+      "is_primary_admin": false,
+      "email": "manager@modernsecure.test",
+      "password": "IRZtLt9tiKcbKWxAFl5TcQiaHo4-UA7l",
+      "id": "4045f3c0-aea7-4d14-be02-ea01e5f43978"
+    },
+    "client": {
+      "name": "Клиент",
+      "role": null,
+      "is_primary_admin": false,
+      "email": "client@modernsecure.test",
+      "password": "TCesGlAmkJi_788I3BewbWObGvax78Lx",
+      "id": "daf56d64-0004-4bef-9408-6b2ef04ef34c"
+    }
+  },
+  "client_card_id": "4904e4e2-ca0a-4407-9a6b-681992262255"
+}
