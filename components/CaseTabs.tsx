@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { NavIcon, type NavIconName } from "./NavIcon";
 
@@ -16,7 +17,22 @@ const staffTabs = [...tabs, { suffix: "/notes", label: "Заметки кома�
 
 export function CaseTabs({ root, staff, caseNumber }: { root: string; staff?: boolean; caseNumber: string }) {
   const pathname = usePathname();
-  return <nav className={staff ? "staff-case-nav" : "case-nav"} aria-label={`Разделы дела № ${caseNumber}`}>
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const revealCurrentTab = () => {
+      const active = nav.querySelector<HTMLElement>('[aria-current="page"]');
+      if (!active || nav.scrollWidth <= nav.clientWidth) return;
+      nav.scrollLeft += active.getBoundingClientRect().left - nav.getBoundingClientRect().left
+        - (nav.clientWidth - active.offsetWidth) / 2;
+    };
+    revealCurrentTab();
+    const observer = new ResizeObserver(revealCurrentTab);
+    observer.observe(nav);
+    return () => observer.disconnect();
+  }, [pathname]);
+  return <nav ref={navRef} className={staff ? "staff-case-nav" : "case-nav"} aria-label={`Разделы дела № ${caseNumber}`}>
     {(staff ? staffTabs : tabs).map((tab) => {
       const href = `${root}${tab.suffix}`;
       const active = pathname === href;

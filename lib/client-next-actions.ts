@@ -1,6 +1,6 @@
 import { documentRequestState, type DocumentFileState } from "./document-request-state.ts";
 
-type Task = { id: string; title: string; kind: string; status: string; due_at: string | null };
+type Task = { id: string; title: string; kind: string; status: string; due_at: string | null; document_request_id?: string | null };
 type Request = { id: string; title: string; status: string; due_at: string | null };
 type File = DocumentFileState & { request_id: string };
 
@@ -24,6 +24,7 @@ export function clientNextActions(input: {
   const items: ClientNextAction[] = [];
   if (input.caseActive) {
     for (const task of input.tasks.filter((row) => row.status === "new")) {
+      if (task.kind === "upload_document" && task.document_request_id) continue;
       items.push({ kind: "task", title: task.title,
         detail: task.kind === "upload_document" ? "Загрузить документ" : task.kind === "acknowledge"
           ? "Подтвердить ознакомление" : "Ответить по задаче",

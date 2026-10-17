@@ -43,20 +43,19 @@ export default async function StaffCaseNotes({ params, searchParams }: {
     : null;
 
   return <>
-    <Link href={`/staff/cases/${id}`} className="staff-back">← К делу № {item.case_number}</Link>
-    <div className="staff-page-heading"><div><span className="staff-eyebrow">ТОЛЬКО ДЛЯ КОМАНДЫ</span><h1>Внутренние заметки</h1><p>{item.title} · обсуждайте рабочие детали отдельно от переписки с клиентом.</p></div></div>
+    <div className="staff-page-heading"><div><h1>Внутренние заметки</h1><p>{item.title} · обсуждайте рабочие детали отдельно от переписки с клиентом.</p></div></div>
     {query.added === "1" && <div className="staff-alert is-success" role="status">Заметка сохранена в деле.</div>}
     {query.error && <div className="staff-alert is-error" role="alert">{query.error === "invalid" ? "Напишите заметку до 4000 символов." : "Не удалось сохранить заметку. Проверьте доступ и повторите попытку."}</div>}
     <section className="staff-panel staff-notes-compose"><h2>Добавить заметку</h2><p>Клиент не видит этот раздел. Для ответа клиенту откройте «Сообщения».</p>
       <form action={addCaseNote} className="staff-form"><input type="hidden" name="caseId" value={id} /><input type="hidden" name="noteKey" value={randomUUID()} />
         <label>Текст заметки<textarea name="body" required maxLength={4000} rows={5} placeholder="Что важно знать команде по этому делу" /></label>
-        <div className="staff-notes-actions"><SubmitButton>Сохранить заметку</SubmitButton><Link href={`/staff/cases/${id}/messages`}>Написать клиенту →</Link></div>
+        <div className="staff-notes-actions"><SubmitButton>Сохранить заметку</SubmitButton><Link href={`/staff/cases/${id}/messages`}>Написать клиенту</Link></div>
       </form>
     </section>
     <section className="staff-list-section"><div className="staff-section-heading"><h2>История заметок</h2><span>Автор и время сохраняются</span></div>
       {notes.length ? <ol className="staff-notes-list">{notes.map((note) => <li key={note.id}><div><strong>{note.author_name}</strong><time dateTime={note.created_at}>{dateTime(note.created_at)}</time></div><p>{note.body}</p></li>)}</ol>
         : <div className="staff-empty-box"><h3>Заметок пока нет</h3><p>Зафиксируйте внутренний контекст дела — он останется доступен команде после переназначения.</p></div>}
-      {olderHref && <div className="staff-pagination"><Link href={olderHref}>Более ранние заметки →</Link></div>}
+      {olderHref && <div className="staff-pagination"><Link href={olderHref}>Более ранние заметки</Link></div>}
     </section>
   </>;
 }

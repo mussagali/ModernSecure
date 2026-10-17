@@ -29,6 +29,25 @@ export async function addInstallment(formData: FormData) {
   redirect(`/staff/cases/${caseId}/payments?created=1`);
 }
 
+export async function enableOwnPaymentPermission(formData: FormData) {
+  const caseId = field(formData, "caseId");
+  if (!uuidPattern.test(caseId)) redirect("/staff/cases");
+  const { supabase, userId, staff } = await requireStaffCase(caseId);
+  if (staff.role !== "admin") redirect(`/staff/cases/${caseId}/payments?error=finance`);
+  const reason = field(formData, "reason");
+  if (!reason || reason.length > 500) redirect(`/staff/cases/${caseId}/payments?error=invalid`);
+  const { data: member, error: lookupError } = await supabase.from("staff_members")
+    .select("can_confirm_payments").eq("user_id", userId).maybeSingle();
+  if (lookupError || !member) redirect(`/staff/cases/${caseId}/payments?error=finance`);
+  if (!member.can_confirm_payments) {
+    const { error } = await supabase.rpc("admin_set_payment_permission", {
+      p_staff_user_id: userId, p_allowed: true, p_reason: reason,
+    });
+    if (error) redirect(`/staff/cases/${caseId}/payments?error=finance`);
+  }
+  redirect(`/staff/cases/${caseId}/payments?financeEnabled=1`);
+}
+
 export async function updateInstallment(formData: FormData) {
   const caseId = field(formData, "caseId");
   const scheduleId = field(formData, "scheduleId");

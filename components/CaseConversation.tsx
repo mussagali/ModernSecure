@@ -1,5 +1,7 @@
 "use client";
 
+import { NavIcon } from "./NavIcon";
+
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -302,17 +304,17 @@ export default function CaseConversation({ caseId, caseNumber, caseTitle, backHr
     <header className={styles.header}>
       <Link href={backHref} className={styles.backButton} aria-label={backLabel} title={backLabel}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true"><path d="m14.5 5-7 7 7 7"/></svg></Link>
       <div className={styles.avatar} aria-hidden="true">{contactName.trim().charAt(0).toUpperCase() || "С"}</div>
-      <div className={styles.headerText}><strong>{contactName}</strong><span title={caseTitle}>Дело № {caseNumber} · {caseTitle}</span></div>
+      <div className={styles.headerText}><h1>{contactName}</h1><span title={caseTitle}>Дело № {caseNumber} · {caseTitle}</span></div>
       <div className={styles.headerRight}>{unread > 0 && <span className={styles.unread}>{unread} новых среди последних</span>}<span className={`${styles.connection} ${connection === "live" ? styles.connectionLive : ""}`} aria-live="polite"><i aria-hidden="true" />{connection === "live" ? "Автообновление" : connection === "offline" ? "Нет соединения" : "Синхронизация"}</span></div>
     </header>
 
     {viewer === "client" && <div className={styles.serviceInfo}>
       {(businessHours?.trim() || responseExpectation?.trim()) && <div>{businessHours?.trim() && <span>Время работы: {businessHours.trim()}</span>}{responseExpectation?.trim() && <span>Срок ответа: {responseExpectation.trim()}</span>}</div>}
-      <Link href="/account/help">Контакты и помощь →</Link>
+      <Link href="/account/help">Контакты и помощь</Link>
     </div>}
 
     {(historyCursor || historyError) && <nav className={styles.historyNav} aria-label="История переписки">
-      <button type="button" onClick={loadOlder} disabled={!historyCursor || historyLoading}>{historyLoading ? "Загружаем историю…" : "↑ Показать предыдущие сообщения"}</button>
+      <button type="button" onClick={loadOlder} disabled={!historyCursor || historyLoading}>{historyLoading ? "Загружаем историю…" : "Показать предыдущие сообщения"}</button>
       {historyError && <span role="alert">{historyError}</span>}
     </nav>}
 
@@ -345,14 +347,14 @@ export default function CaseConversation({ caseId, caseNumber, caseTitle, backHr
       })}
     </div></div>
 
-    {showJump && <button type="button" className={styles.jumpButton} onClick={() => { if (timelineRef.current) timelineRef.current.scrollTop = timelineRef.current.scrollHeight; followLatestRef.current = true; setShowJump(false); }}>К последним сообщениям ↓</button>}
+    {showJump && <button type="button" className={styles.jumpButton} onClick={() => { if (timelineRef.current) timelineRef.current.scrollTop = timelineRef.current.scrollHeight; followLatestRef.current = true; setShowJump(false); }}>К последним сообщениям</button>}
 
     <div className={styles.footer}>
       {readControl && <div className={styles.readControl}>{readControl}</div>}
       {(error || notice) && <div className={`${styles.feedback} ${error ? styles.feedbackError : ""}`} role={error ? "alert" : "status"}>{error || notice}</div>}
       {!canSend ? <div className={styles.closed}>Отправка сообщений по этому делу сейчас недоступна.</div> :
         <form className={`${styles.composer} ${dragging ? styles.dragging : ""}`} onSubmit={send} onDragEnter={(event) => { event.preventDefault(); setDragging(true); }} onDragOver={(event) => event.preventDefault()} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragging(false); }} onDrop={onDrop}>
-          {files.length > 0 && <div className={styles.queued} aria-label="Выбранные файлы">{files.map((file, index) => <div className={styles.queuedFile} key={`${file.name}-${file.lastModified}-${index}`}><span className={styles.queuedIcon}><FileIcon image={file.type.startsWith("image/")}/></span><span title={file.name}>{file.name}</span><small>{formatSize(file.size)}</small><button type="button" onClick={() => { setFiles(files.filter((_, position) => position !== index)); keyRef.current = null; }} aria-label={`Убрать ${file.name}`} disabled={sending}>×</button></div>)}</div>}
+          {files.length > 0 && <div className={styles.queued} aria-label="Выбранные файлы">{files.map((file, index) => <div className={styles.queuedFile} key={`${file.name}-${file.lastModified}-${index}`}><span className={styles.queuedIcon}><FileIcon image={file.type.startsWith("image/")}/></span><span title={file.name}>{file.name}</span><small>{formatSize(file.size)}</small><button type="button" onClick={() => { setFiles(files.filter((_, position) => position !== index)); keyRef.current = null; }} aria-label={`Убрать ${file.name}`} disabled={sending}><NavIcon name="close" size={18} /></button></div>)}</div>}
           <div className={styles.composeRow}>
             <input ref={inputRef} id={`chat-files-${viewer}`} className={styles.hiddenFile} type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif" multiple onChange={(event) => addFiles(Array.from(event.target.files ?? []))} disabled={sending} tabIndex={-1} aria-hidden="true" />
             <button type="button" className={styles.attachButton} title="Прикрепить файлы" aria-label="Прикрепить файлы" onClick={() => inputRef.current?.click()} disabled={sending}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m8 12.5 6.5-6.5a3.5 3.5 0 0 1 5 5l-9 9a5 5 0 0 1-7-7l9.5-9.5"/></svg></button>

@@ -1,3 +1,4 @@
+import { signInQa } from "./qa-login.mjs";
 import assert from "node:assert/strict";
 import { readFileSync, statSync } from "node:fs";
 import { createServerClient } from "@supabase/ssr";
@@ -26,7 +27,7 @@ async function check(account, role) {
     },
   } });
   try {
-    const login = await client.auth.signInWithPassword({ email: account.email, password: account.password });
+    const login = await signInQa(client, { email: account.email, password: account.password });
     assert.ifError(login.error);
     assert.equal(login.data.user?.id, account.id);
     const count = await client.rpc("staff_unread_case_count");

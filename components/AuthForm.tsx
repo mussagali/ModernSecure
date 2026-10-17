@@ -32,12 +32,11 @@ function SubmitButton({ mode }: { mode: Mode }) {
   return (
     <button className="auth-submit" type="submit" disabled={pending}>
       {pending ? "Подождите…" : buttonLabels[mode]}
-      <span aria-hidden="true">↗</span>
     </button>
   );
 }
 
-export function AuthForm({ mode }: { mode: Mode }) {
+export function AuthForm({ mode, next = "/account" }: { mode: Mode; next?: string }) {
   const [state, action] = useActionState(actions[mode], initialAuthState);
   const [showPassword, setShowPassword] = useState(false);
   const hasPassword = mode !== "forgot";
@@ -46,6 +45,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   return (
     <>
       <form className="auth-form" action={action}>
+        <input type="hidden" name="next" value={next} />
         {hasEmail && <div className="auth-field">
           <label htmlFor="email">Электронная почта</label>
           <input id="email" name="email" type="email" autoComplete="email" placeholder="name@example.com" required maxLength={254} />

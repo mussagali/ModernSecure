@@ -1,3 +1,4 @@
+import { signInQa } from "./qa-login.mjs";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { readFileSync, statSync } from "node:fs";
@@ -26,7 +27,7 @@ const browser = createServerClient(url, publicKey, {
   auth: { autoRefreshToken: false },
 });
 
-const signedIn = await browser.auth.signInWithPassword({ email: qa.email, password: qa.password });
+const signedIn = await signInQa(browser, { email: qa.email, password: qa.password });
 assert.ifError(signedIn.error);
 assert.equal(signedIn.data.user?.id, qa.id);
 const direct = await browser.rpc("server_record_file_access", {
@@ -103,7 +104,7 @@ const staffBrowser = createServerClient(url, publicKey, {
   },
   auth: { autoRefreshToken: false },
 });
-const staffSignIn = await staffBrowser.auth.signInWithPassword({
+const staffSignIn = await signInQa(staffBrowser, {
   email: lawyer.email, password: lawyer.password,
 });
 assert.ifError(staffSignIn.error);

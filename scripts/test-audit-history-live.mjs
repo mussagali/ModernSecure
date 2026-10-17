@@ -1,3 +1,4 @@
+import { simulateMfaInTransaction } from "./transactional-mfa.mjs";
 import assert from "node:assert/strict";
 import { readFileSync, statSync } from "node:fs";
 import pg from "pg";
@@ -28,7 +29,8 @@ try {
   const admin = staff.rows.find((row) => row.role === "admin");
   const manager = staff.rows.find((row) => row.role === "manager");
   assert.ok(admin && manager, "Known QA/admin accounts not found");
-  await db.query("begin isolation level repeatable read read only");
+  await db.query("begin isolation level repeatable read");
+  await simulateMfaInTransaction(db, admin.user_id);
   await db.query("select set_config('request.jwt.claim.sub',$1,true)", [admin.user_id]);
   await db.query("set local role authenticated");
   const total = Number((await db.query("select count(*) as count from public.audit_events")).rows[0].count);

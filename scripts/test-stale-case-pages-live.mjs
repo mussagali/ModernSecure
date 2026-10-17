@@ -1,3 +1,4 @@
+import { signInQa } from "./qa-login.mjs";
 import assert from "node:assert/strict";
 import { readFileSync, statSync } from "node:fs";
 import { createServerClient } from "@supabase/ssr";
@@ -32,7 +33,7 @@ async function withAccount(account, check) {
     redirect: "manual",
   });
   try {
-    const login = await client.auth.signInWithPassword({ email: account.email, password: account.password });
+    const login = await signInQa(client, { email: account.email, password: account.password });
     assert.ifError(login.error);
     assert.equal(login.data.user?.id, account.id);
     await check(client, open);
@@ -46,7 +47,7 @@ for (const role of ["lawyer", "manager"]) {
     const { data: rows, error } = await client.rpc("staff_stale_case_page", { p_page: 1 });
     assert.ifError(error);
     assert.ok(Array.isArray(rows));
-    const dashboard = await open("/staff");
+    const dashboard = await open("/staff/overview");
     assert.equal(dashboard.status, 200, `${role} cannot open dashboard`);
     assert.ok((await dashboard.text()).includes('href="/staff/cases/stale"'), `${role} dashboard has no stale queue link`);
     const queue = await open("/staff/cases/stale");

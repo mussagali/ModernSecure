@@ -1,5 +1,7 @@
 "use server";
 
+import { parseAlmatyDeadline } from "../../lib/deadlines";
+
 import { redirect } from "next/navigation";
 import { requireStaff } from "../../lib/staff";
 
@@ -196,8 +198,8 @@ export async function createTask(formData: FormData) {
   const kind = value(formData, "kind");
   const dueAt = value(formData, "dueAt");
   if (!uuidPattern.test(caseId)) redirect("/staff/cases?error=invalid");
-  if (!title || title.length > 180 || description.length > 2000 || (kind === "acknowledge" && !description) || !["answer", "acknowledge", "contact"].includes(kind) || (dueAt && Number.isNaN(Date.parse(dueAt)))) redirect(`/staff/cases/${caseId}/tasks?error=invalid`);
-  const { error } = await supabase.rpc("staff_create_task", { p_case_id: caseId, p_kind: kind, p_title: title, p_description: description || null, p_due_at: dueAt ? new Date(dueAt).toISOString() : null });
+  if (!title || title.length > 180 || description.length > 2000 || (kind === "acknowledge" && !description) || !["answer", "acknowledge", "contact", "upload_document"].includes(kind) || (dueAt && !parseAlmatyDeadline(dueAt))) redirect(`/staff/cases/${caseId}/tasks?error=invalid`);
+  const { error } = await supabase.rpc("staff_create_task", { p_case_id: caseId, p_kind: kind, p_title: title, p_description: description || null, p_due_at: dueAt ? parseAlmatyDeadline(dueAt) : null });
   if (error) redirect(`/staff/cases/${caseId}/tasks?error=create`);
   redirect(`/staff/cases/${caseId}/tasks?created=1`);
 }
@@ -214,14 +216,38 @@ export async function reviewTask(formData: FormData) {
   redirect(`/staff/cases/${caseId}/tasks?reviewed=1`);
 }
 
+export async function cancelTask(formData: FormData) {
+  const { supabase } = await requireStaff(["lawyer", "admin"]);
+  const caseId = value(formData, "caseId");
+  const taskId = value(formData, "taskId");
+  const reason = value(formData, "reason");
+  const status = value(formData, "status");
+  if (!uuidPattern.test(caseId) || !uuidPattern.test(taskId) || !reason || reason.length > 1000 || !["new", "response_sent"].includes(status)) redirect("/staff/cases?error=invalid");
+  const { error } = await supabase.rpc("staff_cancel_task", { p_task_id: taskId, p_expected_status: status, p_reason: reason });
+  if (error) redirect(`/staff/cases/${caseId}/tasks?error=cancel`);
+  redirect(`/staff/cases/${caseId}/tasks?cancelled=1`);
+}
+
+export async function closeDocumentRequest(formData: FormData) {
+  const { supabase } = await requireStaff(["lawyer", "admin"]);
+  const caseId = value(formData, "caseId");
+  const requestId = value(formData, "requestId");
+  const reason = value(formData, "reason");
+  const status = value(formData, "status");
+  if (!uuidPattern.test(caseId) || !uuidPattern.test(requestId) || !reason || reason.length > 1000 || !["cancelled", "not_required"].includes(status)) redirect("/staff/cases?error=invalid");
+  const { error } = await supabase.rpc("staff_close_document_request", { p_request_id: requestId, p_status: status, p_reason: reason });
+  if (error) redirect(`/staff/cases/${caseId}/documents?error=close`);
+  redirect(`/staff/cases/${caseId}/documents?closed=1`);
+}
+
 export async function createDocumentRequest(formData: FormData) {
   const { supabase } = await requireStaff();
   const caseId = value(formData, "caseId");
   const title = value(formData, "title");
   const instructions = value(formData, "instructions");
   const dueAt = value(formData, "dueAt");
-  if (!uuidPattern.test(caseId) || !title || title.length > 180 || instructions.length > 2000 || (dueAt && Number.isNaN(Date.parse(dueAt)))) redirect("/staff/cases?error=invalid");
-  const { error } = await supabase.rpc("staff_create_document_request", { p_case_id: caseId, p_title: title, p_instructions: instructions || null, p_required: formData.get("required") === "on", p_due_at: dueAt ? new Date(dueAt).toISOString() : null });
+  if (!uuidPattern.test(caseId) || !title || title.length > 180 || instructions.length > 2000 || (dueAt && !parseAlmatyDeadline(dueAt))) redirect("/staff/cases?error=invalid");
+  const { error } = await supabase.rpc("staff_create_document_request", { p_case_id: caseId, p_title: title, p_instructions: instructions || null, p_required: formData.get("required") === "on", p_due_at: dueAt ? parseAlmatyDeadline(dueAt) : null });
   if (error) redirect(`/staff/cases/${caseId}/documents?error=create`);
   redirect(`/staff/cases/${caseId}/documents?created=1`);
 }
@@ -264,11 +290,11 @@ export async function markStaffMessagesRead(formData: FormData) {
 }
 
 export async function addStaffMember(formData: FormData) {
-  const { supabase } = await requireStaff(["admin"]);
+  const { supabase, staff } = await requireStaff(["admin"]);
   const email = value(formData, "email").toLowerCase();
   const displayName = value(formData, "displayName");
   const role = value(formData, "role");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || !displayName || displayName.length > 160 || !["lawyer", "manager"].includes(role)) redirect("/staff/team?error=invalid");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || !displayName || displayName.length > 160 || !(staff.is_primary_admin ? ["lawyer", "manager", "admin"] : ["lawyer", "manager"]).includes(role)) redirect("/staff/team?error=invalid");
   const { data, error } = await supabase.rpc("admin_invite_staff", { p_email: email, p_display_name: displayName, p_role: role });
   if (error?.message === "Account already has a role") redirect("/staff/team?error=assigned");
   if (error || (data !== "pending" && data !== "granted")) redirect("/staff/team?error=invite");
@@ -285,12 +311,12 @@ export async function cancelStaffInvitation(formData: FormData) {
 }
 
 export async function changeStaffAccess(formData: FormData) {
-  const { supabase } = await requireStaff(["admin"]);
+  const { supabase, staff } = await requireStaff(["admin"]);
   const staffUserId = value(formData, "staffUserId");
   const role = value(formData, "role");
   const active = value(formData, "active");
   const reason = value(formData, "reason");
-  if (!uuidPattern.test(staffUserId) || !["lawyer", "manager"].includes(role) || !["true", "false"].includes(active) || !reason || reason.length > 500) redirect("/staff/team?error=invalid");
+  if (!uuidPattern.test(staffUserId) || !(staff.is_primary_admin ? ["lawyer", "manager", "admin"] : ["lawyer", "manager"]).includes(role) || !["true", "false"].includes(active) || !reason || reason.length > 500) redirect("/staff/team?error=invalid");
   const { data: current, error: lookupError } = await supabase.from("staff_members")
     .select("role, active").eq("user_id", staffUserId).maybeSingle();
   if (lookupError) redirect("/staff/team?error=access");

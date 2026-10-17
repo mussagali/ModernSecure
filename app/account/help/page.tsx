@@ -1,7 +1,7 @@
+import { AccountHeader } from "../../../components/AccountHeader";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { signOutAction } from "../actions";
 import { createClient } from "../../../lib/supabase/server";
 
 export const metadata: Metadata = { title: "Помощь — Современная защита" };
@@ -61,29 +61,26 @@ export default async function ClientHelpPage() {
   const hasContactDetails = Boolean(phone || email || whatsapp || businessHours || responseExpectation);
 
   return <main className="account-page">
-    <header className="account-header">
-      <Link href="/account" className="account-brand"><span className="auth-brand-mark" aria-hidden="true">сз</span><span>современная <strong>защита</strong></span></Link>
-      <form action={signOutAction}><button type="submit" className="account-signout">Выйти</button></form>
-    </header>
+    <AccountHeader />
     <div className="account-content account-detail">
-      <Link href="/account" className="account-back">← В личный кабинет</Link>
-      <span className="auth-eyebrow">ЛИЧНЫЙ КАБИНЕТ</span>
+      <Link href="/account" className="account-back">В личный кабинет</Link>
+
       <h1>Помощь</h1>
 
       <section className="account-detail-section" aria-labelledby="faq-heading">
-        <div className="account-section-heading"><div><span className="account-card-index">ВОПРОСЫ И ОТВЕТЫ</span><h2 id="faq-heading">Частые вопросы</h2></div></div>
+        <div className="account-section-heading"><div><h2 id="faq-heading">Частые вопросы</h2></div></div>
         {faqResult.error ? <p className="account-muted" role="alert">Не удалось загрузить вопросы. Обновите страницу позже.</p>
-          : faqResult.data?.length ? faqResult.data.map((entry) => <article className="account-card" key={entry.id}><h2>{entry.question}</h2><p>{entry.answer}</p></article>)
+          : faqResult.data?.length ? faqResult.data.map((entry) => <details className="help-question" key={entry.id}><summary>{entry.question}</summary><p>{entry.answer}</p></details>)
             : <p className="account-muted">Ответы на частые вопросы пока не опубликованы.</p>}
       </section>
 
       <section className="account-detail-section" aria-labelledby="contacts-heading">
-        <div className="account-section-heading"><div><span className="account-card-index">СВЯЗЬ</span><h2 id="contacts-heading">Контакты</h2></div></div>
+        <div className="account-section-heading"><div><h2 id="contacts-heading">Контакты</h2></div></div>
         {contactResult.error ? <p className="account-muted" role="alert">Не удалось загрузить контакты. Обновите страницу позже.</p>
           : hasContactDetails ? <div className="account-card">
               {phone && <p>Телефон: {phoneLink ? <a href={phoneLink}>{phone}</a> : phone}</p>}
               {email && <p>Email: {emailLink ? <a href={emailLink}>{email}</a> : email}</p>}
-              {whatsapp && <p><a href={whatsapp} target="_blank" rel="noopener noreferrer">Написать в WhatsApp ↗</a></p>}
+              {whatsapp && <p><a href={whatsapp} target="_blank" rel="noopener noreferrer">Написать в WhatsApp</a></p>}
               {businessHours && <p>Время работы: {businessHours}</p>}
               {responseExpectation && <p>Срок ответа: {responseExpectation}</p>}
             </div>

@@ -1,3 +1,4 @@
+import { signInQa } from "./qa-login.mjs";
 import assert from "node:assert/strict";
 import { readFileSync, statSync } from "node:fs";
 import { createServerClient } from "@supabase/ssr";
@@ -28,7 +29,7 @@ const client = createServerClient(url, key, { cookies: {
 } });
 
 try {
-  const login = await client.auth.signInWithPassword({ email: account.email, password: account.password });
+  const login = await signInQa(client, { email: account.email, password: account.password });
   assert.ifError(login.error);
   assert.equal(login.data.user?.id, account.id);
 

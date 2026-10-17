@@ -1,3 +1,4 @@
+import { simulateMfaInTransaction } from "./transactional-mfa.mjs";
 import { readFileSync, statSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
@@ -13,7 +14,7 @@ const expectedTargets = [
   { host: "aws-0-ap-northeast-2.pooler.supabase.com", user: "postgres.bdkrihsiprkmukyjyspv" },
 ];
 const projectTables = [
-  "profiles", "staff_members", "clients", "service_templates", "service_template_versions",
+  "legal_documents", "profiles", "staff_members", "clients", "service_templates", "service_template_versions",
   "stage_templates", "document_templates", "cases", "case_assignments", "case_stage_events",
   "case_suspensions", "case_internal_notes", "document_requests", "upload_sessions",
   "document_files", "document_internal_notes", "tasks", "task_events", "messages",
@@ -22,6 +23,7 @@ const projectTables = [
   "contact_settings", "staff_invites", "staff_threads", "staff_messages", "staff_thread_reads", "staff_message_attachments", "staff_message_case_refs",
 ];
 const requiredWorkflows = [
+  "staff_cancel_task", "staff_close_document_request", "admin_publish_legal_document", "client_consent_status", "accept_client_consents",
   "link_client_account", "staff_create_client", "admin_create_service", "staff_create_case",
   "staff_change_case_stage", "staff_assign_case", "staff_create_task", "client_respond_task",
   "staff_review_task", "staff_create_document_request", "post_case_message",
@@ -61,6 +63,7 @@ const requiredWorkflows = [
   "staff_stale_case_days", "staff_stale_case_page", "admin_set_stale_case_days",
 ];
 const requiredWorkflowTriggers = [
+  "modernsecure_document_task_files", "modernsecure_document_task_closed", "modernsecure_linked_document_task_guard",
   "modernsecure_contract_file_insert_guard", "modernsecure_receipt_file_insert_guard",
   "modernsecure_contract_notify", "modernsecure_receipt_submitted_notify",
   "modernsecure_receipt_reviewed_notify", "modernsecure_document_submission_notify",
@@ -130,7 +133,7 @@ async function verify(url, preMigration = false) {
   const client = createClient(url);
   try {
     await client.connect();
-    const checkedTables = preMigration ? projectTables.filter((name) => !["staff_invites", "staff_threads", "staff_messages", "staff_thread_reads", "staff_message_attachments", "staff_message_case_refs"].includes(name)) : projectTables;
+    const checkedTables = preMigration ? projectTables.filter((name) => !["legal_documents", "staff_invites", "staff_threads", "staff_messages", "staff_thread_reads", "staff_message_attachments", "staff_message_case_refs"].includes(name)) : projectTables;
     const checkedWorkflows = preMigration ? [] : requiredWorkflows;
     const tables = await client.query("select tablename, rowsecurity from pg_tables where schemaname = 'public'");
     const matching = tables.rows.filter((row) => checkedTables.includes(row.tablename));
@@ -171,13 +174,16 @@ async function verify(url, preMigration = false) {
       messageRealtimeReady = ['messages', 'staff_messages'].every((name) => publication.rows.some((row) => row.tablename === name));
       const reminderFunction = await client.query(`select 1 from pg_catalog.pg_proc p
         join pg_catalog.pg_namespace n on n.oid = p.pronamespace
-        where n.nspname = 'private' and p.proname = 'enqueue_task_deadline_reminders'`);
+        where n.nspname = 'private' and p.proname in ('enqueue_task_deadline_reminders', 'enqueue_payment_deadline_reminders')`);
       const cronTable = await client.query("select to_regclass('cron.job') as name");
       const reminderJob = cronTable.rows[0]?.name ? await client.query(`select 1 from cron.job
         where jobname = $1 and schedule = $2 and command = $3 and active`,
       ["modernsecure-task-deadlines", "0 * * * *", "select private.enqueue_task_deadline_reminders()"])
         : { rows: [] };
-      reminderJobReady = reminderFunction.rows.length > 0 && reminderJob.rows.length > 0;
+      const paymentJob = cronTable.rows[0]?.name ? await client.query(`select 1 from cron.job
+        where jobname = 'modernsecure-payment-deadlines' and schedule = '5 * * * *'
+          and command = 'select private.enqueue_payment_deadline_reminders()' and active`) : { rows: [] };
+      reminderJobReady = reminderFunction.rows.length === 2 && reminderJob.rows.length > 0 && paymentJob.rows.length > 0;
     }
     if (preMigration) {
       const receiptMetadata = await client.query(`select 1 from information_schema.columns
@@ -204,13 +210,14 @@ async function roleSmoke(url) {
   try {
     await client.connect();
     const owner = await client.query(`
-      select sm.user_id from public.staff_members sm join auth.users u on u.id = sm.user_id
-      where lower(u.email) = 'ayanz2008@gmail.com' and sm.role = 'admin' and sm.active
+      select sm.user_id, u.email from public.staff_members sm join auth.users u on u.id = sm.user_id
+      where sm.is_primary_admin and sm.role = 'admin' and sm.active
     `);
     if (owner.rows.length !== 1) throw new Error("Главный администратор не найден; тест остановлен.");
     const email = `role-smoke-${randomUUID()}@example.test`;
     await client.query("begin");
     inTransaction = true;
+    await simulateMfaInTransaction(client, owner.rows[0].user_id);
     const clientCard = await client.query("insert into public.clients (full_name) values ('Проверка границ ролей') returning id");
     await client.query("select set_config('request.jwt.claim.sub', $1, true)", [owner.rows[0].user_id]);
     await client.query("set local role authenticated");
@@ -221,7 +228,7 @@ async function roleSmoke(url) {
     await client.query("savepoint staff_client_boundary");
     let dualRoleDenied = false;
     try {
-      await client.query("select public.link_client_account($1, 'ayanz2008@gmail.com')", [clientCard.rows[0].id]);
+      await client.query("select public.link_client_account($1, $2)", [clientCard.rows[0].id, owner.rows[0].email]);
     } catch (error) {
       dualRoleDenied = error instanceof Error && error.message.includes("Account is already staff");
       await client.query("rollback to savepoint staff_client_boundary");
@@ -244,7 +251,7 @@ async function roleSmoke(url) {
     if (verified.rows[0]?.claimed !== true) throw new Error("Подтверждённый email не получил роль.");
     await client.query("select public.update_own_profile('Проверка профиля', '+7 777 123 45 67', 'Алматы')");
     const profileBeforeMfa = await client.query("select user_id from public.profiles where user_id = auth.uid()");
-    if (profileBeforeMfa.rows.length !== 0) throw new Error("Новый сотрудник увидел профиль без второго фактора.");
+    if (profileBeforeMfa.rows.length !== 1) throw new Error("Новый сотрудник не увидел свой профиль при необязательном MFA.");
     await client.query("reset role");
     const editedProfile = await client.query("select display_name, phone, city from public.profiles where user_id = $1", [invitedUserId]);
     if (editedProfile.rows[0]?.display_name !== "Проверка профиля" || editedProfile.rows[0]?.city !== "Алматы") {
@@ -469,10 +476,11 @@ async function documentSmoke(url) {
   let inTransaction = false;
   try {
     await client.connect();
-    const owner = await client.query("select user_id from public.staff_members where role = 'admin' and active limit 1");
+    const owner = await client.query("select user_id from public.staff_members where is_primary_admin and role = 'admin' and active");
     if (!owner.rows[0]) throw new Error("Главный администратор не найден; тест остановлен.");
     await client.query("begin");
     inTransaction = true;
+    await simulateMfaInTransaction(client, owner.rows[0].user_id);
     const clientId = randomUUID();
     const otherId = randomUUID();
     const clientCardId = randomUUID();
@@ -576,6 +584,16 @@ async function documentSmoke(url) {
     await client.query("select set_config('request.jwt.claim.sub', $1, true)", [clientId]);
     await client.query("set local role authenticated");
     await client.query("select public.complete_document_upload($1)", [first.rows[0].batch.session_id]);
+    await client.query("savepoint unreviewed_resubmit");
+    let unreviewedDenied = false;
+    try { await client.query("select public.begin_document_upload($1, $2, $3::jsonb)",
+      [requestId, "unreviewed-new-key-789", files]); }
+    catch (error) {
+      unreviewedDenied = error.message.includes("Current document version must be reviewed or retracted first");
+      await client.query("rollback to savepoint unreviewed_resubmit");
+    }
+    if (!unreviewedDenied) throw new Error("Повторная отправка непроверенного документа должна быть запрещена.");
+    await client.query("select public.retract_document_file($1)", [first.rows[0].batch.files[0].id]);
     const second = await client.query("select public.begin_document_upload($1, $2, $3::jsonb) as batch",
       [requestId, "intentional-new-key-789", files]);
     const exactRetry = await client.query("select public.resume_or_begin_document_upload($1, $2, $3::jsonb) as batch",
@@ -613,10 +631,11 @@ async function financeSmoke(url) {
   let inTransaction = false;
   try {
     await client.connect();
-    const owner = await client.query("select user_id, can_confirm_payments from public.staff_members where role = 'admin' and active limit 1");
+    const owner = await client.query("select user_id, can_confirm_payments from public.staff_members where is_primary_admin and role = 'admin' and active");
     if (!owner.rows[0]) throw new Error("Главный администратор не найден; тест остановлен.");
     await client.query("begin");
     inTransaction = true;
+    await simulateMfaInTransaction(client, owner.rows[0].user_id);
     const ids = Array.from({ length: 7 }, () => randomUUID());
     const [clientUserId, clientCardId, serviceId, versionId, stageId, caseId, paymentKey] = ids;
     const unique = randomUUID();
@@ -750,12 +769,12 @@ async function inspectRoles(url) {
     await client.connect();
     const target = await client.query(`
       select u.id, u.email, u.email_confirmed_at is not null as email_verified,
-        sm.role, sm.active, sm.display_name
+        sm.role, sm.active, sm.is_primary_admin, sm.display_name
       from auth.users u left join public.staff_members sm on sm.user_id = u.id
-      where lower(u.email) = 'ayanz2008@gmail.com'
+      where sm.is_primary_admin
     `);
     const admins = await client.query(`
-      select u.email, sm.active from public.staff_members sm
+      select u.email, sm.active, sm.is_primary_admin from public.staff_members sm
       join auth.users u on u.id = sm.user_id where sm.role = 'admin'
     `);
     const counts = await client.query(`
@@ -782,10 +801,10 @@ async function inspectCron(url) {
         order by start_time desc
         limit 1
       ) d on true
-      where j.jobname = $1
-    `, ["modernsecure-task-deadlines"]);
-    const row = result.rows[0];
-    if (!row) throw new Error("Задание напоминаний не найдено.");
+      where j.jobname = any($1)
+    `, [["modernsecure-task-deadlines", "modernsecure-payment-deadlines"]]);
+    if (result.rows.length !== 2) throw new Error("Задания напоминаний не найдены.");
+    for (const row of result.rows) {
     console.log(JSON.stringify({
       job: row.jobname,
       active: row.active,
@@ -796,6 +815,7 @@ async function inspectCron(url) {
     }, null, 2));
     if (!row.active || (row.status && row.status !== "succeeded")) {
       throw new Error("Почасовое задание неактивно или последний запуск завершился ошибкой.");
+    }
     }
   } finally {
     await client.end().catch(() => {});

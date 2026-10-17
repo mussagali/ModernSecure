@@ -8,7 +8,7 @@ export async function requireClientCase(id: string) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
   const userId = auth?.claims?.sub;
-  if (!userId) redirect("/login");
+  if (!userId) redirect(`/login?next=${encodeURIComponent(`/account/cases/${id}`)}`);
   const { data: client, error: clientError } = await supabase.from("clients").select("id").eq("user_id", userId).maybeSingle();
   if (clientError) throw new Error("Не удалось проверить доступ к делу");
   if (!client) notFound();

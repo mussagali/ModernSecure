@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { NavIcon } from "./NavIcon";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, type ChangeEvent, type FormEvent, type KeyboardEvent } from "react";
 import { createBrowserClient } from "@supabase/ssr";
@@ -246,7 +247,7 @@ export function StaffChat({ userId, selectedId, selectedThreadId, returnCase, co
 
   return <div className={`${styles.shell} staff-chat-root${current ? " staff-chat-active" : ""}`}>
     <aside className={`${styles.sidebar}${current ? ` ${styles.sidebarWithSelection}` : ""}`}>
-      <div className={styles.sidebarHeader}><span className={styles.eyebrow}>ВНУТРЕННЯЯ СВЯЗЬ</span><h1>Чат команды</h1><p>Диалоги между сотрудниками</p><Link href="/staff/inbox">Переписка с клиентами →</Link></div>
+      <div className={styles.sidebarHeader}><h1>Чат команды</h1><p>Диалоги между сотрудниками</p><Link href="/staff/inbox">Переписка с клиентами</Link></div>
       <label className={styles.search}><span className={styles.srOnly}>Поиск сотрудника</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 5 5"/></svg><input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Найти коллегу" type="search" /></label>
       <div className={styles.people}>
         {people.length ? people.map((person) => <Link key={person.user_id} href={`/staff/chat?to=${person.user_id}`} className={`${styles.person}${person.user_id === selectedId ? ` ${styles.personActive}` : ""}`} aria-current={person.user_id === selectedId ? "page" : undefined}>
@@ -258,42 +259,42 @@ export function StaffChat({ userId, selectedId, selectedThreadId, returnCase, co
     </aside>
     <section className={`${styles.conversation}${current ? ` ${styles.conversationSelected}` : ""}`} aria-label={current ? `Диалог с ${current.display_name}` : "Выберите сотрудника"}>
       {current ? <>
-        <header className={styles.header}><Link href="/staff/chat" className={styles.back} aria-label="К списку сотрудников">←</Link><span className={styles.avatar}>{current.display_name.trim().slice(0, 1).toLocaleUpperCase("ru")}</span><span className={styles.headerTitle}><strong>{current.display_name}</strong><small>{roleLabels[current.role]} · приватный диалог</small></span>{!connected && <span className={`${styles.connection} ${styles.offline}`} role="status"><i />Нет сети</span>}</header>
-        {returnCase && <div className={styles.caseReturn}><span>Новые сообщения будут связаны с делом № {returnCase.caseNumber}. Клиент их не увидит.</span><Link href={`/staff/cases/${returnCase.id}`}>К делу →</Link><Link href={`/staff/chat?to=${current.user_id}`}>Убрать связь</Link></div>}
-        {(olderHref || historical) && <nav className={styles.historyBar} aria-label="История диалога">{olderHref && <Link href={olderHref}>↑ Ранние сообщения</Link>}{historical && <Link href={latestHref}>К последним ↓</Link>}</nav>}
+        <header className={styles.header}><Link href="/staff/chat" className={styles.back} aria-label="К списку сотрудников"><NavIcon name="back" /></Link><span className={styles.avatar}>{current.display_name.trim().slice(0, 1).toLocaleUpperCase("ru")}</span><span className={styles.headerTitle}><strong>{current.display_name}</strong><small>{roleLabels[current.role]} · приватный диалог</small></span>{!connected && <span className={`${styles.connection} ${styles.offline}`} role="status"><i />Нет сети</span>}</header>
+        {returnCase && <div className={styles.caseReturn}><span>Новые сообщения будут связаны с делом № {returnCase.caseNumber}. Клиент их не увидит.</span><Link href={`/staff/cases/${returnCase.id}`}>К делу</Link><Link href={`/staff/chat?to=${current.user_id}`}>Убрать связь</Link></div>}
+        {(olderHref || historical) && <nav className={styles.historyBar} aria-label="История диалога">{olderHref && <Link href={olderHref}>Ранние сообщения</Link>}{historical && <Link href={latestHref}>К последним</Link>}</nav>}
         <div className={styles.timelineWrap}><div ref={timeline} onScroll={onTimelineScroll} className={`${styles.timeline}${historical ? ` ${styles.historical}` : ""}`}>
           {messages.length ? messages.map((message) => <article key={message.id} className={`${styles.message}${message.sender_user_id === userId ? ` ${styles.mine}` : ""}`}>
-            {message.caseRef && <Link className={styles.caseCard} href={`/staff/cases/${message.caseRef.id}`}><span>Дело № {message.caseRef.case_number}</span><strong>{message.caseRef.title}</strong><small>Открыть карточку →</small></Link>}
+            {message.caseRef && <Link className={styles.caseCard} href={`/staff/cases/${message.caseRef.id}`}><span>Дело № {message.caseRef.case_number}</span><strong>{message.caseRef.title}</strong><small>Открыть карточку</small></Link>}
             {(message.body !== "Вложение" || !message.attachments.length) && <p>{message.body}</p>}
             {!!message.attachments.length && <div className={styles.attachments}>{message.attachments.map((file) => <a key={file.id}
               href={`/api/staff-message-attachments/${file.id}${canPreviewFile(file.detected_mime_type) ? "?preview=1" : ""}`}
               target="_blank" rel="noopener noreferrer" className={styles.fileCard}>
-              <span aria-hidden="true">{file.detected_mime_type.startsWith("image/") ? "▧" : "▤"}</span>
+              <span aria-hidden="true"><NavIcon name="documents" /></span>
               <span><strong>{file.original_name}</strong><small>{fileSize(file.size_bytes)} · {canPreviewFile(file.detected_mime_type) ? "Открыть" : "Скачать"}</small></span>
-              <span aria-hidden="true">↗</span>
+
             </a>)}</div>}
             <time dateTime={message.created_at}>{time.format(new Date(message.created_at))}</time>
           </article>)
-            : <div className={styles.empty}><span>✦</span><h2>Начните диалог</h2><p>Пишите коллеге напрямую. Клиент не увидит эти сообщения.</p></div>}
-        </div>{showJump && !historical && <button type="button" className={styles.jumpButton} onClick={() => { if (timeline.current) timeline.current.scrollTop = timeline.current.scrollHeight; followLatest.current = true; setShowJump(false); markReadRef.current(); }}>К последним сообщениям ↓</button>}</div>
+            : <div className={styles.empty}><span><NavIcon name="messages" size={36} /></span><h2>Начните диалог</h2><p>Пишите коллеге напрямую. Клиент не увидит эти сообщения.</p></div>}
+        </div>{showJump && !historical && <button type="button" className={styles.jumpButton} onClick={() => { if (timeline.current) timeline.current.scrollTop = timeline.current.scrollHeight; followLatest.current = true; setShowJump(false); markReadRef.current(); }}>К последним сообщениям</button>}</div>
         {current.active ? <div className={styles.footer}>
           {error && <p className={styles.error} role="alert">{error}</p>}
           <form onSubmit={send} className={styles.composer}>
             {!!files.length && <div className={styles.queued} aria-label="Выбранные файлы">{files.map((file, index) => <span key={`${file.name}-${file.lastModified}-${index}`} className={styles.queuedFile}>
               <span title={file.name}>{file.name}</span><small>{fileSize(file.size)}</small>
-              <button type="button" disabled={sending} onClick={() => { setFiles(files.filter((_, position) => position !== index)); key.current = null; }} aria-label={`Убрать ${file.name}`}>×</button>
+              <button type="button" disabled={sending} onClick={() => { setFiles(files.filter((_, position) => position !== index)); key.current = null; }} aria-label={`Убрать ${file.name}`}><NavIcon name="close" size={18} /></button>
             </span>)}</div>}
             <div className={styles.composeRow}>
               <input ref={fileInput} type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif" multiple onChange={addFiles} disabled={sending} className={styles.hiddenFile} tabIndex={-1} aria-hidden="true" />
-              <button type="button" className={styles.attachButton} onClick={() => fileInput.current?.click()} disabled={sending} aria-label="Прикрепить файлы" title="Прикрепить файлы">＋</button>
+              <button type="button" className={styles.attachButton} onClick={() => fileInput.current?.click()} disabled={sending} aria-label="Прикрепить файлы" title="Прикрепить файлы"><NavIcon name="plus" /></button>
               <textarea value={draft} onChange={(event) => { setDraft(event.target.value); key.current = null; }} onKeyDown={onKeyDown} maxLength={4000} rows={1} disabled={sending} placeholder="Напишите коллеге…" aria-label="Сообщение коллеге" />
-              <button type="submit" className={styles.sendButton} disabled={sending || (!draft.trim() && !files.length)} aria-label={sending ? "Отправка" : "Отправить сообщение"}>{sending ? "…" : "↑"}</button>
+              <button type="submit" className={styles.sendButton} disabled={sending || (!draft.trim() && !files.length)} aria-label={sending ? "Отправка" : "Отправить сообщение"}>{sending ? "…" : <NavIcon name="arrow" />}</button>
             </div>
           </form>
           <small>PDF и фото до 20 МБ · Enter — отправить · Shift+Enter — новая строка</small>
         </div>
           : <div className={styles.closed}>Доступ коллеги закрыт. История диалога сохранена, новые сообщения недоступны.</div>}
-      </> : <div className={styles.welcome}><span>✦</span><h2>Команда рядом</h2><p>Выберите сотрудника слева, чтобы начать приватную переписку.</p><p>Обсуждение с клиентом остаётся отдельно в карточке дела.</p></div>}
+      </> : <div className={styles.welcome}><span><NavIcon name="messages" size={36} /></span><h2>Команда рядом</h2><p>Выберите сотрудника слева, чтобы начать приватную переписку.</p><p>Обсуждение с клиентом остаётся отдельно в карточке дела.</p></div>}
     </section>
   </div>;
 }

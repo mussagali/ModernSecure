@@ -99,6 +99,21 @@ try {
   await addContract(firstContract, versionedCase, 1, 100);
   await addContract(secondContract, versionedCase, 2, 100);
   await addContract(otherContract, otherCase, 1, 100);
+  await database.query("update public.staff_members set can_confirm_payments = false where user_id = $1", [admin]);
+  await assert.rejects(asAdmin(addInstallment, [versionedCase, 10]), /Not authorized/);
+  await asAdmin(
+    "select public.admin_set_payment_permission($1, true, 'Admin self-enable for case payments')",
+    [admin],
+  );
+  const financeAccess = await database.query(
+    "select can_confirm_payments from public.staff_members where user_id = $1", [admin],
+  );
+  assert.equal(financeAccess.rows[0].can_confirm_payments, true);
+  const financeAudit = await database.query(
+    "select action, actor_user_id from public.audit_events where entity_id = $1 and action = 'payment_permission_changed'", [admin],
+  );
+  assert.equal(financeAudit.rows.length, 1);
+  assert.equal(financeAudit.rows[0].actor_user_id, admin);
   const oldWithoutContract = randomUUID();
   const oldWithVersions = randomUUID();
   const oldWithOneVersion = randomUUID();
@@ -155,7 +170,7 @@ try {
 
   const page = readFileSync(path.join(root, "app/staff/cases/[id]/payments/page.tsx"), "utf8");
   assert.match(page, /canChange && !latestContract/);
-  assert.match(page, /canChange && latestContract && <section/);
+  assert.match(page, /canChange && latestContract && <(?:section|details)/);
   assert.match(page, /select\("id, contract_id, due_on/);
   assert.match(page, /версия договора не установлена/);
   console.log("OK payment contract chain: orphan preflight, unknown legacy versions, creation guard, same-case FK, version binding, UI gate");

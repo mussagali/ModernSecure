@@ -1,0 +1,556 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-16T10:32:01.130324+00:00",
+  "title": "Design System: Современная защита",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Cool Canvas",
+        "canonical": "#f3f4f6",
+        "tonalRamp": [
+          "oklch(15.000% 0.00287 264.542)",
+          "oklch(26.429% 0.00287 264.542)",
+          "oklch(37.857% 0.00287 264.542)",
+          "oklch(49.286% 0.00287 264.542)",
+          "oklch(60.714% 0.00287 264.542)",
+          "oklch(72.143% 0.00287 264.542)",
+          "oklch(83.571% 0.00287 264.542)",
+          "oklch(95.000% 0.00287 264.542)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "White Surface",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15.000% 0.00000 0.000)",
+          "oklch(26.429% 0.00000 0.000)",
+          "oklch(37.857% 0.00000 0.000)",
+          "oklch(49.286% 0.00000 0.000)",
+          "oklch(60.714% 0.00000 0.000)",
+          "oklch(72.143% 0.00000 0.000)",
+          "oklch(83.571% 0.00000 0.000)",
+          "oklch(95.000% 0.00000 0.000)"
+        ]
+      },
+      "surface-soft": {
+        "role": "neutral",
+        "displayName": "Soft Surface",
+        "canonical": "#f8fafc",
+        "tonalRamp": [
+          "oklch(15.000% 0.00341 247.858)",
+          "oklch(26.429% 0.00341 247.858)",
+          "oklch(37.857% 0.00341 247.858)",
+          "oklch(49.286% 0.00341 247.858)",
+          "oklch(60.714% 0.00341 247.858)",
+          "oklch(72.143% 0.00341 247.858)",
+          "oklch(83.571% 0.00341 247.858)",
+          "oklch(95.000% 0.00341 247.858)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#111827",
+        "tonalRamp": [
+          "oklch(15.000% 0.03176 264.665)",
+          "oklch(26.429% 0.03176 264.665)",
+          "oklch(37.857% 0.03176 264.665)",
+          "oklch(49.286% 0.03176 264.665)",
+          "oklch(60.714% 0.03176 264.665)",
+          "oklch(72.143% 0.03176 264.665)",
+          "oklch(83.571% 0.03176 264.665)",
+          "oklch(95.000% 0.03176 264.665)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Slate",
+        "canonical": "#526075",
+        "tonalRamp": [
+          "oklch(15.000% 0.03810 258.358)",
+          "oklch(26.429% 0.03810 258.358)",
+          "oklch(37.857% 0.03810 258.358)",
+          "oklch(49.286% 0.03810 258.358)",
+          "oklch(60.714% 0.03810 258.358)",
+          "oklch(72.143% 0.03810 258.358)",
+          "oklch(83.571% 0.03810 258.358)",
+          "oklch(95.000% 0.03810 258.358)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Quiet Line",
+        "canonical": "#dce1e9",
+        "tonalRamp": [
+          "oklch(15.000% 0.01216 259.823)",
+          "oklch(26.429% 0.01216 259.823)",
+          "oklch(37.857% 0.01216 259.823)",
+          "oklch(49.286% 0.01216 259.823)",
+          "oklch(60.714% 0.01216 259.823)",
+          "oklch(72.143% 0.01216 259.823)",
+          "oklch(83.571% 0.01216 259.823)",
+          "oklch(95.000% 0.01216 259.823)"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Field Line",
+        "canonical": "#aeb9c9",
+        "tonalRamp": [
+          "oklch(15.000% 0.02585 257.656)",
+          "oklch(26.429% 0.02585 257.656)",
+          "oklch(37.857% 0.02585 257.656)",
+          "oklch(49.286% 0.02585 257.656)",
+          "oklch(60.714% 0.02585 257.656)",
+          "oklch(72.143% 0.02585 257.656)",
+          "oklch(83.571% 0.02585 257.656)",
+          "oklch(95.000% 0.02585 257.656)"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Action Blue",
+        "canonical": "#2563eb",
+        "tonalRamp": [
+          "oklch(15.000% 0.21521 262.881)",
+          "oklch(26.429% 0.21521 262.881)",
+          "oklch(37.857% 0.21521 262.881)",
+          "oklch(49.286% 0.21521 262.881)",
+          "oklch(60.714% 0.21521 262.881)",
+          "oklch(72.143% 0.21521 262.881)",
+          "oklch(83.571% 0.21521 262.881)",
+          "oklch(95.000% 0.21521 262.881)"
+        ]
+      },
+      "accent-hover": {
+        "role": "primary",
+        "displayName": "Action Blue Hover",
+        "canonical": "#1d4ed8",
+        "tonalRamp": [
+          "oklch(15.000% 0.21717 264.376)",
+          "oklch(26.429% 0.21717 264.376)",
+          "oklch(37.857% 0.21717 264.376)",
+          "oklch(49.286% 0.21717 264.376)",
+          "oklch(60.714% 0.21717 264.376)",
+          "oklch(72.143% 0.21717 264.376)",
+          "oklch(83.571% 0.21717 264.376)",
+          "oklch(95.000% 0.21717 264.376)"
+        ]
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "Blue Wash",
+        "canonical": "#eff6ff",
+        "tonalRamp": [
+          "oklch(15.000% 0.01418 254.604)",
+          "oklch(26.429% 0.01418 254.604)",
+          "oklch(37.857% 0.01418 254.604)",
+          "oklch(49.286% 0.01418 254.604)",
+          "oklch(60.714% 0.01418 254.604)",
+          "oklch(72.143% 0.01418 254.604)",
+          "oklch(83.571% 0.01418 254.604)",
+          "oklch(95.000% 0.01418 254.604)"
+        ]
+      },
+      "accent-ink": {
+        "role": "primary",
+        "displayName": "Readable Blue",
+        "canonical": "#1e40af",
+        "tonalRamp": [
+          "oklch(15.000% 0.18087 265.638)",
+          "oklch(26.429% 0.18087 265.638)",
+          "oklch(37.857% 0.18087 265.638)",
+          "oklch(49.286% 0.18087 265.638)",
+          "oklch(60.714% 0.18087 265.638)",
+          "oklch(72.143% 0.18087 265.638)",
+          "oklch(83.571% 0.18087 265.638)",
+          "oklch(95.000% 0.18087 265.638)"
+        ]
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "Success",
+        "canonical": "#166534",
+        "tonalRamp": [
+          "oklch(15.000% 0.10832 151.328)",
+          "oklch(26.429% 0.10832 151.328)",
+          "oklch(37.857% 0.10832 151.328)",
+          "oklch(49.286% 0.10832 151.328)",
+          "oklch(60.714% 0.10832 151.328)",
+          "oklch(72.143% 0.10832 151.328)",
+          "oklch(83.571% 0.10832 151.328)",
+          "oklch(95.000% 0.10832 151.328)"
+        ]
+      },
+      "success-soft": {
+        "role": "semantic",
+        "displayName": "Success Wash",
+        "canonical": "#f0fdf4",
+        "tonalRamp": [
+          "oklch(15.000% 0.01806 155.826)",
+          "oklch(26.429% 0.01806 155.826)",
+          "oklch(37.857% 0.01806 155.826)",
+          "oklch(49.286% 0.01806 155.826)",
+          "oklch(60.714% 0.01806 155.826)",
+          "oklch(72.143% 0.01806 155.826)",
+          "oklch(83.571% 0.01806 155.826)",
+          "oklch(95.000% 0.01806 155.826)"
+        ]
+      },
+      "warning": {
+        "role": "semantic",
+        "displayName": "Warning",
+        "canonical": "#92400e",
+        "tonalRamp": [
+          "oklch(15.000% 0.12470 46.201)",
+          "oklch(26.429% 0.12470 46.201)",
+          "oklch(37.857% 0.12470 46.201)",
+          "oklch(49.286% 0.12470 46.201)",
+          "oklch(60.714% 0.12470 46.201)",
+          "oklch(72.143% 0.12470 46.201)",
+          "oklch(83.571% 0.12470 46.201)",
+          "oklch(95.000% 0.12470 46.201)"
+        ]
+      },
+      "warning-soft": {
+        "role": "semantic",
+        "displayName": "Warning Wash",
+        "canonical": "#fffbeb",
+        "tonalRamp": [
+          "oklch(15.000% 0.02140 95.277)",
+          "oklch(26.429% 0.02140 95.277)",
+          "oklch(37.857% 0.02140 95.277)",
+          "oklch(49.286% 0.02140 95.277)",
+          "oklch(60.714% 0.02140 95.277)",
+          "oklch(72.143% 0.02140 95.277)",
+          "oklch(83.571% 0.02140 95.277)",
+          "oklch(95.000% 0.02140 95.277)"
+        ]
+      },
+      "danger": {
+        "role": "semantic",
+        "displayName": "Danger",
+        "canonical": "#b42318",
+        "tonalRamp": [
+          "oklch(15.000% 0.18205 29.513)",
+          "oklch(26.429% 0.18205 29.513)",
+          "oklch(37.857% 0.18205 29.513)",
+          "oklch(49.286% 0.18205 29.513)",
+          "oklch(60.714% 0.18205 29.513)",
+          "oklch(72.143% 0.18205 29.513)",
+          "oklch(83.571% 0.18205 29.513)",
+          "oklch(95.000% 0.18205 29.513)"
+        ]
+      },
+      "danger-soft": {
+        "role": "semantic",
+        "displayName": "Danger Wash",
+        "canonical": "#fff1f2",
+        "tonalRamp": [
+          "oklch(15.000% 0.01517 12.422)",
+          "oklch(26.429% 0.01517 12.422)",
+          "oklch(37.857% 0.01517 12.422)",
+          "oklch(49.286% 0.01517 12.422)",
+          "oklch(60.714% 0.01517 12.422)",
+          "oklch(72.143% 0.01517 12.422)",
+          "oklch(83.571% 0.01517 12.422)",
+          "oklch(95.000% 0.01517 12.422)"
+        ]
+      },
+      "nav-active": {
+        "role": "primary",
+        "displayName": "Navigation Blue Wash",
+        "canonical": "#e8efff",
+        "tonalRamp": [
+          "oklch(15.000% 0.02282 266.909)",
+          "oklch(26.429% 0.02282 266.909)",
+          "oklch(37.857% 0.02282 266.909)",
+          "oklch(49.286% 0.02282 266.909)",
+          "oklch(60.714% 0.02282 266.909)",
+          "oklch(72.143% 0.02282 266.909)",
+          "oklch(83.571% 0.02282 266.909)",
+          "oklch(95.000% 0.02282 266.909)"
+        ]
+      },
+      "status-neutral": {
+        "role": "neutral",
+        "displayName": "Neutral Status",
+        "canonical": "#e9edf3",
+        "tonalRamp": [
+          "oklch(15.000% 0.00915 258.336)",
+          "oklch(26.429% 0.00915 258.336)",
+          "oklch(37.857% 0.00915 258.336)",
+          "oklch(49.286% 0.00915 258.336)",
+          "oklch(60.714% 0.00915 258.336)",
+          "oklch(72.143% 0.00915 258.336)",
+          "oklch(83.571% 0.00915 258.336)",
+          "oklch(95.000% 0.00915 258.336)"
+        ]
+      },
+      "message-own": {
+        "role": "primary",
+        "displayName": "Outgoing Message Blue",
+        "canonical": "#edf3ff",
+        "tonalRamp": [
+          "oklch(15.000% 0.01733 264.486)",
+          "oklch(26.429% 0.01733 264.486)",
+          "oklch(37.857% 0.01733 264.486)",
+          "oklch(49.286% 0.01733 264.486)",
+          "oklch(60.714% 0.01733 264.486)",
+          "oklch(72.143% 0.01733 264.486)",
+          "oklch(83.571% 0.01733 264.486)",
+          "oklch(95.000% 0.01733 264.486)"
+        ]
+      },
+      "message-own-line": {
+        "role": "primary",
+        "displayName": "Outgoing Message Border",
+        "canonical": "#cbdafa",
+        "tonalRamp": [
+          "oklch(15.000% 0.04709 265.480)",
+          "oklch(26.429% 0.04709 265.480)",
+          "oklch(37.857% 0.04709 265.480)",
+          "oklch(49.286% 0.04709 265.480)",
+          "oklch(60.714% 0.04709 265.480)",
+          "oklch(72.143% 0.04709 265.480)",
+          "oklch(83.571% 0.04709 265.480)",
+          "oklch(95.000% 0.04709 265.480)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Page headline",
+        "purpose": "Fluid functional page heading; shared system sans."
+      },
+      "section": {
+        "displayName": "Section heading",
+        "purpose": "Main content grouping."
+      },
+      "title": {
+        "displayName": "Small title",
+        "purpose": "Smaller section headings."
+      },
+      "body": {
+        "displayName": "Reading baseline",
+        "purpose": "Body, input values, and chat messages."
+      },
+      "label": {
+        "displayName": "Control label",
+        "purpose": "Persistent labels and secondary actions."
+      },
+      "button": {
+        "displayName": "Button text",
+        "purpose": "Shared button text with a tighter line height."
+      },
+      "metadata": {
+        "displayName": "Metadata",
+        "purpose": "Identifiers, timestamps, and supporting facts."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-menu",
+        "value": "0 12px 32px #1118271a",
+        "purpose": "Floating menus and chat jump controls; not ordinary panels."
+      }
+    ],
+    "motion": [
+      {
+        "name": "action-color",
+        "value": "background 150ms ease-out",
+        "purpose": "Filled primary button hover."
+      },
+      {
+        "name": "card-border",
+        "value": "border-color 150ms ease-out",
+        "purpose": "Clickable client case card hover."
+      },
+      {
+        "name": "disclosure-in",
+        "value": "180ms cubic-bezier(.16,1,.3,1)",
+        "purpose": "Translate disclosure content from -3px to 0."
+      },
+      {
+        "name": "disclosure-icon",
+        "value": "transform 180ms ease-out",
+        "purpose": "Rotate the create-case plus to 45deg when open."
+      },
+      {
+        "name": "loading-spin",
+        "value": ".8s linear infinite",
+        "purpose": "Functional loading indicator."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none; transition: none; scroll-behavior: auto",
+        "purpose": "Applied globally for prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "staff-rail-compact",
+        "value": "1150px"
+      },
+      {
+        "name": "team-chat-list-compact",
+        "value": "1100px"
+      },
+      {
+        "name": "client-header-compact",
+        "value": "1000px"
+      },
+      {
+        "name": "staff-mobile-shell",
+        "value": "900px"
+      },
+      {
+        "name": "auth-single-column",
+        "value": "850px"
+      },
+      {
+        "name": "team-chat-single-pane",
+        "value": "800px"
+      },
+      {
+        "name": "workspace-stacked",
+        "value": "700px"
+      },
+      {
+        "name": "security-compact",
+        "value": "600px"
+      },
+      {
+        "name": "upload-actions-stacked",
+        "value": "550px"
+      },
+      {
+        "name": "auth-small-phone",
+        "value": "390px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Filled blue action with the shared control target and focus treatment.",
+      "html": "<button class=\"ds-primary\">Сохранить</button>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 16px;border:1px solid transparent;border-radius:var(--control-radius,8px);font:600 14px/1.4 var(--font, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif);cursor:pointer;background:var(--accent, #2563eb);color:var(--surface, #ffffff);transition:background 150ms ease-out;}.ds-primary:hover:not(:disabled){background:var(--accent-hover, #1d4ed8);}.ds-primary:focus-visible{outline:3px solid var(--accent, #2563eb);outline-offset:3px;}.ds-primary:disabled{opacity:.55;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none;}}"
+    },
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outlined link-style secondary action.",
+      "html": "<a class=\"ds-secondary\" href=\"#cancel\">Отмена</a>",
+      "css": ".ds-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 16px;border:1px solid transparent;border-radius:var(--control-radius,8px);font:600 14px/1.4 var(--font, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif);cursor:pointer;background:var(--surface, #ffffff);color:var(--ink, #111827);border-color:var(--line, #dce1e9);font:600 14px/1.55 var(--font, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif);text-decoration:none;}.ds-secondary:hover{background:var(--surface-soft, #f8fafc);}.ds-secondary:focus-visible{outline:3px solid var(--accent, #2563eb);outline-offset:3px;}"
+    },
+    {
+      "name": "Quiet action",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Contextual text action within a case workflow.",
+      "html": "<button class=\"ds-quiet\">Открыть уведомление</button>",
+      "css": ".ds-quiet{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 16px;border:1px solid transparent;border-radius:var(--control-radius,8px);font:600 14px/1.4 var(--font, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif);cursor:pointer;padding-inline:0;background:transparent;color:var(--accent-ink, #1e40af);text-align:left;}.ds-quiet:hover{text-decoration:underline;}.ds-quiet:focus-visible{outline:3px solid var(--accent, #2563eb);outline-offset:3px;}.ds-quiet:disabled{opacity:.55;cursor:not-allowed;}"
+    },
+    {
+      "name": "Labeled field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Persistent label, readable input value, and outlined boundary.",
+      "html": "<label class=\"ds-field-label\">Название дела<input class=\"ds-field\" placeholder=\"Введите название\"></label>",
+      "css": ".ds-field-label{display:grid;gap:7px;color:var(--ink, #111827);font:600 14px/1.55 var(--font, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif);}.ds-field{width:100%;min-width:0;min-height:48px;padding:10px 12px;border:1px solid var(--line-strong, #aeb9c9);border-radius:var(--control-radius,8px);background:var(--surface, #ffffff);color:var(--ink, #111827);caret-color:var(--accent, #2563eb);font:400 16px/1.55 var(--font, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif);}.ds-field::placeholder{color:#65738a;opacity:1;}.ds-field:focus-visible{outline:3px solid var(--accent, #2563eb);outline-offset:3px;}.ds-field:read-only{background:var(--surface-soft, #f8fafc);color:var(--muted, #526075);}"
+    },
+    {
+      "name": "Case section navigation",
+      "kind": "nav",
+      "refersTo": "case-navigation-active",
+      "description": "Five equal-weight case destinations, with full labels in three columns on mobile.",
+      "html": "<nav class=\"ds-case-nav\" aria-label=\"Разделы дела\"><a class=\"ds-case-link\" href=\"#overview\" aria-current=\"page\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9Z\"/><path d=\"M9 21v-7h6v7\"/></svg><span>Обзор</span></a><a class=\"ds-case-link\" href=\"#tasks\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"2\"/><path d=\"m8 10 2 2 4-4M8 17h8\"/></svg><span>Задачи</span></a><a class=\"ds-case-link\" href=\"#documents\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z\"/><path d=\"M14 3v5h4M9 13h6m-6 4h6\"/></svg><span>Документы</span></a><a class=\"ds-case-link\" href=\"#messages\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16v12H9l-5 4V5Z\"/><path d=\"M8 10h8m-8 3h5\"/></svg><span>Сообщения</span></a><a class=\"ds-case-link\" href=\"#payments\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"2.5\" y=\"5\" width=\"19\" height=\"14\" rx=\"2\"/><path d=\"M2.5 10h19M7 15h4\"/></svg><span>Оплаты</span></a></nav>",
+      "css": ".ds-case-nav{display:flex;flex-wrap:wrap;gap:8px;padding:8px;border:1px solid var(--line, #dce1e9);border-radius:12px;background:var(--surface, #ffffff);}.ds-case-link{display:flex;align-items:center;justify-content:center;flex:1;gap:8px;min-height:48px;padding:10px 14px;border-radius:7px;color:var(--muted, #526075);text-decoration:none;font:600 15px/1.55 var(--font, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif);white-space:nowrap;}.ds-case-link:hover{color:var(--accent-ink, #1e40af);background:var(--surface-soft, #f8fafc);}.ds-case-link[aria-current=page]{color:var(--accent-ink, #1e40af);background:#e8efff;}.ds-case-link:focus-visible{outline:3px solid var(--accent, #2563eb);outline-offset:3px;}.ds-case-link svg{flex-shrink:0;}@media(max-width:700px){.ds-case-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:6px;}.ds-case-link{flex-direction:column;gap:4px;min-height:60px;padding:6px 4px;font-size:14px;}.ds-case-link svg{width:18px;height:18px;}}"
+    },
+    {
+      "name": "Status tag",
+      "kind": "chip",
+      "refersTo": "status",
+      "description": "A compact non-interactive state label with a semantic success variant.",
+      "html": "<div class=\"ds-tags\"><span class=\"ds-tag\">В работе</span><span class=\"ds-tag ds-linked\">Доступ предоставлен</span></div>",
+      "css": ".ds-tags{display:flex;flex-wrap:wrap;gap:8px;}.ds-tag{display:inline-flex;align-items:center;padding:5px 9px;border-radius:5px;background:#e9edf3;color:var(--muted, #526075);font:400 13px/1.55 var(--font, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif);}.ds-linked{color:var(--success, #166534);background:var(--success-soft, #f0fdf4);}"
+    },
+    {
+      "name": "Work panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Flat outlined container for related work; mobile padding follows the shared panel behavior.",
+      "html": "<section class=\"ds-panel\"><h2 class=\"ds-panel-title\">Документы</h2><p class=\"ds-panel-copy\">Файлы и результаты проверки по делу.</p></section>",
+      "css": ".ds-panel{padding:24px;border:1px solid var(--line, #dce1e9);border-radius:var(--radius,12px);background:var(--surface, #ffffff);color:var(--ink, #111827);font:400 16px/1.55 var(--font, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif);}.ds-panel-title{margin:0;font:650 20px/1.25 var(--font, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif);letter-spacing:-.02em;}.ds-panel-copy{margin:12px 0;color:var(--muted, #526075);}@media(max-width:700px){.ds-panel{padding:20px;}}"
+    },
+    {
+      "name": "Inline disclosure",
+      "kind": "custom",
+      "refersTo": "disclosure",
+      "description": "Secondary content expands in place with the shipped disclosure motion.",
+      "html": "<details class=\"ds-disclosure\"><summary class=\"ds-disclosure-summary\">Изменить данные</summary><div class=\"ds-disclosure-body\">Форма открывается здесь, сохраняя контекст дела.</div></details>",
+      "css": ".ds-disclosure{border:1px solid var(--line, #dce1e9);border-radius:var(--radius,12px);background:var(--surface, #ffffff);font:400 16px/1.55 var(--font, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif);}.ds-disclosure-summary{min-height:48px;padding:16px 20px;color:var(--accent-ink, #1e40af);font-weight:600;cursor:pointer;}.ds-disclosure-summary:focus-visible{outline:3px solid var(--accent, #2563eb);outline-offset:3px;}.ds-disclosure-body{padding:0 20px 24px;color:var(--muted, #526075);}.ds-disclosure[open]>.ds-disclosure-body{animation:ds-disclosure-in 180ms cubic-bezier(.16,1,.3,1);}@keyframes ds-disclosure-in{from{transform:translateY(-3px);}to{transform:translateY(0);}}@media(prefers-reduced-motion:reduce){.ds-disclosure[open]>.ds-disclosure-body{animation:none;}}"
+    },
+    {
+      "name": "Outgoing message",
+      "kind": "custom",
+      "refersTo": "message-own",
+      "description": "Outgoing bubble with the shared reading size and directional lower corner.",
+      "html": "<article class=\"ds-message\"><p class=\"ds-message-text\">Документы отправлены.</p><time class=\"ds-message-time\">14:30</time></article>",
+      "css": ".ds-message{max-width:min(78%,640px);min-width:100px;padding:14px 16px 10px;border:1px solid #cbdafa;border-radius:12px 12px 3px 12px;background:#edf3ff;color:var(--ink, #111827);font-family:var(--font, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif);overflow-wrap:anywhere;}.ds-message-text{margin:0;font-size:16px;line-height:1.55;white-space:pre-wrap;}.ds-message-time{display:block;margin-top:6px;color:var(--muted, #526075);font-size:11px;text-align:right;}@media(max-width:700px){.ds-message{max-width:92%;padding:12px;}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Привычный бизнес-интерфейс",
+    "overview": "A calm, familiar workspace for a client and the team handling a legal case. White surfaces sit on a cool gray canvas; blue identifies actions and the current location. The same visual vocabulary supports mobile client work and the denser staff workspace, with readable text, explicit labels, and functional grouping.\n\nThe user selected a code-led replacement of the previous visual identity and explicitly chose a system sans interface. The retained brand commitment is the name «Современная защита». The built identity adds an outlined shield-and-check SVG within a blue rounded tile; navigation uses the existing authored outline SVG set. There is no decorative photography, raster illustration, display-font treatment, or simulated material.",
+    "keyCharacteristics": [
+      "White outlined panels on a cool gray canvas.",
+      "Blue actions and clearly tinted current navigation.",
+      "System sans text with restrained weight and size hierarchy.",
+      "Labeled controls, spacious hit areas, and contextual inline disclosures.",
+      "Shared component language across client, staff, authentication, and chat."
+    ],
+    "rules": [
+      {
+        "name": "The Action and State Rule",
+        "body": "Use blue for actions and location; use success, warning, and danger colors for the condition the accompanying text names.",
+        "section": "colors"
+      },
+      {
+        "name": "The Reading Baseline Rule",
+        "body": "Keep body text, typed field values, and chat messages at 16px; express secondary hierarchy through supporting roles rather than shrinking the main reading task.",
+        "section": "typography"
+      },
+      {
+        "name": "The Context Stays Rule",
+        "body": "Expand secondary forms inline within the surrounding workspace, and preserve visible navigation when changing case sections.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat Workspace Rule",
+        "body": "Keep ordinary surfaces flat; reserve the menu shadow for controls that float above the workspace.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do reuse the shared cool neutrals, action blue, and semantic feedback pairs.",
+      "Do retain 16px body, input, and message text and the shared visible focus treatment.",
+      "Do keep repeated controls at least 48px high and mobile client case navigation cells at least 60px high.",
+      "Do preserve full client case-section names, equal cell widths, and an explicit active state.",
+      "Do use the authored outline SVG components and the existing geometric brand mark.",
+      "Do keep secondary forms contextual and honor reduced-motion preferences."
+    ],
+    "donts": [
+      "Don't add decorative imagery or display typography to this selected interface world.",
+      "Don't turn flat working panels into raised promotional cards.",
+      "Don't encode status solely through color or replace navigation labels with icons alone.",
+      "Don't treat generated sidecar tonal ramps as additional approved application tokens."
+    ]
+  }
+}

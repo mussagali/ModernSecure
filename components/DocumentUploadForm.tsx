@@ -1,5 +1,7 @@
 "use client";
 
+import { NavIcon } from "./NavIcon";
+
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
@@ -280,8 +282,8 @@ export function DocumentUploadForm({ caseId, requestId, view }: Props) {
         return <li className={styles.item} key={item.id}>
           <div className={styles.fileInfo}><strong>{item.name}</strong><small>{(item.file.size / 1024 / 1024).toFixed(1)} МБ · {statusLabels[status]}{status === "uploading" ? ` ${progress[item.id] ?? 0}%` : ""}</small></div>
           {!locked && !working && <div className={styles.controls}>
-            <button type="button" aria-label={`Поднять ${item.name}`} disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
-            <button type="button" aria-label={`Опустить ${item.name}`} disabled={index === files.length - 1} onClick={() => move(index, 1)}>↓</button>
+            <button type="button" aria-label={`Поднять ${item.name}`} disabled={index === 0} onClick={() => move(index, -1)}><NavIcon name="up" size={18} /></button>
+            <button type="button" aria-label={`Опустить ${item.name}`} disabled={index === files.length - 1} onClick={() => move(index, 1)}><NavIcon name="down" size={18} /></button>
             <button type="button" aria-label={`Убрать ${item.name}`} onClick={() => setFiles((current) => current.filter((entry) => entry.id !== item.id))}>Убрать</button>
           </div>}
           {(status === "uploading" || status === "processing" || status === "uploaded") && <progress className={styles.progress} value={progress[item.id] ?? 0} max={100} aria-label={`Передача ${item.name}`} />}
@@ -291,7 +293,7 @@ export function DocumentUploadForm({ caseId, requestId, view }: Props) {
     {message && <p className={phase === "aborted" ? styles.notice : styles.error} role="alert">{message}</p>}
     {working && <p className={styles.notice} role="status">{phase === "hashing" ? "Проверяем файлы…" : phase === "preparing" ? "Подготавливаем отправку…" : phase === "processing" ? "Завершаем отправку…" : "Отправляем файлы по очереди…"}</p>}
     <div className={styles.actions}>
-      <button type="submit" disabled={working || files.length === 0}>{locked ? "Повторить отправку" : "Отправить файлы →"}</button>
+      <button type="submit" disabled={working || files.length === 0}>{locked ? "Повторить отправку" : "Отправить файлы"}</button>
       {working && <button type="button" className={styles.secondary} onClick={abort}>Остановить</button>}
       {locked && !working && <button type="button" className={styles.secondary} onClick={startOver}>Изменить набор</button>}
     </div>

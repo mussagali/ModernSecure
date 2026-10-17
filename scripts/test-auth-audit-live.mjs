@@ -1,3 +1,4 @@
+import { simulateMfaInTransaction } from "./transactional-mfa.mjs";
 import assert from "node:assert/strict";
 import { readFileSync, statSync } from "node:fs";
 import pg from "pg";
@@ -31,7 +32,8 @@ try {
   const count = Number((await db.query("select count(*) as total from auth.audit_log_entries")).rows[0].total);
   assert.ok(count >= 2, "Expected the QA sign-in and sign-out in Supabase Auth audit");
 
-  await db.query("begin isolation level repeatable read read only");
+  await db.query("begin isolation level repeatable read");
+  await simulateMfaInTransaction(db, admin.user_id);
   await db.query("select set_config('request.jwt.claim.sub',$1,true)", [admin.user_id]);
   await db.query("set local role authenticated");
   await db.query("savepoint invalid_limit");

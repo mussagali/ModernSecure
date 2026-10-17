@@ -1,3 +1,4 @@
+import { signInQa } from "./qa-login.mjs";
 import assert from "node:assert/strict";
 import { readFileSync, statSync } from "node:fs";
 import { createServerClient } from "@supabase/ssr";
@@ -26,7 +27,7 @@ async function navFor(account) {
     },
   } });
   try {
-    const login = await client.auth.signInWithPassword({ email: account.email, password: account.password });
+    const login = await signInQa(client, { email: account.email, password: account.password });
     assert.ifError(login.error);
     assert.equal(login.data.user?.id, account.id);
     const response = await fetch("http://localhost:3000/staff", {
@@ -52,7 +53,7 @@ async function navFor(account) {
 }
 
 const lawyer = await navFor(accounts.lawyer);
-for (const href of ["/staff", "/staff/cases", "/staff/inbox", "/staff/chat", "/staff/review", "/staff/notifications"]) {
+for (const href of ["/staff/overview", "/staff/cases", "/staff/inbox", "/staff/chat", "/staff/review", "/staff/notifications"]) {
   assert.ok(lawyer.has(href), `Lawyer is missing ${href}`);
 }
 for (const href of ["/staff/clients", "/staff/services", "/staff/team", "/staff/audit", "/staff/settings"]) {

@@ -10,9 +10,9 @@ import { NavIcon, type NavIconName } from "./NavIcon";
 type StaffRole = "lawyer" | "manager" | "admin";
 type StaffNavItem = { href: string; label: string; icon: NavIconName; managerOnly?: boolean; reviewerOnly?: boolean; adminOnly?: boolean };
 const items: StaffNavItem[] = [
-  { href: "/staff", label: "Обзор", icon: "home" },
-  { href: "/staff/clients", label: "Клиенты", icon: "clients", managerOnly: true },
   { href: "/staff/cases", label: "Дела", icon: "cases" },
+  { href: "/staff/overview", label: "Обзор", icon: "home" },
+  { href: "/staff/clients", label: "Клиенты", icon: "clients", managerOnly: true },
   { href: "/staff/inbox", label: "Сообщения клиентов", icon: "messages" },
   { href: "/staff/chat", label: "Чат команды", icon: "team" },
   { href: "/staff/review", label: "Документы на проверке", icon: "review", reviewerOnly: true },
@@ -24,8 +24,8 @@ const items: StaffNavItem[] = [
 ];
 
 const mobilePrimary = new Map([
-  ["/staff", "Главная"],
   ["/staff/cases", "Дела"],
+  ["/staff/clients", "Клиенты"],
   ["/staff/inbox", "Сообщения"],
   ["/staff/chat", "Коллеги"],
 ]);
@@ -42,7 +42,7 @@ function visibleItems(role: StaffRole) {
 }
 
 function isActive(path: string, href: string) {
-  return path === href || (href !== "/staff" && path.startsWith(`${href}/`));
+  return (path === "/staff" && href === "/staff/cases") || path === href || (href !== "/staff" && path.startsWith(`${href}/`));
 }
 
 export function StaffNav({ role, unreadCount }: { role: StaffRole; unreadCount: number }) {
@@ -71,7 +71,11 @@ export function StaffMobileNav({ role, unreadCount }: { role: StaffRole; unreadC
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const available = visibleItems(role);
   const primary = available.filter((item) => mobilePrimary.has(item.href));
-  const secondary = available.filter((item) => !mobilePrimary.has(item.href));
+  if (role === "lawyer") {
+    const review = available.find((item) => item.href === "/staff/review");
+    if (review) primary.splice(1, 0, review);
+  }
+  const secondary = available.filter((item) => !primary.includes(item));
   const moreActive = secondary.some((item) => isActive(path, item.href));
 
   useEffect(() => {
@@ -96,7 +100,7 @@ export function StaffMobileNav({ role, unreadCount }: { role: StaffRole; unreadC
         aria-current={active ? "page" : undefined}
         className={`staff-mobile-primary-link${active ? " is-active" : ""}`}>
         <span className="staff-nav-icon"><NavIcon name={item.icon} /></span>
-        <span>{mobilePrimary.get(item.href)}</span>
+        <span>{mobilePrimary.get(item.href) ?? "Проверка"}</span>
         {item.href === "/staff/inbox" && unreadCases !== null && unreadCases > 0 && <b className="staff-mobile-inbox-badge" aria-hidden="true">{unreadCases > 99 ? "99+" : unreadCases}</b>}
       </Link>;
     })}

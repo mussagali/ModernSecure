@@ -4,6 +4,7 @@ import { createClient } from "./supabase/server";
 export type StaffStatus = {
   role: "lawyer" | "manager" | "admin";
   active: boolean;
+  is_primary_admin: boolean;
   display_name: string;
   mfa_required: boolean;
   mfa_passed: boolean;

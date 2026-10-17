@@ -11,5 +11,5 @@ export default async function ResetPasswordPage() {
   const { data } = await supabase.auth.getClaims();
   if (!data?.claims) redirect("/login?error=reset-link");
 
-  return <AuthFrame eyebrow="ВОССТАНОВЛЕНИЕ ДОСТУПА" title="Новый пароль" description="Задайте новый пароль для вашего аккаунта."><AuthForm mode="reset" /></AuthFrame>;
+  return <AuthFrame title="Новый пароль" description="Задайте новый пароль для вашего аккаунта."><AuthForm mode="reset" /></AuthFrame>;
 }

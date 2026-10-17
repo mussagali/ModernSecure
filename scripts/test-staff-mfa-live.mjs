@@ -56,6 +56,7 @@ const browser = createServerClient(url, publishable, { cookies: {
 } });
 let factorId;
 let changed = false;
+let originalMfaRequired;
 
 try {
   await db.connect();
@@ -63,7 +64,8 @@ try {
   assert.ifError(existing.error);
   assert.equal(existing.data.factors.length, 0, "QA user has an existing factor; do not touch it");
   const original = await db.query("select mfa_required from public.staff_members where user_id=$1 and role='lawyer'", [user.id]);
-  assert.equal(original.rows[0]?.mfa_required, false, "QA user MFA flag changed; do not touch it");
+  assert.equal(typeof original.rows[0]?.mfa_required, "boolean");
+  originalMfaRequired = original.rows[0].mfa_required;
   const auditBefore = Number((await db.query(`select count(*) as count from public.audit_events
     where actor_user_id=$1 and action='staff_mfa_verified'`, [user.id])).rows[0].count);
   const signIn = await browser.auth.signInWithPassword({ email: user.email, password: user.password });
@@ -148,7 +150,7 @@ try {
     }
   }
   if (changed) {
-    await db.query("update public.staff_members set mfa_required=false where user_id=$1", [user.id]);
+    await db.query("update public.staff_members set mfa_required=$2 where user_id=$1", [user.id, originalMfaRequired]);
     console.log("Restored QA staff MFA flag");
   }
   await db.end().catch(() => {});

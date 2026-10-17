@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import "./redesign.css";
 import "./auth.css";
 import "./case-workspace.css";
 import "./chat-screen.css";
@@ -13,7 +12,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ru">
-      <body>{children}</body>
+      <body className="product-ui">{children}</body>
     </html>
   );
 }

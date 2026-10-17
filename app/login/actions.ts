@@ -1,5 +1,6 @@
 "use server";
 
+import { safeAccountReturn } from "../../lib/return-path";
 import { redirect } from "next/navigation";
 import { createClient } from "../../lib/supabase/server";
 import { getStaffStatus } from "../../lib/staff";
@@ -49,7 +50,7 @@ export async function loginAction(_previous: AuthState, formData: FormData): Pro
     if (staffError) redirect("/account?staffLookupError=1");
     if (staff?.active) redirect(staff.mfa_passed ? "/staff" : "/staff-security");
   }
-  redirect("/account");
+  redirect(safeAccountReturn(formData.get("next")));
 }
 
 export async function registerAction(_previous: AuthState, formData: FormData): Promise<AuthState> {

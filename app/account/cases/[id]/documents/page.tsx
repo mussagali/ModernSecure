@@ -1,5 +1,6 @@
+import { formatDeadline } from "../../../../../lib/deadlines";
 import { DocumentUploadForm } from "../../../../../components/DocumentUploadForm";
-import { formatKzDate, requireClientCase } from "../../../../../lib/client-case";
+import { requireClientCase } from "../../../../../lib/client-case";
 import { canPreviewFile } from "../../../../../lib/file-preview";
 import { documentRequestLabels, documentRequestState, latestDocumentVersion } from "../../../../../lib/document-request-state";
 import { retractDocumentFile } from "./actions";
@@ -12,7 +13,7 @@ const fileStatus: Record<string, string> = {
 export default async function ClientDocuments({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ uploaded?: string; uploadError?: string; retracted?: string; error?: string }> }) {
   const { id } = await params;
   const { supabase, item } = await requireClientCase(id);
-  const { data: requests, error } = await supabase.from("document_requests").select("id, title, instructions, required, due_at, status, created_at").eq("case_id", id).order("created_at", { ascending: false });
+  const { data: requests, error } = await supabase.from("document_requests").select("id, title, instructions, required, due_at, status, closure_reason, created_at").eq("case_id", id).order("created_at", { ascending: false });
   if (error) throw new Error("Не удалось загрузить документы");
   const requestIds = (requests ?? []).map((request) => request.id);
   const { data: files, error: fileError } = requestIds.length ? await supabase.from("document_files").select("id, request_id, version_no, file_position, original_name, detected_mime_type, status, return_reason, uploaded_at").in("request_id", requestIds).neq("status", "quarantine").order("version_no", { ascending: false }).order("file_position") : { data: [], error: null };
@@ -33,7 +34,8 @@ export default async function ClientDocuments({ params, searchParams }: { params
       return <article className="case-work-card" id={`request-${request.id}`} key={request.id}>
         <div className="case-work-head"><h3>{request.title}</h3><span>{request.status === "active" ? documentRequestLabels[state] : request.status === "not_required" ? "Не требуется" : "Отменён"}</span></div>
         <p>{request.required ? "Обязательный документ" : "Дополнительный документ"}{currentVersion ? ` · текущая версия ${currentVersion}` : ""}</p>
-        {request.instructions && <p>{request.instructions}</p>}{request.due_at && <small>Срок: {formatKzDate(request.due_at)}</small>}
+        {request.closure_reason && <p className="case-feedback">Причина: {request.closure_reason}</p>}
+        {request.instructions && <p>{request.instructions}</p>}{request.due_at && <small>Срок: {formatDeadline(request.due_at)}</small>}
         {state === "under_review" && request.status === "active" && <p className="account-muted">Файлы уже получены. Дождитесь решения юриста; если отправили не то, отзовите файлы текущей версии до проверки.</p>}
         {state === "returned" && request.status === "active" && <p className="account-muted">Исправьте замечания ниже и отправьте полный набор файлов новой версией.</p>}
         {state === "accepted" && request.status === "active" && <p className="account-muted">Все файлы текущей версии приняты. Повторная отправка не требуется.</p>}
@@ -42,6 +44,6 @@ export default async function ClientDocuments({ params, searchParams }: { params
       </article>;
     })}</div> : <p className="account-muted">Запросов документов пока нет.</p>}
     {!uploadsReady && <p className="case-safety-note">Загрузка файлов пока не включена: серверное хранилище ещё не настроено. Сейчас система не принимает файлы.</p>}
-    {uploadsReady && <p className="case-safety-note">Файлы хранятся в закрытом хранилище. Автоматическая антивирусная проверка не подключена; не открывайте подозрительные файлы.</p>}
+    {uploadsReady && <p className="account-muted">Загрузите документы по запросу сотрудника. После проверки результат появится рядом с файлом.</p>}
   </section>;
 }

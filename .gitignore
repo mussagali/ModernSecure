@@ -10,3 +10,8 @@ supabase/.branches/
 *.log
 .test-accounts.local.json
 .vercel
+
+.workspace-accounts.local.json
+.impeccable/questions/
+.impeccable/review/
+.impeccable/reference/

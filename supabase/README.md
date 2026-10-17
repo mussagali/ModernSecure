@@ -2,7 +2,7 @@
 
 The ordered files in `migrations/` define the current schema, role-scoped RLS, private Storage buckets, and audited workflows for clients, cases, staff, documents, chats, tasks, payments and notifications. Keep them in order; do not edit a migration already applied to the project.
 
-Applied to Supabase project `bdkrihsiprkmukyjyspv` (Seoul, `ap-northeast-2`). On 2026-10-12, `npm run db:verify` reported 35 RLS-enabled tables, 70 RLS policies, two private buckets, 69 workflow functions and 12 workflow triggers. The web app uses Supabase Auth and live case/file data. The project contains explicitly marked QA records; never treat it as an empty database.
+Applied to Supabase project `bdkrihsiprkmukyjyspv` (Seoul, `ap-northeast-2`). On 2026-10-16, all 83 migrations were applied and `npm run db:verify` reported 37 RLS-enabled tables, 74 RLS policies, two private buckets, 82 workflow functions and 18 workflow triggers. The web app uses Supabase Auth and live case/file data. On 2026-10-17 the owner explicitly requested a reset of this connected project. Migration `084` adds a protected primary-administrator flag; the reset removes prior users, business data and stored files, then creates five new accounts and one linked client card. Runtime schemas, RLS and private buckets remain in place. Credentials are stored only in the Git-ignored `.workspace-accounts.local.json` (mode 600); that file also records the private local backup path.
 
 ## Before applying
 
@@ -24,6 +24,28 @@ Message uploads use the private `modernsecure-files` bucket. If an upload or dat
 - Accepted document versions, messages and audit rows are protected against direct update/delete by triggers. Operational archiving/retention needs a separately reviewed procedure.
 - The user clarified that the Kazakhstan residency line in the original brief was an error; this project has no regional hosting restriction. Before real customer data is added, review retention, backups, access, and personal-data processing requirements.
 
+## Audit fixes, 2026-10-16
+
+Migrations `078`–`082` add payment deadline reminders, reasoned task/document-request closure, conflict checks for contact and FAQ edits, versioned client consents, and document-upload tasks linked to document review. Deadlines entered in the staff forms use explicit Almaty time (UTC+5); existing saved timestamps are not rewritten. `npm run db:cron-status` checks both hourly reminder jobs. Payment reminders account for confirmed partial payments and deduplicate repeated runs.
+
+The owner subsequently requested password-only access. Migration `083` disables mandatory MFA for existing staff and sets it off by default for new staff. An employee can still opt in by confirming an authenticator at `/staff-security`; a verified factor continues to require MFA. Unfinished enrollment does not block password login. Missing assurance claims fail the check when MFA is required. QA tests use temporary factors only on the named QA accounts and remove them afterward; they never enroll an authenticator for a real employee.
+
+The administrator can publish approved terms, personal-data consent and optional marketing consent at `/staff/settings/legal`. No legal text is seeded: the owner has no approved texts yet. Publishing a mandatory version requires clients to accept it on opening the cabinet, with its version and hash recorded. This is a cabinet UI gate, not a global API consent restriction. Marketing withdrawal and legal review remain separate work.
+
+Bank/payment instructions can be configured in staff settings. The client cabinet now places required actions first, displays deadline times, and uses larger controls and responsive navigation. An expired session returns to the requested account page after ordinary password login.
+
+## Verification
+
+- `npm test`: local test scripts, including migration/workflow tests against PGlite.
+- `node scripts/test-primary-admin-live.mjs`: hierarchy and escalation checks against the connected database, all inside a rolled-back transaction.
+- `npm run test:live`: historical scripts against the running app and connected Supabase. Their old QA users and case fixtures were removed by the requested reset, so the full suite requires deliberately provisioning new fixtures; `TEST_BASE_URL` defaults to `http://localhost:3000`. These scripts exercise shared QA records and must run sequentially.
+- `npm run build` and `npm run lint`: application build and static checks.
+- `npm run db:verify`, `npm run db:role-smoke`, `npm run db:document-smoke`, `npm run db:finance-smoke`, and `npm run db:cron-status`: schema, authorization, document/payment workflows and reminder jobs. The three smoke workflows roll back their test transactions.
+
+All checks above passed on 2026-10-16. Both reminder jobs had successful executions. Desktop and 360 px mobile previews were checked in Chrome; this is not real-device WebView acceptance. The web changes were tested locally and were not publicly deployed.
+
 ## Release work still open
 
-The database and web workflows are not sufficient proof of release readiness. Complete the scenario-by-scenario web acceptance, corporate SMTP and email recovery, staff MFA rollout, Storage orphan-cleanup schedule, monitoring, backup/restore drill and load testing. Android WebView and iOS WKWebView require separate real-device acceptance, including camera/gallery and file preview. See the current readiness report in the work plan outputs; do not infer that `db:verify` covers these runtime checks. Corporate SMTP remains deferred until the company mailbox is available; do not disable email confirmation in the meantime.
+The database and web workflows are not sufficient proof of release readiness. Complete the scenario-by-scenario web acceptance, approved legal texts, corporate SMTP and email recovery, Storage orphan-cleanup schedule, monitoring, backup/restore drill and load testing. MFA is optional by the owner's subsequent request; authenticator enrollment is needed only when opting in. Android WebView and iOS WKWebView require separate real-device acceptance, including camera/gallery and file preview. Configurable stage transitions and stage deadlines, notification-template editing, configurable upload limits, sample document templates, a separate archive, full localization, client time-zone settings and password-recovery return routing remain outside these fixes. Do not infer that `db:verify` covers these features or runtime checks. Corporate SMTP remains deferred until the company mailbox is available; do not disable email confirmation in the meantime.
+
+The operator-only `scripts/reset-workspace.mjs` defaults to no mutation and supports `--plan`. Applying requires `--apply` plus the exact project ID, checks the table inventory, backs up private data/files locally, and refuses to run again when the saved reset state exists. It is never run by the application or migrations.

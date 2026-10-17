@@ -1,3 +1,4 @@
+import { NavIcon } from "../../../../components/NavIcon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { formatKzDate, requireClientCase } from "../../../../lib/client-case";
@@ -16,7 +17,7 @@ export default async function ClientCasePage({ params }: { params: Promise<{ id:
     supabase.from("stage_templates").select("id, position, title, client_description").eq("version_id", item.service_version_id).order("position"),
     supabase.from("case_stage_events").select("id, to_stage_id, client_note, occurred_at").eq("case_id", id).order("occurred_at", { ascending: false }).limit(10),
     supabase.from("case_suspensions").select("id, reason_for_client, control_at, started_at, ended_at").eq("case_id", id).order("started_at", { ascending: false }).limit(20),
-    supabase.from("tasks").select("id, title, kind, status, due_at").eq("case_id", id).in("status", ["new", "response_sent"]).order("due_at", { ascending: true, nullsFirst: false }).limit(100),
+    supabase.from("tasks").select("id, title, kind, document_request_id, status, due_at").eq("case_id", id).in("status", ["new", "response_sent"]).order("due_at", { ascending: true, nullsFirst: false }).limit(100),
     supabase.from("document_requests").select("id, title, status, due_at, required").eq("case_id", id).eq("status", "active"),
     supabase.rpc("case_unread_message_count", { p_case_id: id }),
     supabase.from("case_assignments").select("staff_user_id").eq("case_id", id).is("revoked_at", null),
@@ -65,14 +66,10 @@ export default async function ClientCasePage({ params }: { params: Promise<{ id:
       .filter((payment) => payment.schedule_id === row.id)
       .reduce((sum, payment) => sum + toKztCents(payment.amount_kzt), BigInt(0)),
   })).find((row) => row.remaining > BigInt(0));
-  return <>
-    <section className="account-detail-card"><span className="account-card-index">{item.is_suspended ? "ДЕЛО ПРИОСТАНОВЛЕНО" : item.status === "closed" ? "ДЕЛО ЗАВЕРШЕНО" : "ТЕКУЩИЙ ЭТАП"}</span><h2>{currentStage?.title ?? "Этап ещё не назначен"}</h2><p>{currentStage?.client_description ?? "Информация о ходе дела появится после обновления сотрудником."}</p>{item.is_suspended && activeSuspension && <p className="account-detail-note">Причина приостановки: {activeSuspension.reason_for_client}</p>}{item.next_review_at && <p className="account-detail-note">Следующая проверка: {formatKzDate(item.next_review_at)}</p>}{item.status === "closed" && item.result_summary && <p className="account-detail-note">Результат: {item.result_summary}</p>}
+  return <div className="case-overview">
+
+    <section className="account-detail-card"><h2>{currentStage?.title ?? "Этап ещё не назначен"}</h2><p>{currentStage?.client_description ?? "Информация о ходе дела появится после обновления сотрудником."}</p>{item.is_suspended && activeSuspension && <p className="account-detail-note">Причина приостановки: {activeSuspension.reason_for_client}</p>}{item.next_review_at && <p className="account-detail-note">Следующая проверка: {formatKzDate(item.next_review_at)}</p>}{item.status === "closed" && item.result_summary && <p className="account-detail-note">Результат: {item.result_summary}</p>}
       <div className="account-case-facts"><div><span>УСЛУГА</span><strong>{service.name}</strong></div><div><span>ОТВЕТСТВЕННЫЙ ЮРИСТ</span><strong>{lawyers.length ? lawyers.map((person) => person.display_name).join(", ") : "Юрист пока не назначен"}</strong></div><div><span>ПОСЛЕДНЕЕ ОБНОВЛЕНИЕ ДЕЛА</span><strong>{formatKzDate(lastUpdateAt)}</strong></div></div>
-    </section>
-    <section className="case-next-actions" aria-labelledby="case-next-actions-title"><div className="case-next-actions-heading"><div><span className="account-card-index">ВАШИ ДЕЙСТВИЯ</span><h2 id="case-next-actions-title">Что нужно сделать</h2></div>{nextActions.length > 0 && <span>{nextActions.length}</span>}</div>
-      {nextActions.length ? <ul>{nextActions.slice(0, 5).map((action) => <li key={action.href}><Link href={action.href}><span className="case-next-action-kind">{action.kind === "task" ? "Задача" : action.kind === "document" ? "Документ" : "Переписка"}</span><strong>{action.title}</strong><small>{action.detail}{action.dueAt ? ` · срок ${formatKzDate(action.dueAt)}` : ""}</small><span className="case-next-action-arrow" aria-hidden="true">→</span></Link></li>)}</ul>
-        : <p>{item.is_suspended ? "Дело приостановлено. Новых действий пока нет." : "Сейчас от вас ничего не требуется."}</p>}
-      {nextActions.length > 5 && <p className="case-next-actions-more">Ещё {nextActions.length - 5} действий — откройте разделы дела ниже.</p>}
     </section>
     <div className="case-overview-grid">
       <Link href={`/account/cases/${id}/tasks`}><span>Задачи</span><strong>{tasksResult.data?.filter((task) => task.status === "new").length ?? 0}</strong><small>Ожидают вашего ответа</small></Link>
@@ -80,10 +77,15 @@ export default async function ClientCasePage({ params }: { params: Promise<{ id:
       <Link href={`/account/cases/${id}/messages`}><span>Сообщения</span><strong>{unreadMessages}</strong><small>Непрочитанные</small></Link>
       <Link href={`/account/cases/${id}/payments`}><span>Ближайшая оплата</span><strong>{nextPayment ? formatKzt(nextPayment.remaining) : "—"}</strong><small>{nextPayment ? `${formatKzDate(nextPayment.due_on)}${nextPayment.contract ? ` · договор № ${nextPayment.contract.contract_number}, версия ${nextPayment.contract.version_no}` : " · версия договора не указана"}` : "Нет платежей к оплате"}</small></Link>
     </div>
-    <section className="account-detail-section"><h2>Ответственный сотрудник</h2><p>{staff?.length ? staff.map((person) => `${person.display_name} (${person.role === "lawyer" ? "юрист" : person.role === "manager" ? "менеджер" : "администратор"})`).join(", ") : "Пока не назначен"}</p></section>
-    {!!noticesResult.data?.length && <section className="account-detail-section"><h2>Новые события</h2><ul className="case-simple-list">{noticesResult.data.map((notice) => <li key={notice.id}><form action={openClientNotification} className="notification-open-form"><input type="hidden" name="notificationId" value={notice.id} /><button type="submit">{notice.title} →</button></form><small>{formatKzDate(notice.created_at)}</small></li>)}</ul><form action={markClientNotificationsRead} className="case-quiet-form"><input type="hidden" name="caseId" value={id} /><button type="submit">Отметить события прочитанными</button></form></section>}
+    <section className="case-next-actions" aria-labelledby="case-next-actions-title"><div className="case-next-actions-heading"><div><h2 id="case-next-actions-title">Что нужно сделать</h2></div>{nextActions.length > 0 && <span>{nextActions.length}</span>}</div>
+      {nextActions.length ? <ul>{nextActions.slice(0, 5).map((action) => <li key={action.href}><Link href={action.href}><span className="case-next-action-kind">{action.kind === "task" ? "Задача" : action.kind === "document" ? "Документ" : "Переписка"}</span><strong>{action.title}</strong><small>{action.detail}{action.dueAt ? ` · срок ${formatKzDate(action.dueAt)}` : ""}</small><span className="case-next-action-arrow"><NavIcon name="arrow" size={18} /></span></Link></li>)}</ul>
+        : <p>{item.is_suspended ? "Дело приостановлено. Новых действий пока нет." : "Сейчас от вас ничего не требуется."}</p>}
+      {nextActions.length > 5 && <p className="case-next-actions-more">Ещё {nextActions.length - 5} действий — откройте разделы дела ниже.</p>}
+    </section>
+    <section className="account-detail-section case-contact-card"><div><h2>Есть вопрос по делу?</h2><p>{staff?.length ? staff.map((person) => `${person.display_name} (${person.role === "lawyer" ? "юрист" : person.role === "manager" ? "менеджер" : "администратор"})`).join(", ") : "Сотрудник ответит в переписке по делу"}</p></div><Link className="primary-action" href={`/account/cases/${id}/messages`}>Написать сотруднику</Link></section>
+    {!!noticesResult.data?.length && <section className="account-detail-section"><h2>Новые события</h2><ul className="case-simple-list">{noticesResult.data.map((notice) => <li key={notice.id}><form action={openClientNotification} className="notification-open-form"><input type="hidden" name="notificationId" value={notice.id} /><button type="submit">{notice.title}</button></form><small>{formatKzDate(notice.created_at)}</small></li>)}</ul><form action={markClientNotificationsRead} className="case-quiet-form"><input type="hidden" name="caseId" value={id} /><button type="submit">Отметить события прочитанными</button></form></section>}
     {!!stages.length && <section className="account-detail-section"><h2>Этапы дела</h2><ol className="account-stages">{stages.map((stage) => <li key={stage.id} className={stage.id === currentStage?.id ? "is-current" : stage.position < (currentStage?.position ?? 0) ? "is-complete" : ""}><span className="account-stage-index">{stage.position}</span><div><strong>{stage.title}</strong>{stage.client_description && <p>{stage.client_description}</p>}</div></li>)}</ol></section>}
     {!!suspensionsResult.data?.length && <section className="account-detail-section"><h2>Приостановки дела</h2><ol className="account-events">{suspensionsResult.data.map((entry) => <li key={entry.id}><time dateTime={entry.started_at}>{formatKzDate(entry.started_at)}</time><strong>{entry.ended_at ? "Работа возобновлена" : "Дело приостановлено"}</strong><p>{entry.reason_for_client}</p>{entry.control_at && <small>Контрольная дата: {formatKzDate(entry.control_at)}</small>}</li>)}</ol></section>}
     <section className="account-detail-section"><h2>История обновлений</h2>{events.length ? <ol className="account-events">{events.map((event) => <li key={event.id}><time dateTime={event.occurred_at}>{formatKzDate(event.occurred_at)}</time><strong>{stageNames.get(event.to_stage_id) ?? "Изменение этапа"}</strong><p>{event.client_note}</p></li>)}</ol> : <p className="account-muted">Обновлений пока нет.</p>}</section>
-  </>;
+  </div>;
 }

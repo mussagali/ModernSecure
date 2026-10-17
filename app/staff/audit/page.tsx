@@ -60,7 +60,7 @@ export default async function AuditPage({ searchParams }: {
 
   return <>
     <div className="staff-page-heading"><div>
-      <span className="staff-eyebrow">ГЛАВНЫЙ АДМИНИСТРАТОР · КОНТРОЛЬ</span>
+
       <h1>Журнал действий</h1>
       <p>История операций по всей системе. Записи нельзя изменить задним числом.</p>
     </div></div>
@@ -74,7 +74,7 @@ export default async function AuditPage({ searchParams }: {
         {actorId && <span>Инициатор: {actorName}</span>}
         <Link href="/staff/audit">Сбросить фильтры</Link>
       </div>}
-      {cursor && <Link href={newestHref}>← К последним событиям</Link>}
+      {cursor && <Link href={newestHref}>К последним событиям</Link>}
     </div>
     {invalidCursor && <p className="staff-alert" role="status">Ссылка на страницу устарела. Показаны последние события.</p>}
     <section className="staff-list-section" aria-label="События журнала">
@@ -97,11 +97,11 @@ export default async function AuditPage({ searchParams }: {
           <nav className="staff-audit-pagination" aria-label="Страницы журнала">
             <span>Показано {events.length} событий{hasOlder ? "; есть более ранние" : "; это конец истории"}.</span>
             <div>{cursor && <Link href={newestHref}>К последним</Link>}
-              {olderHref && <Link href={olderHref}>Более ранние →</Link>}</div>
+              {olderHref && <Link href={olderHref}>Более ранние</Link>}</div>
           </nav>
         </> : <div className="staff-empty-box"><h3>Записей нет</h3>
           <p>По выбранным условиям событий не найдено.</p>
-          {cursor && <Link href={newestHref}>Вернуться к последним событиям →</Link>}
+          {cursor && <Link href={newestHref}>Вернуться к последним событиям</Link>}
         </div>}
     </section>
   </>;

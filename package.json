@@ -50,7 +50,10 @@
     "financial-files:cleanup": "node scripts/cleanup-financial-files.mjs",
     "messages:cleanup": "node scripts/cleanup-message-attachments.mjs",
     "storage:smoke": "node scripts/storage-smoke.mjs",
-    "test:financial-uuid": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-financial-upload-uuid-case.mjs"
+    "test:financial-uuid": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-financial-upload-uuid-case.mjs",
+    "test": "node scripts/run-tests.mjs",
+    "test:live": "node scripts/run-tests.mjs live",
+    "test:audit-fixes": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-audit-fixes.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
