@@ -1,6 +1,10 @@
 const actions: Record<string, string> = {
   accepted: "Принято",
   account_linked: "Аккаунт привязан",
+  registration_approved: "Регистрация клиента одобрена",
+  identity_corrected: "Исправлены ФИО или ИИН",
+  installment_cancelled: "Отменён срок оплаты",
+  identity_completed: "Данные клиента дополнены",
   acknowledged: "Ознакомление подтверждено",
   cancelled: "Отменено",
   closed: "Дело завершено",
@@ -34,6 +38,7 @@ const entities: Record<string, string> = {
   case_assignment: "Назначение на дело",
   case_internal_note: "Внутренняя заметка",
   client: "Карточка клиента",
+  profile: "Профиль",
   contract: "Договор",
   document_file: "Документ по делу",
   document_request: "Запрос документов",

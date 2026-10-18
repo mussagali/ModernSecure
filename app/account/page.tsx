@@ -25,7 +25,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   const [{ data: profile, error: profileError }, { data: client, error: clientError }, { count: unreadCount }] = await Promise.all([
     supabase.from("profiles").select("email, display_name").eq("user_id", userId).maybeSingle(),
-    supabase.from("clients").select("id, full_name").eq("user_id", userId).maybeSingle(),
+    supabase.from("clients").select("id, full_name, iin").eq("user_id", userId).maybeSingle(),
     supabase.from("notifications").select("id", { count: "exact", head: true }).eq("recipient_user_id", userId).is("read_at", null),
   ]);
   const email = profile?.email ?? (typeof auth.claims.email === "string" ? auth.claims.email : "");
@@ -43,10 +43,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       {query.invite === "none" && <p className="case-feedback">Активного приглашения для этого подтверждённого email нет. Проверьте адрес и попросите администратора отправить приглашение повторно.</p>}
       {query.staffAccess === "denied" && <p className="case-feedback is-error">У текущего аккаунта нет активной роли сотрудника. Панель администратора откроется только после входа под адресом, которому назначена эта роль.</p>}
       {hasError ? <section className="account-card" role="alert"><h2>Не удалось получить данные</h2><p>Обновите страницу. Если ошибка повторится, обратитесь к сотруднику компании.</p></section>
-        : !client ? <section className="account-card"><h2>Аккаунт пока не подключён</h2><p>Вы вошли как {email}. Сотрудник компании свяжет этот аккаунт с вашей карточкой, и здесь появятся дела. Если вы сотрудник, проверьте приглашение или войдите под рабочим адресом.</p><form action={activateStaffInvitation}><button type="submit" className="account-activate-button">Проверить приглашение сотрудника</button></form><form action={signOutAction}><button type="submit" className="account-activate-button">Сменить аккаунт</button></form></section>
+        : !client ? <section className="account-card"><h2>{staff ? "Доступ сотрудника отключён" : "Ожидаем одобрения администратора"}</h2><p>{staff ? "Обратитесь к администратору компании, чтобы уточнить доступ." : `Аккаунт ${email} уже виден администратору. После одобрения карточки сотрудник сможет добавить ваши дела. ФИО и ИИН можно заполнить в профиле сейчас или позже.`}</p>{!staff && <Link href="/account/profile" className="account-activate-button">Заполнить профиль</Link>}<details><summary>Вы сотрудник компании?</summary><p>Проверьте приглашение или войдите под рабочим адресом.</p><form action={activateStaffInvitation}><button type="submit" className="account-activate-button">Проверить приглашение сотрудника</button></form><form action={signOutAction}><button type="submit" className="account-activate-button">Сменить аккаунт</button></form></details></section>
         : <section className="account-cases" id="cases"><div className="account-section-heading"><div><h2>Ваши дела</h2></div><span className="account-count">{cases?.length ?? 0}</span></div>
           {cases?.length ? <ul className="account-case-list">{cases.map((item) => <li key={item.id}><Link href={`/account/cases/${item.id}`} className="account-case-link"><span className="account-case-number">Дело № {item.case_number}</span><strong>{item.title}</strong><span className="account-case-footer"><span>{item.is_suspended ? "Приостановлено" : statusNames[item.status] ?? item.status}</span><span aria-hidden="true">Открыть</span></span></Link></li>)}</ul>
-            : <div className="account-card account-empty"><h3>Пока нет дел</h3><p>Карточка клиента подключена, но дела ещё не созданы. Когда сотрудник добавит дело, оно появится здесь.</p></div>}
+            : <div className="account-card account-empty"><h3>Пока нет дел</h3><p>Карточка клиента одобрена. Когда сотрудник добавит дело, оно появится здесь.</p>{!client.iin && <Link href="/account/profile" className="account-activate-button">Дополнить профиль и ИИН</Link>}</div>}
         </section>}
     </div>
   </main>;

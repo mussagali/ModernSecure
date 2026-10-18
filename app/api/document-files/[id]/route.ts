@@ -1,3 +1,4 @@
+import { fileStream } from "../../../../lib/file-stream";
 import { createHash } from "node:crypto";
 import { storageAdmin } from "../../../../lib/document-files";
 import { recordFileAccess } from "../../../../lib/file-access-audit";
@@ -6,6 +7,7 @@ import { previewFile } from "../../../../lib/heic-preview";
 import { createClient } from "../../../../lib/supabase/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -40,12 +42,12 @@ export async function GET(request: Request, context: RouteContext<"/api/document
   if (!await recordFileAccess(admin, auth.claims.sub, "document_file", id, preview)) {
     return new Response("File access audit unavailable", { status: 503 });
   }
-  return new Response(served.bytes, {
+  return new Response(fileStream(served.bytes), {
     headers: {
       "Content-Type": served.mime,
       "Content-Disposition": fileContentDisposition(file.original_name, file.detected_mime_type, preview, "document"),
-      "Content-Length": String(served.bytes.length),
-      "Cache-Control": "private, no-store",
+
+      "Cache-Control": "private, no-store, no-transform",
       "X-Content-Type-Options": "nosniff",
       "Content-Security-Policy": "sandbox",
       "Cross-Origin-Resource-Policy": "same-origin",

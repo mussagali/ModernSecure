@@ -70,7 +70,7 @@ export async function registerAction(_previous: AuthState, formData: FormData): 
     options: { emailRedirectTo: `${process.env.APP_ORIGIN}/auth/callback` },
   });
   if (error) return { status: "error", message: "Не удалось создать аккаунт. Попробуйте позже." };
-  return { status: "success", message: "Проверьте почту и подтвердите email по ссылке в письме." };
+  return { status: "success", message: "Проверьте почту и подтвердите email по ссылке в письме. Новые аккаунты автоматически поступают администратору на одобрение; ФИО и ИИН можно заполнить позже в профиле." };
 }
 
 export async function forgotPasswordAction(_previous: AuthState, formData: FormData): Promise<AuthState> {

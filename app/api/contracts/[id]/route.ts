@@ -1,9 +1,11 @@
+import { fileStream } from "../../../../lib/file-stream";
 import { checkDocumentFile, storageAdmin } from "../../../../lib/document-files";
 import { recordFileAccess } from "../../../../lib/file-access-audit";
 import { createClient } from "../../../../lib/supabase/server";
 import { uuidPattern } from "../../../../lib/uuid";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 
 export async function GET(request: Request, context: RouteContext<"/api/contracts/[id]">) {
@@ -30,12 +32,12 @@ export async function GET(request: Request, context: RouteContext<"/api/contract
   if (!await recordFileAccess(admin, auth.claims.sub, "contract", id, preview)) {
     return new Response("File access audit unavailable", { status: 503 });
   }
-  return new Response(file.bytes, {
+  return new Response(fileStream(file.bytes), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `${preview ? "inline" : "attachment"}; filename="contract-${id}.pdf"`,
-      "Content-Length": String(file.size),
-      "Cache-Control": "private, no-store",
+
+      "Cache-Control": "private, no-store, no-transform",
       "X-Content-Type-Options": "nosniff",
       "Content-Security-Policy": "sandbox",
       "Cross-Origin-Resource-Policy": "same-origin",

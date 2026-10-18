@@ -1,10 +1,12 @@
+import { readUploadFormData } from "../../../lib/staged-uploads";
 import { randomUUID } from "node:crypto";
 import { checkDocumentFile, storageAdmin } from "../../../lib/document-files";
-import { readBoundedFormData, UploadInputError } from "../../../lib/upload-request";
+import { UploadInputError } from "../../../lib/upload-request";
 import { createClient } from "../../../lib/supabase/server";
 import { uuidPattern } from "../../../lib/uuid";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 const maxFiles = 5;
 const maxTotalBytes = 40 * 1024 * 1024;
@@ -44,7 +46,7 @@ export async function POST(request: Request) {
   const storage = admin;
 
   let form: FormData;
-  try { form = await readBoundedFormData(request, maxTotalBytes + 2 * 1024 * 1024); }
+  try { form = await readUploadFormData(request, maxTotalBytes + 2 * 1024 * 1024, userId, admin); }
   catch (error) { return failure("Не удалось прочитать файлы. Проверьте их размер и повторите попытку.", error instanceof UploadInputError ? error.status : 400); }
   const rawCaseId = form.get("caseId");
   const rawKey = form.get("key");

@@ -58,7 +58,7 @@ export default async function ClientHelpPage() {
   const whatsapp = whatsappHref(contact?.whatsapp_url ?? null);
   const businessHours = contact?.business_hours?.trim();
   const responseExpectation = contact?.response_expectation?.trim();
-  const hasContactDetails = Boolean(phone || email || whatsapp || businessHours || responseExpectation);
+  const hasContactDetails = Boolean(phone || email || whatsapp);
 
   return <main className="account-page">
     <AccountHeader />
@@ -84,7 +84,7 @@ export default async function ClientHelpPage() {
               {businessHours && <p>Время работы: {businessHours}</p>}
               {responseExpectation && <p>Срок ответа: {responseExpectation}</p>}
             </div>
-            : <p className="account-muted">Доступных контактных данных пока нет.</p>}
+            : <p className="account-muted">Компания пока не опубликовала контакты поддержки. Если у вас уже есть дело, напишите сотруднику в его разделе «Переписка». До появления дела используйте канал, по которому вы обратились в компанию.</p>}
       </section>
     </div>
   </main>;

@@ -1,10 +1,12 @@
+import { readUploadFormData } from "../../../lib/staged-uploads";
 import { checkDocumentFile, storageAdmin } from "../../../lib/document-files";
 import { staffMessageFileId } from "../../../lib/staff-message-upload";
 import { createClient } from "../../../lib/supabase/server";
-import { readBoundedFormData, UploadInputError } from "../../../lib/upload-request";
+import { UploadInputError } from "../../../lib/upload-request";
 import { uuidPattern } from "../../../lib/uuid";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 const maxFiles = 5;
 const maxTotalBytes = 40 * 1024 * 1024;
@@ -26,7 +28,7 @@ export async function POST(request: Request) {
   if (!admin) return failure("Хранилище файлов сейчас недоступно.", 503);
 
   let form: FormData;
-  try { form = await readBoundedFormData(request, maxTotalBytes + 2 * 1024 * 1024); }
+  try { form = await readUploadFormData(request, maxTotalBytes + 2 * 1024 * 1024, userId, admin); }
   catch (error) {
     return failure("Не удалось прочитать файлы. Проверьте размер и повторите попытку.",
       error instanceof UploadInputError ? error.status : 400);

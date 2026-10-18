@@ -11,5 +11,5 @@ export default async function RegisterPage() {
   const { data } = await supabase.auth.getClaims();
   if (data?.claims) redirect("/account");
 
-  return <AuthFrame title="Регистрация" description="Создайте аккаунт и подтвердите адрес электронной почты. Доступ к делу появится после его привязки сотрудником."><AuthForm mode="register" /></AuthFrame>;
+  return <AuthFrame title="Регистрация" description="Создайте аккаунт — администратор сразу увидит вашу заявку. Подтвердите почту для входа. ФИО и ИИН можно заполнить позже в профиле."><AuthForm mode="register" /></AuthFrame>;
 }

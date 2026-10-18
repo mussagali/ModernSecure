@@ -1,10 +1,12 @@
+import { readUploadFormData } from "../../../lib/staged-uploads";
 import { checkDocumentFile, MAX_DOCUMENT_BYTES, storageAdmin } from "../../../lib/document-files";
 import { toKztCents } from "../../../lib/money";
 import { createClient } from "../../../lib/supabase/server";
-import { readBoundedFormData, UploadInputError } from "../../../lib/upload-request";
+import { UploadInputError } from "../../../lib/upload-request";
 import { uuidPattern } from "../../../lib/uuid";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 const moneyPattern = /^(?:0|[1-9][0-9]{0,11})(?:\.[0-9]{1,2})?$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
   const admin = storageAdmin();
   if (!admin) return new Response("Contract storage is not configured", { status: 503 });
   let form: FormData;
-  try { form = await readBoundedFormData(request, MAX_DOCUMENT_BYTES + 1024 * 1024); }
+  try { form = await readUploadFormData(request, MAX_DOCUMENT_BYTES + 1024 * 1024, userId, admin); }
   catch (error) {
     return new Response("Invalid upload", { status: error instanceof UploadInputError ? error.status : 400 });
   }
@@ -80,9 +82,6 @@ export async function POST(request: Request) {
       return Response.redirect(returnTo(caseId, "contractError=conflict"), 303);
     }
     return Response.redirect(returnTo(caseId, "contractUploaded=1"), 303);
-  }
-  if (caseRecord.status !== "open" || caseRecord.is_suspended) {
-    return Response.redirect(returnTo(caseId, "contractError=access"), 303);
   }
   const bucket = admin.storage.from("modernsecure-files");
   const { error: uploadError } = await bucket.upload(path, checked.bytes, {

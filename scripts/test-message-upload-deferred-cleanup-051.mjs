@@ -61,6 +61,7 @@ function routeFor(state, form) {
     "node:crypto": { randomUUID },
     "../../../lib/document-files": { checkDocumentFile: checked,
       storageAdmin: () => ({ storage: { from: () => bucket }, from: () => { throw new Error("unsafe reference check"); } }) },
+    "../../../lib/staged-uploads": { readUploadFormData: async () => form },
     "../../../lib/upload-request": { readBoundedFormData: async () => form, UploadInputError: class extends Error {} },
     "../../../lib/supabase/server": { createClient: async () => supabase },
     "../../../lib/uuid": { uuidPattern },

@@ -1,4 +1,5 @@
 "use client";
+import { postFiles } from "../lib/direct-upload";
 
 import { NavIcon } from "./NavIcon";
 
@@ -284,7 +285,7 @@ export default function CaseConversation({ caseId, caseNumber, caseTitle, backHr
     form.set("body", body);
     files.forEach((file) => form.append("files", file));
     try {
-      const response = await fetch("/api/message-attachments", { method: "POST", body: form, headers: { Accept: "application/json" } });
+      const response = await postFiles("/api/message-attachments", form);
       const result = await response.json().catch(() => null) as { ok?: boolean; error?: string } | null;
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Сообщение не отправлено. Попробуйте ещё раз.");
       setBody("");

@@ -1,4 +1,5 @@
 "use client";
+import { postFiles } from "../lib/direct-upload";
 
 import Link from "next/link";
 import { NavIcon } from "./NavIcon";
@@ -199,9 +200,7 @@ export function StaffChat({ userId, selectedId, selectedThreadId, returnCase, co
         form.set("body", body);
         if (returnCase) form.set("caseId", returnCase.id);
         files.forEach((file) => form.append("files", file));
-        const response = await fetch("/api/staff-message-attachments", {
-          method: "POST", body: form, headers: { Accept: "application/json" },
-        });
+        const response = await postFiles("/api/staff-message-attachments", form);
         const result = await response.json().catch(() => null) as { ok?: boolean; error?: string } | null;
         if (!response.ok || !result?.ok) throw new Error(result?.error || "Не удалось отправить файл. Повторите попытку.");
       } else {

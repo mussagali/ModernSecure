@@ -1,4 +1,5 @@
 "use client";
+import { postFiles } from "../lib/direct-upload";
 
 import { NavIcon } from "./NavIcon";
 
@@ -62,38 +63,13 @@ function validateBatch(value: unknown, metadata: Metadata[], caseId: string, req
   return batch as Batch;
 }
 
-function uploadFile(sessionId: string, fileId: string, file: File, onProgress: (percent: number) => void,
-  onProcessing: () => void, onRequest: (request: XMLHttpRequest | null) => void): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    onRequest(request);
-    request.open("POST", "/api/document-uploads/file");
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable && event.total > 0) onProgress(Math.min(100, Math.round(event.loaded / event.total * 100)));
-    };
-    request.upload.onload = onProcessing;
-    request.onerror = () => reject(new Error("Не удалось передать файл. Проверьте соединение и повторите попытку."));
-    request.onabort = () => reject(new Error("Загрузка остановлена."));
-    request.onload = () => {
-      if (request.status !== 200) {
-        reject(new Error(`Сервер не принял «${file.name}» (HTTP ${request.status}). Повторите попытку.`));
-        return;
-      }
-      try {
-        const response: unknown = JSON.parse(request.responseText);
-        if (!response || typeof response !== "object" || (response as { ok?: unknown }).ok !== true
-          || (response as { fileId?: unknown }).fileId !== fileId) throw new Error("Invalid response");
-        resolve();
-      } catch {
-        reject(new Error("Сервер вернул некорректное подтверждение загрузки. Повторите попытку."));
-      }
-    };
-    const body = new FormData();
-    body.append("sessionId", sessionId);
-    body.append("fileId", fileId);
-    body.append("file", file);
-    request.send(body);
-  }).finally(() => onRequest(null));
+async function uploadFile(sessionId: string, fileId: string, file: File, onProgress: (percent: number) => void,
+  onProcessing: () => void, onRequest: (request: XMLHttpRequest | null) => void, signal: AbortSignal): Promise<void> {
+  const body = new FormData();
+  body.append("sessionId", sessionId); body.append("fileId", fileId); body.append("file", file);
+  const response = await postFiles("/api/document-uploads/file", body, { onProgress, onProcessing, onRequest, signal });
+  const result = await response.json().catch(() => null);
+  if (!response.ok || !result?.ok || result.fileId !== fileId) throw new Error(`Сервер не принял «${file.name}». Повторите попытку.`);
 }
 
 export function DocumentUploadForm({ caseId, requestId, view }: Props) {
@@ -222,7 +198,7 @@ export function DocumentUploadForm({ caseId, requestId, view }: Props) {
             await uploadFile(batch.session_id, target.id, item.file,
               (percent) => { if (stillCurrent()) setProgress((current) => ({ ...current, [item.id]: percent })); },
               () => { if (stillCurrent()) setFileStates((current) => ({ ...current, [item.id]: "processing" })); },
-              (request) => { activeRequest.current = request; });
+              (request) => { activeRequest.current = request; }, controller.signal);
           } catch (uploadError) {
             if (stillCurrent()) setFileStates((current) => ({ ...current, [item.id]: "error" }));
             throw uploadError;
