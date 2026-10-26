@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-23T01:38:24.094425+00:00",
+  "title": "Design System: Modern Secure Web",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas"
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface"
+      },
+      "surface-soft": {
+        "role": "neutral",
+        "displayName": "Surface Soft"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted"
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line"
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Line Strong"
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Accent"
+      },
+      "accent-hover": {
+        "role": "primary",
+        "displayName": "Accent Hover"
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "Accent Soft"
+      },
+      "warning": {
+        "role": "neutral",
+        "displayName": "Warning"
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "Danger"
+      }
+    },
+    "typographyMeta": {
+      "body": {
+        "displayName": "Operational body",
+        "purpose": "Reading and field values."
+      },
+      "display": {
+        "displayName": "Login display",
+        "purpose": "Approved PT Serif regular for the authentication introduction; 36px at the 850px auth breakpoint. Self-hosted with an OFL license and font-display: swap."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "loading-paper",
+        "value": "1.6s ease-in-out infinite alternate",
+        "purpose": "Skeleton opacity pulse; disabled for reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "auth-stack",
+        "value": "850px"
+      }
+    ],
+    "authenticationRefinement": {
+      "date": "2026-10-23",
+      "surfaceRadius": "12px",
+      "controlRadius": "8px",
+      "decorativeRules": false,
+      "roleList": false,
+      "workspaceLabel": false,
+      "passwordToggle": "authored SVG eye, independently controls each field",
+      "scope": "authentication pages only; latest user request overrides previous square-only restriction"
+    }
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "description": "Extracted web primitive; preview text is illustrative.",
+      "html": "<button class=\"ds-primary\">Save</button>",
+      "css": ".ds-primary{min-height:48px;padding:10px 16px;border:1px solid transparent;border-radius:0;background:var(--accent,#005bea);color:var(--surface,#fbfcff);font:600 14px/1.4 \"Segoe UI\",Arial,sans-serif}.ds-primary:hover{background:var(--accent-hover,#0047bd)}.ds-primary:focus-visible{outline:3px solid var(--accent,#005bea);outline-offset:3px}",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "description": "Extracted web primitive; preview text is illustrative.",
+      "html": "<button class=\"ds-secondary\">Cancel</button>",
+      "css": ".ds-secondary{min-height:48px;padding:10px 16px;border:1px solid var(--line,#dce5f2);border-radius:0;background:var(--surface,#fbfcff);color:var(--ink,#0c193f);font:600 14px \"Segoe UI\",Arial,sans-serif}.ds-secondary:hover{background:var(--surface-soft,#edf3fb)}.ds-secondary:focus-visible{outline:3px solid var(--accent,#005bea);outline-offset:3px}",
+      "refersTo": "button-secondary"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "description": "Extracted web primitive; preview text is illustrative.",
+      "html": "<label class=\"ds-label\">Email<input class=\"ds-input\" type=\"email\" /></label>",
+      "css": ".ds-label{display:grid;gap:8px;color:var(--ink,#0c193f);font:600 14px \"Segoe UI\",Arial,sans-serif}.ds-input{min-height:48px;padding:10px 12px;border:1px solid var(--line-strong,#8094b3);border-radius:0;background:var(--surface,#fbfcff);color:var(--ink,#0c193f);font:16px \"Segoe UI\",Arial,sans-serif}.ds-input:focus-visible{outline:3px solid var(--accent,#005bea);outline-offset:3px}",
+      "refersTo": "input"
+    },
+    {
+      "name": "Working panel",
+      "kind": "card",
+      "description": "Extracted web primitive; preview text is illustrative.",
+      "html": "<section class=\"ds-panel\">No records available</section>",
+      "css": ".ds-panel{padding:24px;border:1px solid var(--line,#dce5f2);border-radius:0;background:var(--surface,#fbfcff);color:var(--ink,#0c193f);font:16px/1.55 \"Segoe UI\",Arial,sans-serif}",
+      "refersTo": "panel"
+    },
+    {
+      "name": "Current navigation",
+      "kind": "nav",
+      "description": "Extracted web primitive; preview text is illustrative.",
+      "html": "<a class=\"ds-nav\" href=\"#\" aria-current=\"page\">Overview</a>",
+      "css": ".ds-nav{display:flex;align-items:center;min-height:48px;padding:10px 12px;background:var(--accent,#005bea);color:var(--surface,#fbfcff);font:650 14px \"Segoe UI\",Arial,sans-serif;text-decoration:none}.ds-nav:hover{background:var(--accent-hover,#0047bd)}.ds-nav:focus-visible{outline:3px solid var(--accent,#005bea);outline-offset:3px}"
+    },
+    {
+      "name": "Navigation count",
+      "kind": "chip",
+      "description": "Extracted web primitive; preview text is illustrative.",
+      "html": "<span class=\"ds-count\">2</span>",
+      "css": ".ds-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:0;background:var(--accent,#005bea);color:var(--surface,#fbfcff);font:11px \"Segoe UI\",Arial,sans-serif}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Cool light legal workspace",
+    "overview": "The web application uses cool light surfaces, navy text, straight boundaries, and one dark blue accent. Authentication, client, lawyer, manager, and administrator workspaces share this visual language. This root system replaces the former blue, rounded web styles; the separately scoped native application in apps/client_mobile is unchanged.\n\nThe design favors readable work records, visible labels, bordered forms, and honest empty states. Source authority is app/role-design.css, loaded after the root styles, together with the flattened web component styles. Staff and client source coverage does not imply authenticated visual acceptance.",
+    "keyCharacteristics": [
+      "Cool light canvas and solid cool surfaces.",
+      "Graphite text and blue actions or current location.",
+      "Square boundaries and flat functional grouping.",
+      "Labeled controls, visible focus, loading skeletons, and legal links."
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Reserve blue for actions and location; success, warning and danger remain semantic feedback, accompanied by text.",
+        "section": "colors"
+      },
+      {
+        "name": "The Flat Surface Rule",
+        "body": "Separate content with solid tone, spacing, and straight borders; do not add shadows or translucency.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use the shared cool neutrals and blue action accent across web roles.",
+      "Do preserve visible focus, readable field values, and text descriptions of status.",
+      "Do show skeleton loading states and accessible terms and privacy links.",
+      "Do show real empty states and the unpublished notice when a legal document is unavailable.",
+      "Do keep native application design documentation scoped to apps/client_mobile."
+    ],
+    "donts": [
+      "Don't add gradients, glass, shadows, rounded corners, pure white, purple and black palettes, rainbow colors, neon, or pastels.",
+      "Don't use Lucide, emoji, sparkle decoration, dot grids, radial orbs, terminal styling, colored side stripes, or checkmark bullets.",
+      "Don't add bento layouts, three feature cards, pricing tiers, fabricated testimonials, or animated arrows and hover motion.",
+      "Don't introduce Inter, Geist, Space Grotesk, or em dash punctuation.",
+      "Don't turn generated sidecar tonal ramps into approved application colors."
+    ]
+  }
+}

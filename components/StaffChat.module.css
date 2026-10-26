@@ -1,0 +1,77 @@
+.shell { display: grid; grid-template-columns: 280px minmax(0,1fr); height: 100%; min-height: 0; background: var(--surface); }
+.sidebar { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--line); background: var(--surface); }
+.sidebarHeader { padding: 24px 20px 16px; }
+.sidebarHeader h1 { font-size: 24px; }
+.sidebarHeader p { margin: 8px 0; font-size: 14px; color: var(--muted); }
+.sidebarHeader a { display: inline-flex; align-items: center; min-height: 48px; font-size: 13px; }
+.search { display: flex; align-items: center; gap: 10px; margin: 0 16px 16px; padding-left: 12px; border: 1px solid var(--line-strong); border-radius:0; }
+.search svg { width: 18px; height: 18px; color: var(--muted); }
+.search input { border: 0!important; background: transparent!important; }
+.srOnly, .hiddenFile { position: absolute; width: 1px!important; min-height: 0!important; height: 1px; padding: 0!important; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.people { flex: 1; overflow: auto; padding: 0 8px 16px; }
+.person { display: flex; align-items: center; gap: 12px; min-height: 88px; padding: 12px; border-radius:0; color: var(--ink); text-decoration: none; }
+.person:hover { color: var(--ink); background: var(--surface-soft); }
+.personActive { background: var(--accent-soft); }
+.avatar { display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius:0; background: var(--surface); color: var(--accent-ink); font-weight: 600; }
+.personBody { display: grid; gap: 4px; min-width: 0; flex: 1; }
+.personTop { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.personTop strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 600; }
+.personTop time { flex: none; color: var(--muted); font-size: 11px; }
+.personRole { color: var(--muted); font-size: 12px; }
+.snippet { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 14px; }
+.badge { min-width: 22px; padding: 2px 6px; border-radius:0; background: var(--accent); color: var(--surface); font-size: 12px; text-align: center; }
+.noPeople { padding: 20px; text-align: center; color: var(--muted); font-size: 14px; }
+.conversation { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--surface-soft); }
+.header { display: flex; align-items: center; gap: 12px; flex: none; min-height: 64px; padding: 8px 20px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.headerTitle { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.headerTitle strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; font-weight: 600; }
+.headerTitle small { color: var(--muted); font-size: 12px; }
+.connection { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.connection i { width: 7px; height: 7px; border-radius:0; background: var(--danger); }
+.offline { color: var(--danger); }
+.back { display: none; }
+.caseReturn, .historyBar { flex: none; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; padding: 12px 24px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); background: var(--surface); }
+.caseReturn a, .historyBar a { display: inline-flex; align-items: center; min-height: 48px; font-weight: 600; }
+.caseCard { display: grid; gap: 4px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--surface); text-decoration: none; }
+.caseCard span, .caseCard small { font-size: 12px; color: var(--muted); }
+.caseCard strong { font-size: 14px; }
+.timelineWrap { position: relative; display: flex; flex: 1; min-height: 0; min-width: 0; }
+.timeline { overscroll-behavior: contain; display: flex; flex: 1; flex-direction: column; gap: 14px; overflow: auto; min-height: 0; padding: 24px; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.timeline::before { content: ""; margin-top: auto; }
+.timeline:has(.empty)::before, .timeline.historical::before { display: none; }
+.jumpButton { position: absolute; right: 20px; bottom: 16px; z-index: 2; color: var(--accent-ink); background: var(--surface); box-shadow:none; }
+.jumpButton:hover { color: var(--surface); }
+.message { align-self: flex-start; min-width: 0; max-width: min(85%, 75ch); overflow-wrap: anywhere; padding: 14px 16px 10px; border: 1px solid var(--line); border-radius:0; background: var(--surface); }
+.message.mine { align-self: flex-end; border-color: var(--surface); border-radius:0; background: var(--surface); }
+.message p { margin: 0; font-size: 16px; line-height: 1.55; white-space: pre-wrap; }
+.message time { display: block; margin-top: 6px; color: var(--muted); font-size: 11px; text-align: right; }
+.attachments { display: grid; gap: 8px; margin-top: 10px; }
+.fileCard { display: flex; align-items: center; gap: 10px; min-width: 0; max-width: 360px; padding: 10px; border-radius:0; background: var(--surface-soft); text-decoration: none; color: var(--ink); }
+.fileCard > span:first-child { color: var(--accent-ink); }
+.fileCard > span:nth-child(2) { display: grid; gap: 4px; min-width: 0; flex: 1; }
+.fileCard strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.fileCard small { color: var(--muted); font-size: 12px; }
+.empty, .welcome { display: grid; align-content: center; justify-items: center; width: min(360px, calc(100% - 32px)); margin: auto; color: var(--muted); text-align: center; }
+.empty > span, .welcome > span { display: grid; place-items: center; width: 64px; height: 64px; color: var(--accent); }
+.empty h2, .welcome h2 { margin: 16px 0 8px; color: var(--ink); font-size: 22px; }
+.empty p, .welcome p { font-size: 15px; }
+.footer { flex: none; padding: 8px 12px; border-top: 1px solid var(--line); background: var(--surface); }
+.composer { padding: 8px; border: 1px solid var(--line-strong); border-radius:0; }
+.composer:focus-within { border-color: var(--accent); }
+.composeRow { display: flex; align-items: flex-end; gap: 8px; }
+.composer textarea { flex: 1; min-width: 0; min-height: 48px; max-height: 160px; padding: 10px 4px; border: 0; line-height: 1.5; }
+.composer textarea:focus-visible { outline-width: 2px; outline-offset: 1px; }
+.attachButton, .sendButton { display: grid; place-items: center; flex: none; width: 48px; height: 48px; padding: 10px; border-radius:0; }
+.attachButton { color: var(--muted); background: transparent; }
+.attachButton:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent-ink); }
+.queued { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 8px; }
+.queuedFile { display: flex; align-items: center; gap: 6px; max-width: min(100%,320px); padding: 4px 8px; background: var(--surface-soft); border-radius:0; font-size: 12px; }
+.queuedFile > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.queuedFile small { color: var(--muted); white-space: nowrap; font-size: 11px; }
+.queuedFile button { flex: none; width: 48px; height: 48px; padding: 10px; color: var(--danger); background: transparent; }
+.queuedFile button:hover { background: var(--danger-soft); }
+.footer > small { display: block; margin-top: 8px; color: var(--muted); text-align: right; font-size: 11px; }
+.error { padding: 12px; margin: 0 0 12px; border-radius:0; color: var(--danger); background: var(--danger-soft); font-size: 14px; }
+.closed { padding: 20px; color: var(--muted); background: var(--surface); text-align: center; }
+@media(max-width: 1100px) { .shell { grid-template-columns: 280px minmax(0,1fr); } }
+@media(max-width: 800px) { .shell { grid-template-columns: minmax(0,1fr); } .sidebarWithSelection { display: none; } .conversation:not(.conversationSelected) { display: none; } .back { display: grid; place-items: center; flex: none; width: 48px; height: 48px; color: var(--muted); } .header { padding: 12px; gap: 8px; } .header .avatar { display: none; } .timeline { padding: 16px; } .message { max-width: 92%; padding: 12px; } .caseReturn, .historyBar { padding: 8px 16px; } .footer { padding: 12px; } }

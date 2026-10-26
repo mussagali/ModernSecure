@@ -1,0 +1,62 @@
+/* Shared web workspace: cool surfaces, navy text and a single blue accent. */
+@font-face { font-family:"PT Serif"; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/pt-serif/regular.ttf') format('truetype'); }
+:root, .product-ui .client-app, .product-ui .auth-page, .product-ui .lawyer-shell {
+  --canvas:#f3f7fc; --surface:#fbfcff; --surface-soft:#edf3fb;
+  --ink:#0c193f; --muted:#526b96; --line:#dce5f2; --line-strong:#8094b3;
+  --accent:#005bea; --accent-hover:#0047bd; --accent-ink:#005bea; --accent-soft:#e5efff;
+  --success:#08765d; --success-soft:#edf7f3; --warning:#995019; --warning-soft:#fcf3eb;
+  --danger:#b53235; --danger-soft:#fbfcff;
+  --radius:0; --control-radius:0; --shadow-menu:none;
+  --font:"Segoe UI",Arial,sans-serif;
+}
+.product-ui { background:var(--canvas); }
+.product-ui .auth-page, .product-ui .client-app, .product-ui .lawyer-shell { background:var(--canvas); }
+.product-ui .auth-header { width:min(1240px,calc(100% - 64px)); padding:28px 0; border-bottom:0; }
+.product-ui .auth-layout { width:min(1140px,calc(100% - 64px)); grid-template-columns:minmax(0,1fr) minmax(340px,420px); gap:90px; margin:64px auto; }
+.auth-intro h2 { font-family:"PT Serif",serif; font-size:clamp(40px,4.8vw,64px); font-weight:400; letter-spacing:-.025em; }
+.auth-intro > p { max-width:36ch; margin:24px 0 32px; }
+.product-ui .auth-content { background:var(--surface); padding:32px; border:0; border-radius:12px; }
+.product-ui .auth-footer { display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; border-top:0; padding:24px max(24px,calc((100% - 1240px)/2)); text-align:left; }
+.auth-footer nav, .legal-page > nav { display:flex; flex-wrap:wrap; gap:12px 24px; }
+.auth-footer a, .legal-page nav a { min-height:44px; display:inline-flex; align-items:center; }
+.product-ui .auth-main-foot { text-align:left; margin:18px 0 0; }
+.product-ui .auth-page input:not([type=hidden]), .product-ui .auth-page button { border-radius:8px; }
+.product-ui .auth-page .auth-password-field input { padding-right:52px; }
+.product-ui .auth-page .auth-password-field button { width:46px; height:46px; min-height:46px; top:1px; padding:12px; }
+.product-ui .auth-page .auth-switch { border-top:0; padding-top:4px; }
+.product-ui .client-app .primary-action, .product-ui .client-app button[type=submit], .product-ui .auth-submit,
+.product-ui .client-avatar, .product-ui .client-document-filters a[aria-current=page], .product-ui .lawyer-primary { background:var(--accent); color:var(--surface); }
+.product-ui .client-bottom-nav { background:var(--surface); border-color:var(--line-strong); }
+.product-ui .client-app .account-card, .product-ui .client-app .account-detail-card, .product-ui .client-app .account-case-link { border:1px solid var(--line); }
+.product-ui .staff-nav-link.is-active, .product-ui .staff-mobile-nav a[aria-current=page] { background:var(--accent); color:var(--surface); }
+.product-ui .lawyer-metrics { display:flex; flex-wrap:wrap; gap:0; border-block:1px solid var(--line-strong); }
+.product-ui .lawyer-metrics > a { flex:1 1 160px; background:transparent; border:0; }
+.product-ui .lawyer-dashboard-grid { display:flex; flex-direction:column; gap:28px; }
+.product-ui .staff-role-matrix { display:flex; flex-direction:column; gap:0; }
+.product-ui .staff-role-matrix article { display:grid; grid-template-columns:minmax(160px,1fr) 3fr; gap:24px; padding:16px 0; border-bottom:1px solid var(--line); }
+.product-ui .staff-role-matrix article p { margin:0; }
+.legal-page { width:min(980px,calc(100% - 40px)); margin:auto; padding:28px 0; }
+.legal-page > header { display:flex; align-items:center; justify-content:space-between; gap:20px; padding-bottom:24px; border-bottom:1px solid var(--line-strong); }
+.legal-page article { max-width:72ch; margin:56px auto; }
+.legal-page h1 { margin-bottom:24px; }
+.legal-version { color:var(--muted); }
+.legal-body { white-space:pre-wrap; overflow-wrap:anywhere; }
+.workspace-skeleton { width:min(1100px,calc(100% - 40px)); margin:32px auto; }
+.workspace-skeleton > p { color:var(--muted); }
+.skeleton-heading, .skeleton-toolbar, .skeleton-row span { background:var(--line); animation:loading-paper 1.6s ease-in-out infinite alternate; }
+.skeleton-heading { width:55%; max-width:360px; height:32px; margin:24px 0; }
+.skeleton-toolbar { width:100%; height:44px; margin:24px 0; }
+.skeleton-row { display:grid; grid-template-columns:2fr 1fr 1fr; gap:24px; padding:24px 0; border-bottom:1px solid var(--line); }
+.skeleton-row span { height:14px; }
+@keyframes loading-paper { from { opacity:.55; } to { opacity:1; } }
+@media(prefers-reduced-motion:reduce) { .workspace-skeleton * { animation:none; } }
+@media(max-width:850px) {
+  .product-ui .auth-layout { display:flex; flex-direction:column; width:min(480px,calc(100% - 32px)); gap:28px; margin:28px auto; }
+  .product-ui .auth-intro { display:block; order:2; width:100%; }
+  .auth-intro h2 { font-size:36px; }
+  .auth-intro > p { font-size:16px; }
+  .product-ui .auth-main { width:100%; }
+  .product-ui .staff-role-matrix article { grid-template-columns:1fr; gap:8px; }
+  .product-ui .auth-content { padding:24px; }
+  .product-ui .auth-header { width:calc(100% - 32px); padding:20px 0; }
+}

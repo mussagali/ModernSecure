@@ -1,0 +1,20 @@
+{
+  "preparedAt": "2026-10-17",
+  "repository": {
+    "url": "https://github.com/shpshka/ModernSecure.git",
+    "branch": "main",
+    "visibility": "private"
+  },
+  "supabase": {
+    "projectRef": "bdkrihsiprkmukyjyspv",
+    "dashboardUrl": "https://supabase.com/dashboard/project/bdkrihsiprkmukyjyspv",
+    "region": "ap-northeast-2",
+    "latestMigration": "20261017008400"
+  },
+  "vercel": {
+    "projectId": "prj_AUZHo4y3QYCP6zgbKShHCTieQwII",
+    "orgId": "team_vh7RMN5Keizvs4iYC3EetYmd",
+    "projectName": "modern-secure"
+  },
+  "externalInvitations": "Recipient identity has not been provided; dashboard invitations are not included."
+}

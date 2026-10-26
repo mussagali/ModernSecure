@@ -1,0 +1,114 @@
+/* Client cabinet layout; shared web visual tokens live in role-design.css. */
+.client-app, .auth-page { --canvas:#fbfcff; --surface:#fbfcff; --surface-soft:#fbfcff; --ink:#16345f; --muted:#526b96; --line:#fbfcff; --accent:#526b96; --accent-ink:#16345f; --radius:0; --control-radius:0; color:var(--ink); }
+.client-app { min-height:100dvh; background:var(--surface); }
+.client-app .account-page { background:transparent; padding-bottom:96px; }
+.client-app .account-content { width:min(760px,calc(100% - 36px)); margin:24px auto 0; }
+.client-app h1 { font-size:26px; letter-spacing:-.035em; line-height:1.2; }
+.client-app h2 { font-size:19px; letter-spacing:-.02em; }
+.client-app .client-header { background:transparent; border:0; }
+.client-header .account-header-top { max-width:760px; margin:auto; padding:20px 0 0; }
+.client-header .brand { transform:scale(.85); transform-origin:left center; }
+.client-header-tools { display:flex; align-items:center; gap:12px; }
+.client-header-tools > a { display:flex; align-items:center; justify-content:center; width:44px; height:44px; min-height:44px; border-radius:0; background: #fbfcff; font-size:0; padding:10px; box-shadow:none; }
+.client-header-tools > a span { font-size:11px; }
+.client-header-tools > .client-avatar, .client-avatar { color:#fbfcff; background:var(--surface); }
+.client-bottom-nav { position:fixed; z-index:30; bottom:0; left:50%; transform:translateX(-50%); display:flex; justify-content:space-around; width:min(800px,100%); padding:10px 12px max(12px,env(safe-area-inset-bottom)); background:#fbfcff; backdrop-filter:none; border:1px solid #fbfcff; border-bottom:0; border-radius:0; box-shadow:none; }
+.client-bottom-nav a { display:flex; flex:1; align-items:center; justify-content:center; flex-direction:column; gap:5px; min-height:54px; color:#526b96; font-size:12px; text-decoration:none; }
+.client-bottom-nav a[aria-current=page] { color:#526b96; font-weight:600; }
+.client-bottom-nav a[aria-current=page] svg { filter:none; }
+.client-greeting { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
+.client-greeting p { color:#526b96; margin:0 0 2px; font-size:18px; font-weight:500; }
+.client-greeting h1 { margin:0; }
+.client-message-link { display:grid; place-items:center; width:44px; height:44px; border-radius:0; background:#fbfcff; box-shadow:none; }
+.client-app .account-card,.client-app .account-detail-card,.client-app .account-case-link { background:#fbfcff; border:0; border-radius:0; box-shadow:none; }
+.client-app .account-case-list { display:grid; grid-template-columns:1fr; gap:12px; background:none; border:0; }
+.client-app .account-case-link { position:relative; display:flex; flex-direction:column; gap:4px; padding:18px 48px 18px 64px; }
+.client-app .account-case-link::before { content:""; position:absolute; width:32px; height:38px; left:18px; top:22px; background:#fbfcff; border-radius:0; }
+.client-app .account-case-link::after { content:"›"; position:absolute; right:20px; top:26px; color:#526b96; font-size:26px; }
+.client-app .account-case-link strong { order:-1; font-size:16px; font-weight:600; }
+.client-app .account-case-number { color:var(--muted); font-size:13px; }
+.client-app .account-case-footer { font-size:12px; margin-top:2px; }
+.client-app .account-case-footer > span:last-child { display:none; }
+.client-home .account-section-heading { margin-bottom:10px; }
+.client-home .account-section-heading h2 { font-size:14px; color:var(--muted); font-weight:500; }
+.client-home .account-count { font-size:12px; }
+.client-home .case-overview { display:flex; flex-direction:column; gap:14px; margin-top:16px; }
+.client-home .client-current-stage { margin:0; padding:22px 22px 22px 66px; position:relative; }
+.client-current-stage::before { content:""; position:absolute; left:22px; top:26px; width:24px; height:30px; border:1.5px solid #b53235; border-radius:0; box-shadow:none; }
+.client-app .client-stage-label { margin:0 0 4px; font-size:13px; }
+.client-app .client-current-stage h2 { margin:0 0 10px; }
+.client-app .client-current-stage > p { font-size:14px; line-height:1.6; }
+.client-home .account-case-facts,.client-home .case-overview-grid,.client-home .client-timeline,.client-home .case-contact-card { display:none; }
+.client-home .case-next-actions { margin:0; padding:20px; border:0; border-radius:0; background:#fbfcff; }
+.client-home .case-next-actions h2 { font-size:17px; }
+.client-home .case-next-actions ul { display:grid; grid-template-columns:1fr; }
+.client-home .case-next-actions li { border:0; }
+.client-home .case-next-actions li a { background:transparent; border:0; padding:14px 0; }
+.client-home .case-next-action-kind { color:#b53235; }
+.client-app .client-home-primary { display:none; }
+.client-home .client-home-primary { display:flex; justify-content:space-between; align-items:center; min-height:52px; padding:12px 22px; margin-top:10px; text-decoration:none; }
+.client-home .client-history { margin:0; padding:20px; border-radius:0; background: #fbfcff; }
+.client-home .client-history h2 { font-size:16px; }
+.client-home .client-history .account-events li:not(:first-child) { display:none; }
+.client-app .primary-action,.client-app button[type=submit],.auth-page .auth-submit { border-radius:0; color: #fbfcff; background:var(--surface); box-shadow:none; }
+.client-app .account-detail > .case-nav { display:flex; gap:6px; border:0; overflow:auto; margin:18px 0; padding:4px; background:#fbfcff; border-radius:0; }
+.client-app .case-nav a { flex:1; min-height:44px; justify-content:center; border:0; padding:8px; font-size:12px; border-radius:0; white-space:nowrap; }
+.client-app .case-nav a[aria-current=page] { background:#fbfcff; color:var(--accent); box-shadow:none; }
+.client-app .account-case-topline { margin-bottom:16px; }
+.client-app .account-back { font-size:14px; }
+.client-app .account-case-status { display:inline-block; font-size:12px; color:#526b96; background:#fbfcff; border-radius:0; padding:4px 10px; margin-top:8px; }
+.client-app .case-number-label { font-size:13px; color:var(--muted); margin-top:6px; }
+.client-app .account-detail > .case-overview { display:flex; flex-direction:column; }
+.client-app .account-detail .client-timeline { order:-1; margin-top:8px; }
+.client-app .account-stages li { position:relative; gap:24px; min-height:80px; border:0; padding:14px 8px; }
+.client-app .account-stages li:not(:last-child)::before { content:""; position:absolute; left:22px; top:40px; bottom:-15px; width:2px; background:#fbfcff; }
+.client-app .account-stage-index { z-index:1; width:30px; height:30px; border:7px solid #fbfcff; background: #fbfcff; font-size:0; }
+.client-app .account-stages .is-current .account-stage-index { border:8px solid #526b96; background: #fbfcff; box-shadow:none; }
+.client-app .account-stages .is-complete .account-stage-index { border:0; background:#526b96; color: #fbfcff; font-size:14px; }
+.client-app .account-stages strong { font-size:16px; }
+.client-app .account-stages p { margin:4px 0 0; font-size:14px; }
+.client-app .client-current-stage { position:relative; }
+.client-app .case-work-card { border:0; border-bottom:1px solid #fbfcff; background:#fbfcff; border-radius:0; padding:20px; }
+.client-app .case-work-head h3 { font-size:16px; }
+.client-document-filters { display:flex; gap:8px; overflow-x:auto; margin:16px 0; padding-bottom:8px; }
+.client-document-filters a { flex-shrink:0; display:grid; place-items:center; min-height:44px; padding:8px 14px; border-radius:0; background:#fbfcff; color:#16345f; font-size:12px; text-decoration:none; }
+.client-document-filters a[aria-current=page] { background:var(--surface); color: #fbfcff; }
+.client-document-detail summary { cursor:pointer; display:flex; align-items:center; list-style:none; min-height:48px; gap:12px; }
+.client-document-detail summary::-webkit-details-marker { display:none; }
+.client-document-detail summary > svg { flex-shrink:0; color:#526b96; }
+.client-document-detail summary h3 { flex:1; margin:0; }
+.client-document-detail[open] summary { margin-bottom:18px; }
+.client-document-detail summary span[data-status=accepted] { background:#fbfcff; color:#16345f; }
+.client-document-detail summary span[data-status=missing],.client-document-detail summary span[data-status=returned] { background:#fbfcff; color:#b53235; }
+.client-app .case-work-head > span { font-size:12px; background:#fbfcff; color:#526b96; border-radius:0; padding:5px 10px; }
+.client-more-list { display:grid; margin-top:22px; background:#fbfcff; border-radius:0; overflow:hidden; }
+.client-more-list a { min-height:60px; display:flex; align-items:center; gap:18px; padding:14px 20px; border-bottom:1px solid #fbfcff; color:var(--ink); text-decoration:none; }
+.client-more-list a > svg:first-child { color:#526b96; }
+.client-more-list a > svg:last-child { margin-left:auto; width:16px; }
+.client-profile-summary { display:flex; gap:16px; align-items:center; background:#fbfcff; padding:22px 18px; margin-top:20px; border-radius:0; text-decoration:none; color:var(--ink); }
+.client-profile-summary .client-avatar { display:grid; place-items:center; width:52px; height:52px; border-radius:0; font-size:22px; flex-shrink:0; }
+.client-profile-summary small { display:block; color:var(--muted); margin-top:4px; overflow-wrap:anywhere; }
+.client-profile-summary > svg { margin-left:auto; flex-shrink:0; }
+.client-next-payment > svg:first-child { margin-left:0; color:#526b96; }
+.client-next-payment strong { display:block; font-size:23px; margin-top:5px; }
+.client-signout { margin-top:28px; }
+.client-app .client-signout button { color:var(--muted); background:transparent; box-shadow:none; }
+.client-app ::selection,.auth-page ::selection { color:#fbfcff; background:#526b96; }
+.client-app :focus-visible,.auth-page :focus-visible { outline:3px solid #526b96; outline-offset:3px; }
+.client-app input,.client-app textarea { caret-color:#526b96; }
+@media(max-width:700px) {
+ .client-header .account-header-top { width:calc(100% - 36px); padding-top:16px; }
+ .client-header .brand-name { font-size:12px; }
+ .client-header .brand-mark { width:32px; height:36px; }
+ .client-app .account-content { margin-top:22px; }
+ .client-app .account-detail > h1 { font-size:21px; }
+ .client-app .account-detail .client-current-stage { padding:20px 20px 20px 66px; }
+ .client-app .case-overview-grid { grid-template-columns:1fr 1fr; gap:10px; }
+ .client-app .case-overview-grid > a { border:0; border-radius:0; padding:16px; background: #fbfcff; }
+ .client-app .case-overview-grid strong { font-size:24px; }
+ .client-app .account-page:has(.case-conversation-screen) { padding-bottom:0; }
+ .client-app .account-page:has(.case-conversation-screen) > .client-header { display:none; }
+ .client-app .account-detail:has(.case-conversation-screen) { width:100%; margin:0; }
+ .client-app .account-detail:has(.case-conversation-screen) > .case-nav { display:none; }
+ .client-app .case-conversation-screen { border:0; border-radius:0; }
+}
