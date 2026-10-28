@@ -7,10 +7,10 @@ Executed exact package SQL files 00–05 against isolated PGlite PostgreSQL.
 Supabase Auth and Storage catalog tables were simulated locally.
 
 All literal RPC names used by the application's app/ and lib/ sources exist.
-The package includes migrations 001–095; its manifest hashes match the sources.
+The package includes migrations 001–096; its manifest hashes match the sources.
 
 Verified:
-- complete 95-migration schema installation without any old owner account;
+- complete 96-migration schema installation without any old owner account;
 - profile creation for an Auth account existing before installation;
 - primary operator provisioning and safe repeat;
 - client account linking and safe repeat;

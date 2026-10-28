@@ -1,6 +1,6 @@
 {
-  "schemaVersion": "20261028009500",
-  "installSha256": "5c057bf32a2887608f86f77f8bf765a2ab6f692dadfaac543ef167908619faa3",
+  "schemaVersion": "20261028009600",
+  "installSha256": "22d5a1c4bd76211f78dbad75361fb3942d4e6b198c3b9c6ecec6c87be9c384ed",
   "note": "Migration 008 owner-specific provisioning removed. Original migrations remain unchanged. Supabase CLI migration history is not modified.",
   "migrations": [
     {
@@ -476,6 +476,11 @@
     {
       "file": "20261028009500_resolve_payments_before_case_end.sql",
       "sha256": "a046519a7f0a413a11e02c0d0107c0d06fa85c2eda32cfda75d527455b4cf6b4",
+      "adapted": false
+    },
+    {
+      "file": "20261028009600_client_account_email_lookup.sql",
+      "sha256": "15ae0b1edc7dcf8934095634755b93c4ed4c8004b8ac730e35094ca9adb8c667",
       "adapted": false
     }
   ]

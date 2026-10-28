@@ -112,6 +112,8 @@ function fixtureClient() {
 const moduleCache = new Map();
 const React = require('react');
 const mocks = {
+  'next/cache': { revalidatePath: () => {} },
+  'next/form': { __esModule: true, default: props => React.createElement('form', props) },
   'next/navigation': { redirect: destination => { throw new Redirect(destination); }, notFound: () => { throw new Error('Not found'); } },
   'next/server': { NextResponse: { redirect: url => ({ location: String(url) }) } },
   'next/link': { __esModule: true, default: props => React.createElement('a', props) },
@@ -339,6 +341,51 @@ try {
   const approvedNotice = (await as(10,"select target_path,kind,dedupe_key from public.notifications where kind='account_approved'")).rows[0];
   assert.equal(notificationDestination(approvedNotice,'client'),'/account');
   record('registration-approval-notifications', 'Admins learn about confirmed registrations and users learn about activation; notification links stay in the correct workspace.', `26 new confirmed registrations notified three active admins each; approval added one client notification. Existing resolver routes registration to pending queue, approval to account. A foreign recipient cannot open the notice.`, ['supabase/migrations/20261028009100_admin_account_activation.sql', 'lib/notification-links.ts', 'app/awaiting-approval/page.tsx']);
+
+  // Add client by exact email: run the real lookup, component and server action.
+  const lookup = async (email, actor = 2, aal = 'aal2') => (await as(actor, 'select public.admin_find_client_account($1) as result', [email], aal)).rows[0].result;
+  const { AddClient } = load('components/AddClient.tsx');
+  const { addRegisteredClient } = load('app/staff/clients/actions.ts');
+  for (const actor of [3, 10]) await assert.rejects(lookup('journey200@example.test', actor), /Not authorized/);
+  await assert.rejects(lookup('not-an-email'), /Invalid email/);
+  assert.equal((await lookup('missing@example.test')).status, 'missing');
+  assert.equal((await lookup('%@example.test')).status, 'missing', 'Search is exact, not a SQL pattern');
+  assert.equal((await lookup('journey2@example.test')).status, 'staff');
+  assert.equal((await lookup('journey10@example.test')).status, 'linked');
+  await addUser(200, true);
+  await addUser(201, false);
+  const found = await lookup('  JOURNEY200@EXAMPLE.TEST ');
+  assert.equal(found.status, 'pending'); assert.equal(found.email_verified, true);
+  assert.equal(found.user_id, uid(200));
+  const foundTree = await resolveTree(AddClient({ admin: true, open: true, email: found.email, result: found, error: null }));
+  assert.equal(nodes(foundTree, node => node.type === 'form' && node.props.action === addRegisteredClient).length, 1);
+  const unverifiedTree = await resolveTree(AddClient({ admin: true, open: true, email: 'journey201@example.test', result: await lookup('journey201@example.test'), error: null }));
+  assert.equal(nodes(unverifiedTree, node => node.type === 'form' && node.props.action === addRegisteredClient).length, 0);
+  session = { n: 2, aal: 'aal2' };
+  await redirected(() => addRegisteredClient(form({ email: 'journey201@example.test', displayName: 'Unverified' })), '/staff/clients?new=1&email=journey201%40example.test&error=lookup-unverified');
+  await redirected(() => addRegisteredClient(form({ email: 'JOURNEY200@EXAMPLE.TEST', displayName: 'Client by email', role: 'admin' })), '/staff/clients?added=1&q=journey200%40example.test');
+  assert.equal((await lookup('journey200@example.test')).status, 'linked');
+  assert.equal((await db.query('select count(*)::int n from public.staff_members where user_id=$1', [uid(200)])).rows[0].n, 0);
+  await redirected(() => addRegisteredClient(form({ email: 'journey200@example.test', displayName: 'Duplicate' })), '/staff/clients?new=1&email=journey200%40example.test&error=lookup-card');
+  assert.equal((await db.query('select count(*)::int n from public.clients where user_id=$1', [uid(200)])).rows[0].n, 1);
+  await addUser(202, true);
+  const matching = (await as(2, "select public.staff_create_client('Existing matching client','journey202@example.test') as id")).rows[0].id;
+  assert.equal((await lookup('journey202@example.test')).cards[0].id, matching);
+  await redirected(() => addRegisteredClient(form({ email: 'journey202@example.test', displayName: 'Existing' })), '/staff/clients?new=1&email=journey202%40example.test&error=lookup-card');
+  await redirected(() => addRegisteredClient(form({ email: 'journey202@example.test', displayName: 'Existing', clientId: matching })), '/staff/clients?added=1&q=journey202%40example.test');
+  assert.equal((await lookup('journey202@example.test')).client_id, matching);
+  await addUser(203, true);
+  await as(2, "select public.admin_invite_staff('journey203@example.test','Invited staff','lawyer')");
+  assert.equal((await lookup('journey203@example.test')).invited_role, 'lawyer');
+  await redirected(() => addRegisteredClient(form({ email: 'journey203@example.test', displayName: 'Wrong flow' })), '/staff/clients?new=1&email=journey203%40example.test&error=lookup-invited');
+  for (const actor of [3, 10]) await assert.rejects(as(actor, "select public.admin_add_client_account('journey201@example.test','Forbidden')"), /Not authorized/);
+  await db.query("insert into auth.mfa_factors values(gen_random_uuid(),$1,'verified')", [uid(2)]);
+  await assert.rejects(lookup('journey200@example.test', 2, 'aal1'), /Not authorized/);
+  await assert.rejects(as(2, "select public.admin_add_client_account('journey201@example.test','Forbidden')", [], 'aal1'), /Not authorized/);
+  await db.query('update public.staff_members set active=false where user_id=$1', [uid(2)]);
+  await assert.rejects(lookup('journey200@example.test'), /Not authorized/);
+  await db.query('update public.staff_members set active=true where user_id=$1', [uid(2)]);
+  record('client-email-lookup-and-activation', 'Exact admin-only lookup resolves registered accounts and existing cards; activation remains verified, explicit, client-only and duplicate-safe.', 'Executed lookup/component/action: normalized email, exact wildcard handling, missing/staff/linked/unverified states, create + replay rejection, existing card reuse, staff invitation refusal, manager/client/MFA/disabled denials.', ['components/AddClient.tsx', 'app/staff/clients/actions.ts', 'supabase/migrations/20261028009600_client_account_email_lookup.sql']);
 
   if (process.argv.includes('--production-read-only')) await productionProbe();
   report.status = 'completed';

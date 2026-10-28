@@ -17,7 +17,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
   const query = await searchParams;
   const deniedAlert = query.error === "forbidden" ? <div className="staff-alert is-error" role="alert">У вашей роли нет доступа к запрошенному разделу. Для изменения прав обратитесь к главному администратору.</div> : null;
   if (staff.role === "lawyer") return <>{deniedAlert}<LawyerDashboard /></>;
-  const [clients, cases, services, unlinked, recentCases, recentClients] = await Promise.all([
+  const baseData = Promise.all([
     supabase.from("clients").select("id", { count: "exact", head: true }),
     supabase.from("cases").select("id", { count: "exact", head: true }),
     supabase.from("service_templates").select("id", { count: "exact", head: true }),
@@ -25,8 +25,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
     supabase.from("cases").select("id, case_number, title, status, created_at").order("created_at", { ascending: false }).limit(5),
     supabase.from("clients").select("id, full_name, user_id, created_at").order("created_at", { ascending: false }).limit(5),
   ]);
-  const failed = [clients, cases, services, unlinked, recentCases, recentClients].some((result) => result.error);
-  const adminData = staff.role === "admin" ? await Promise.all([
+  const adminDataRequest = staff.role === "admin" ? Promise.all([
     supabase.from("staff_members").select("user_id", { count: "exact", head: true }).eq("active", true),
     supabase.from("case_assignments").select("id", { count: "exact", head: true }).is("revoked_at", null),
     supabase.from("tasks").select("id", { count: "exact", head: true }).eq("status", "response_sent"),
@@ -34,19 +33,24 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
     supabase.from("messages").select("id", { count: "exact", head: true }),
     supabase.from("audit_events").select("id, action, entity_type, case_id, occurred_at").order("occurred_at", { ascending: false }).limit(5),
   ]) : null;
-  const handoffData = staff.role === "admin" ? await supabase.rpc("admin_unassigned_cases") : null;
-  const pendingAccounts = staff.role === "admin" ? await supabase.rpc("admin_pending_account_summary") : null;
-  const pendingCount = Number(pendingAccounts?.data?.total_count ?? 0);
-  const readyCount = Number(pendingAccounts?.data?.ready_count ?? 0);
-  const unassignedItems = (handoffData?.data ?? []) as Array<{
-    case_id: string; case_number: string; title: string; total_count: number;
-  }>;
-  const [unreadWork, reviewWork, overdueWork, staleQueue] = await Promise.all([
+  const handoffRequest = staff.role === "admin" ? supabase.rpc("admin_unassigned_cases") : null;
+  const pendingRequest = staff.role === "admin" ? supabase.rpc("admin_pending_account_summary") : null;
+  const workQueues = Promise.all([
     getStaffWorklist(supabase, { attention: "unread" }),
     getStaffWorklist(supabase, { attention: "documents" }),
     getStaffWorklist(supabase, { attention: "overdue" }),
     supabase.rpc("staff_stale_case_page", { p_page: 1 }),
   ]);
+  const [[clients, cases, services, unlinked, recentCases, recentClients], adminData, handoffData, pendingAccounts, [unreadWork, reviewWork, overdueWork, staleQueue]] = await Promise.all([
+    baseData, adminDataRequest, handoffRequest, pendingRequest, workQueues,
+  ]);
+  const failed = [clients, cases, services, unlinked, recentCases, recentClients].some((result) => result.error);
+  const pendingCount = Number(pendingAccounts?.data?.total_count ?? 0);
+  const readyCount = Number(pendingAccounts?.data?.ready_count ?? 0);
+  const unassignedItems = (handoffData?.data ?? []) as Array<{
+    case_id: string; case_number: string; title: string; total_count: number;
+  }>;
+
 
   return <>{deniedAlert}<div className="staff-page-heading"><div><h1>{staff.role === "admin" ? "Панель администратора" : "Панель менеджера"}</h1><p>{staff.role === "admin" ? "Клиенты, команда, назначения, рабочие события и журнал изменений в одном месте." : "Клиенты, дела и услуги."}</p></div><span className="staff-role-pill">{staff.role === "admin" ? (staff.is_primary_admin ? "Главный администратор" : "Администратор") : "Менеджер"}</span></div>
     {pendingAccounts && (pendingAccounts.error ? <div className="staff-alert is-error" role="alert">Не удалось проверить новые регистрации. <Link href="/staff/team?tab=pending">Открыть заявки</Link></div> : pendingCount > 0 && <section className="staff-next-step" aria-label="Заявки на активацию"><div><h2>Новые аккаунты ожидают доступа: {pendingCount}</h2><p>{readyCount > 0 ? `Почту подтвердили: ${readyCount}. Проверьте данные и назначьте доступную вам роль.` : "Пользователи ещё не подтвердили почту. После подтверждения вы сможете открыть им доступ."}</p></div><Link href="/staff/team?tab=pending" className="staff-primary-link">Рассмотреть заявки</Link></section>)}
