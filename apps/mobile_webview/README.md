@@ -45,13 +45,40 @@ export ANDROID_SDK_ROOT=/opt/homebrew/share/android-commandlinetools
 
 Локальная сборка без `-PsiteUrl` использует `http://localhost:3000`. Только для неё нужны запущенный `npm run dev` и `adb reverse tcp:3000 tcp:3000`. Не распространяйте её как сборку с опубликованным сайтом.
 
-## Сборка Android
+## Сборка Android на другом компьютере
+
+В репозитории есть весь Android-проект и Gradle Wrapper, включая `gradlew`, `gradlew.bat` и `gradle-wrapper.jar`. Для сборки этой WebView-оболочки не нужны Node.js, Flutter, локальный сайт, `.env`, пароли Supabase или доступ к Vercel. Приложение будет подключаться к опубликованному HTTPS-сайту. Первой сборке нужен интернет для загрузки Gradle и зависимостей.
+
+1. Примите приглашение в приватный GitHub-репозиторий. Установите Git, Android Studio и JDK **21** — с ним эта версия проверена.
+2. Скачайте исходники:
+
+   ```sh
+   git clone --branch main https://github.com/shpshka/ModernSecure.git
+   cd ModernSecure
+   ```
+
+3. В Android Studio выберите **Open** и откройте папку `apps/mobile_webview/android`. Это текущая Android-оболочка; старый проект `apps/client_mobile` для этой сборки не используется.
+4. В **SDK Manager** установите Android SDK Platform **36**, Android SDK Build-Tools **36.0.0** и Platform-Tools, примите лицензии. Android Studio создаст локальный `local.properties` с путём к SDK этого компьютера; этот файл в Git не добавляется.
+5. В **Settings → Build, Execution, Deployment → Build Tools → Gradle** выберите установленный JDK 21. Для запуска команды из терминала также задайте `JAVA_HOME` на папку этого JDK и заново откройте терминал. Проверьте `gradlew --version`: JVM должна быть 21. Android Studio и терминал могут использовать разные настройки Java.
+6. Откройте терминал в папке `apps/mobile_webview/android` и запустите команду для своей системы.
+
+**Windows PowerShell:**
+
+```powershell
+.\gradlew.bat --version
+.\gradlew.bat assembleDebug testDebugUnitTest lintDebug "-PsiteUrl=https://modernsecure.shpshka.work"
+```
+
+**macOS / Linux:**
 
 ```sh
-cd apps/mobile_webview/android
-export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+./gradlew --version
 ./gradlew assembleDebug testDebugUnitTest lintDebug -PsiteUrl=https://modernsecure.shpshka.work
 ```
+
+Дождитесь `BUILD SUCCESSFUL`. Готовый файл от корня репозитория: `apps/mobile_webview/android/app/build/outputs/apk/debug/app-debug.apk`. Его можно скопировать на Android и установить. Ключ для debug-подписи создаётся автоматически. Наличие готового APK в `public/downloads` не требуется для пересборки из исходников.
+
+Для следующих сборок выполните `git pull --ff-only origin main` из чистой рабочей копии и повторите команду. Если меняется только сайт, после его деплоя изменения доступны в приложении по тому же адресу. Изменения нативной оболочки или адреса сайта требуют нового APK.
 
 APK: `app/build/outputs/apk/debug/app-debug.apk`. После успешной проверки скопируйте его в `../../../public/downloads/modernsecure-debug.apk`, обновите соседний файл `.sha256` и закоммитьте оба файла. После деплоя скачайте APK по публичной ссылке и сравните SHA-256 с проверенной сборкой. `artifacts/` остаётся локальной папкой и не попадает в Git. Для другого домена после развёртывания:
 
@@ -60,6 +87,8 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`. После успешной п
 ```
 
 Укажите только origin, без пути. HTTP допускается только для локальной debug-сборки. Release требует HTTPS и отдельную конфигурацию подписи; release-keystore не создан. Для Google Play нужен подписанный AAB (`bundleRelease`), не текущий debug APK. Идентификатор release: `kz.modernsecure.app`, debug: `kz.modernsecure.app.debug`.
+
+Основа команд: [сборка Android из командной строки](https://developer.android.com/build/building-cmdline), [выбор JDK для Android Studio и терминала](https://developer.android.com/build/jdks).
 
 ## Vercel и Supabase
 
