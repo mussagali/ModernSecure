@@ -23,7 +23,7 @@ export async function updateSession(request: NextRequest) {
   );
 
   const { data } = await supabase.auth.getClaims();
-  if (!data?.claims?.sub && /^\/account(?:\/|$)/.test(request.nextUrl.pathname)) {
+  if (!data?.claims?.sub && /^\/(?:account|staff|staff-security)(?:\/|$)/.test(request.nextUrl.pathname)) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.search = "";

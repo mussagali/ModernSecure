@@ -1,8 +1,8 @@
 .form { display: grid; gap: 16px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
 .picker { display: grid; gap: 10px; }
-.picker input { padding: 12px!important; border-style: dashed!important; background: var(--surface-soft)!important; }
+.picker input { padding: 16px!important; border-style: dashed!important; background: var(--surface-soft)!important; }
 .summary { font-size: 14px; font-weight: 600; }
-.list { display: grid; gap: 16px; margin: 0; padding-left: 24px; }
+.list { display: grid; gap: 0; margin: 0; padding-left: 24px; }
 .item { padding-block: 12px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
 .fileInfo { display: grid; gap: 5px; }
 .fileInfo small { color: var(--muted); }

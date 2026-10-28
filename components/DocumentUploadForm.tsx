@@ -1,5 +1,6 @@
 "use client";
-import { postFiles } from "../lib/direct-upload";
+
+import { uploadForm } from "../lib/direct-upload";
 
 import { NavIcon } from "./NavIcon";
 
@@ -67,9 +68,10 @@ async function uploadFile(sessionId: string, fileId: string, file: File, onProgr
   onProcessing: () => void, onRequest: (request: XMLHttpRequest | null) => void, signal: AbortSignal): Promise<void> {
   const body = new FormData();
   body.append("sessionId", sessionId); body.append("fileId", fileId); body.append("file", file);
-  const response = await postFiles("/api/document-uploads/file", body, { onProgress, onProcessing, onRequest, signal });
-  const result = await response.json().catch(() => null);
-  if (!response.ok || !result?.ok || result.fileId !== fileId) throw new Error(`Сервер не принял «${file.name}». Повторите попытку.`);
+  const response = await uploadForm("/api/document-uploads/file", body, { onProgress, onProcessing, onRequest, signal });
+  if (!response.ok) throw new Error(`Сервер не принял «${file.name}» (HTTP ${response.status}). Повторите попытку.`);
+  const result = await response.json();
+  if (result?.ok !== true || result?.fileId !== fileId) throw new Error("Сервер не подтвердил загрузку. Повторите попытку.");
 }
 
 export function DocumentUploadForm({ caseId, requestId, view }: Props) {

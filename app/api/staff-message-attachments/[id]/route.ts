@@ -1,15 +1,16 @@
-import { fileStream } from "../../../../lib/file-stream";
+import { deliverFile } from "../../../../lib/file-delivery";
 import { checkDocumentFile, storageAdmin } from "../../../../lib/document-files";
 import { canPreviewFile, fileContentDisposition } from "../../../../lib/file-preview";
 import { recordFileAccess } from "../../../../lib/file-access-audit";
 import { previewFile } from "../../../../lib/heic-preview";
 import { createClient } from "../../../../lib/supabase/server";
 import { uuidPattern } from "../../../../lib/uuid";
+import { staffWorkspaceEnabled } from "../../../../lib/application-scope";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
 
 export async function GET(request: Request, context: RouteContext<"/api/staff-message-attachments/[id]">) {
+  if (!staffWorkspaceEnabled) return new Response("Not found", { status: 404 });
   const { id } = await context.params;
   if (!uuidPattern.test(id)) return new Response("Not found", { status: 404 });
   const supabase = await createClient();
@@ -41,13 +42,13 @@ export async function GET(request: Request, context: RouteContext<"/api/staff-me
   if (!await recordFileAccess(admin, auth.claims.sub, "staff_message_attachment", id, preview)) {
     return new Response("File access audit unavailable", { status: 503 });
   }
-  return new Response(fileStream(served.bytes), { headers: {
+  return deliverFile(admin, attachment.storage_path, served.bytes, {
     "Content-Type": served.mime,
     "Content-Disposition": fileContentDisposition(attachment.original_name, attachment.detected_mime_type, preview, "attachment"),
-
-    "Cache-Control": "private, no-store, no-transform",
+    "Content-Length": String(served.bytes.length),
+    "Cache-Control": "private, no-store",
     "X-Content-Type-Options": "nosniff",
     "Content-Security-Policy": "sandbox",
     "Cross-Origin-Resource-Policy": "same-origin",
-  } });
+  }, { preview, name: attachment.original_name, transformed: served.mime !== attachment.detected_mime_type });
 }

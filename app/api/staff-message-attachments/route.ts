@@ -1,12 +1,11 @@
-import { readUploadFormData } from "../../../lib/staged-uploads";
 import { checkDocumentFile, storageAdmin } from "../../../lib/document-files";
 import { staffMessageFileId } from "../../../lib/staff-message-upload";
 import { createClient } from "../../../lib/supabase/server";
-import { UploadInputError } from "../../../lib/upload-request";
+import { readBoundedFormData, UploadInputError } from "../../../lib/upload-request";
 import { uuidPattern } from "../../../lib/uuid";
+import { staffWorkspaceEnabled } from "../../../lib/application-scope";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
 
 const maxFiles = 5;
 const maxTotalBytes = 40 * 1024 * 1024;
@@ -17,6 +16,7 @@ function failure(error: string, status: number) {
 }
 
 export async function POST(request: Request) {
+  if (!staffWorkspaceEnabled) return new Response("Not found", { status: 404 });
   if (!process.env.APP_ORIGIN || request.headers.get("origin") !== process.env.APP_ORIGIN) {
     return failure("Недопустимый адрес страницы. Откройте основной адрес сайта.", 403);
   }
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   if (!admin) return failure("Хранилище файлов сейчас недоступно.", 503);
 
   let form: FormData;
-  try { form = await readUploadFormData(request, maxTotalBytes + 2 * 1024 * 1024, userId, admin); }
+  try { form = await readBoundedFormData(request, maxTotalBytes + 2 * 1024 * 1024, { admin, userId: auth.claims.sub }); }
   catch (error) {
     return failure("Не удалось прочитать файлы. Проверьте размер и повторите попытку.",
       error instanceof UploadInputError ? error.status : 400);

@@ -1,3 +1,4 @@
+import { LawyerConversationList } from "../../../../../components/LawyerConversationList";
 import CaseConversation from "../../../../../components/CaseConversation";
 import { loadInitialCaseMessages } from "../../../../../lib/case-message-history";
 import { requireStaffCase } from "../../../../../lib/staff-case";
@@ -29,8 +30,8 @@ export default async function StaffMessages({ params, searchParams }: { params: 
   const senderNames = Object.fromEntries((authorsResult.data ?? []).map((author: { user_id: string; display_name: string }) => [author.user_id, author.display_name]));
   const readIds = new Set((reads ?? []).map((read) => read.message_id));
   const unread = messages.filter((message) => message.sender_user_id !== userId && !readIds.has(message.id)).length;
-  return <div className="case-conversation-screen">
+  return <div className="lawyer-conversation-layout"><LawyerConversationList caseId={id} /><div className="case-conversation-screen">
     <CaseConversation key={id} caseId={id} caseNumber={item.case_number} caseTitle={item.title} backHref="/staff/inbox" backLabel="К списку переписок" contactName={client?.full_name || "Клиент"} viewer="staff" userId={userId} clientUserId={client?.user_id} messages={messages} olderCursor={olderCursor} senderNames={senderNames} canSend={item.status === "open" && !item.is_suspended} unread={unread} initialNotice={query.sent ? "Сообщение отправлено" : undefined} initialError={query.error ? errors[query.error] ?? errors.send : undefined}
       readControl={unread > 0 ? <form action={markStaffMessagesRead}><input type="hidden" name="caseId" value={id} /><button type="submit">Отметить все прочитанными</button></form> : undefined} />
-  </div>;
+  </div></div>;
 }

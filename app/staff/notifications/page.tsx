@@ -4,7 +4,7 @@ import { requireStaff } from "../../../lib/staff";
 import { notificationActionLabel } from "../../../lib/notification-links";
 import { markStaffInboxRead, openStaffNotification } from "./actions";
 
-export const metadata: Metadata = { title: "Уведомления — Современная защита" };
+export const metadata: Metadata = { title: "Уведомления | Современная защита" };
 
 export default async function StaffNotificationsPage({ searchParams }: {
   searchParams: Promise<{ page?: string; read?: string; error?: string }>;

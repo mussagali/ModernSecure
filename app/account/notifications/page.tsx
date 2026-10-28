@@ -6,7 +6,7 @@ import { createClient } from "../../../lib/supabase/server";
 import { notificationActionLabel } from "../../../lib/notification-links";
 import { markClientInboxRead, openClientNotification } from "./actions";
 
-export const metadata: Metadata = { title: "Уведомления — Современная защита" };
+export const metadata: Metadata = { title: "Уведомления | Современная защита" };
 
 export default async function ClientNotificationsPage({ searchParams }: {
   searchParams: Promise<{ page?: string; read?: string; error?: string }>;

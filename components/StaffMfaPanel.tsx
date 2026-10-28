@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 type Factor = { id: string; friendly_name?: string | null; status?: string };
 type PendingFactor = { id: string; qr: string; secret: string };
 
-export function StaffMfaPanel({ required, passed }: { required: boolean; passed: boolean }) {
+export function StaffMfaPanel({ required, passed, next = "/staff" }: { required: boolean; passed: boolean; next?: string }) {
   const router = useRouter();
   const supabase = useMemo(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -68,7 +68,7 @@ export function StaffMfaPanel({ required, passed }: { required: boolean; passed:
     }
     setPending(null);
     setCode("");
-    router.replace("/staff");
+    router.replace(next);
     router.refresh();
   }
 
@@ -112,7 +112,7 @@ export function StaffMfaPanel({ required, passed }: { required: boolean; passed:
       <h2>Вход защищён</h2><p>Этот сеанс подтверждён кодом из приложения. Для восстановления доступа подключите резервное устройство, которое хранится отдельно от основного.</p>
       <ul className="staff-security-factors">{factors.map((factor, index) => <li key={factor.id}><span>{factor.friendly_name || `Устройство ${index + 1}`}</span>{factors.length > 1 && <button type="button" onClick={() => void removeBackup(factor.id)} disabled={working}>Удалить</button>}</li>)}</ul>
       {factors.length < 2 && <button className="staff-security-secondary" type="button" onClick={startEnrollment} disabled={working}>{working ? "Подготавливаем…" : "Добавить резервное устройство"}</button>}
-      <Link className="staff-security-return" href="/staff">Вернуться в рабочую панель</Link>
+      <Link className="staff-security-return" href={next}>Вернуться в рабочую панель</Link>
     </>}
   </div>;
 }

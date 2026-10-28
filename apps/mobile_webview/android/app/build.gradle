@@ -1,0 +1,43 @@
+plugins { id 'com.android.application' }
+def hasFirebase = file('google-services.json').exists()
+if (hasFirebase) apply plugin: 'com.google.gms.google-services'
+def siteUrl = providers.gradleProperty('siteUrl').getOrElse('http://localhost:3000')
+def site = new URI(siteUrl)
+if (!(site.scheme in ['https', 'http']) || !site.host || site.userInfo || site.query || site.fragment || !(site.path in ['', '/'])) {
+    throw new GradleException('siteUrl must be a bare website origin')
+}
+def localSite = site.scheme == 'http' && site.host in ['localhost', '127.0.0.1']
+if (site.scheme == 'http' && !localSite) throw new GradleException('HTTP is only allowed for localhost debugging')
+if (gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') } && site.scheme != 'https') {
+    throw new GradleException('Release builds require -PsiteUrl=https://your-domain')
+}
+android {
+    namespace 'kz.modernsecure.app'
+    compileSdk 36
+    buildToolsVersion '36.0.0'
+    defaultConfig {
+        applicationId 'kz.modernsecure.app'
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName '0.1.0'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        buildConfigField 'String', 'SITE_URL', '"' + siteUrl.replaceAll('/$', '') + '"'
+        buildConfigField 'boolean', 'PUSH_CONFIGURED', hasFirebase.toString()
+    }
+    buildFeatures { buildConfig true }
+    buildTypes {
+        debug { applicationIdSuffix '.debug'; versionNameSuffix '-dev' }
+        release { minifyEnabled true; proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro' }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
+dependencies {
+    implementation 'androidx.core:core:1.16.0'
+    implementation 'androidx.webkit:webkit:1.14.0'
+    implementation 'com.google.firebase:firebase-messaging:26.0.1'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test:core:1.6.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+}

@@ -1,4 +1,4 @@
-import { fileStream } from "../../../../lib/file-stream";
+import { deliverFile } from "../../../../lib/file-delivery";
 import { checkDocumentFile, storageAdmin } from "../../../../lib/document-files";
 import { canPreviewFile, fileContentDisposition } from "../../../../lib/file-preview";
 import { recordFileAccess } from "../../../../lib/file-access-audit";
@@ -7,7 +7,6 @@ import { createClient } from "../../../../lib/supabase/server";
 import { uuidPattern } from "../../../../lib/uuid";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
 
 
 export async function GET(request: Request, context: RouteContext<"/api/payment-receipts/[id]">) {
@@ -41,15 +40,13 @@ export async function GET(request: Request, context: RouteContext<"/api/payment-
   if (!await recordFileAccess(admin, auth.claims.sub, "payment_receipt", id, preview)) {
     return new Response("File access audit unavailable", { status: 503 });
   }
-  return new Response(fileStream(served.bytes), {
-    headers: {
+  return deliverFile(admin, receipt.storage_path, served.bytes, {
       "Content-Type": served.mime,
       "Content-Disposition": fileContentDisposition(receipt.original_name, receipt.detected_mime_type, preview, "receipt"),
-
-      "Cache-Control": "private, no-store, no-transform",
+      "Content-Length": String(served.bytes.length),
+      "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
       "Content-Security-Policy": "sandbox",
       "Cross-Origin-Resource-Policy": "same-origin",
-    },
-  });
+    }, { preview, name: receipt.original_name, transformed: served.mime !== receipt.detected_mime_type });
 }

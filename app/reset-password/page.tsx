@@ -4,7 +4,7 @@ import { AuthForm } from "../../components/AuthForm";
 import { AuthFrame } from "../../components/AuthFrame";
 import { createClient } from "../../lib/supabase/server";
 
-export const metadata: Metadata = { title: "Новый пароль — Современная защита" };
+export const metadata: Metadata = { title: "Новый пароль | Современная защита" };
 
 export default async function ResetPasswordPage() {
   const supabase = await createClient();

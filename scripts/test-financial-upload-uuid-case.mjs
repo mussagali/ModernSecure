@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 import ts from "typescript";
 import { uuidPattern } from "../lib/uuid.ts";
+import { staffWorkspaceEnabled } from "../lib/application-scope.ts";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const origin = "https://modernsecure.test";
@@ -72,9 +73,9 @@ function loadRoute(route, state, form) {
     },
     "../../../lib/money": { toKztCents: (value) => Math.round(Number(value) * 100) },
     "../../../lib/supabase/server": { createClient: async () => supabase },
-    "../../../lib/staged-uploads": { readUploadFormData: async () => form },
     "../../../lib/upload-request": { readBoundedFormData: async () => form, UploadInputError: class extends Error {} },
     "../../../lib/uuid": { uuidPattern },
+    "../../../lib/application-scope": { staffWorkspaceEnabled },
   };
   vm.runInNewContext(compiled, {
     module: routeModule, exports: routeModule.exports,
@@ -142,8 +143,8 @@ for (const route of ["contracts", "payment-receipts"]) {
   assert.equal(closedReplay.state.rpcs.length, 0);
   const closedNew = await runUpload(route, caseId, key, { closed: true });
   assert.equal(closedNew.response.status, 303);
-  assert(closedNew.response.headers.get("location")?.includes("Uploaded=1"), "Financial documents remain available on closed cases");
-  assert.equal(closedNew.state.uploads.length, 1);
+  assert(closedNew.response.headers.get("location")?.includes("Error=access"));
+  assert.equal(closedNew.state.uploads.length, 0);
 }
 
 console.log("OK financial upload UUID casing, Storage paths, DB filters, and RPC arguments");

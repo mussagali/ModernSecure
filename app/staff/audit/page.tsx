@@ -5,7 +5,7 @@ import { auditHref, parseAuditCursor } from "../../../lib/audit-pagination";
 import { uuidPattern } from "../../../lib/client-case";
 import { requireStaff } from "../../../lib/staff";
 
-export const metadata: Metadata = { title: "Журнал действий — Современная защита" };
+export const metadata: Metadata = { title: "Журнал действий | Современная защита" };
 
 const pageSize = 50;
 type AuditEvent = {

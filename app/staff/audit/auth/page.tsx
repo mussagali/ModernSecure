@@ -5,7 +5,7 @@ import { authAuditHref, parseAuthAuditCursor } from "../../../../lib/auth-audit-
 import { uuidPattern } from "../../../../lib/client-case";
 import { requireStaff } from "../../../../lib/staff";
 
-export const metadata: Metadata = { title: "Входы и авторизация — Современная защита" };
+export const metadata: Metadata = { title: "Входы и авторизация | Современная защита" };
 
 const pageSize = 50;
 type AuthAuditEvent = {

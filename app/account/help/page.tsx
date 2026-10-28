@@ -4,7 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "../../../lib/supabase/server";
 
-export const metadata: Metadata = { title: "Помощь — Современная защита" };
+export const metadata: Metadata = { title: "Помощь | Современная защита" };
 
 function phoneHref(value: string | null): string | null {
   const phone = value?.trim();
@@ -38,14 +38,6 @@ export default async function ClientHelpPage() {
   const userId = auth?.claims?.sub;
   if (!userId) redirect("/login");
 
-  const { data: staff, error: staffError } = await supabase
-    .from("staff_members")
-    .select("active")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (staffError) throw new Error("Не удалось проверить доступ к странице помощи");
-  if (staff?.active) redirect("/staff");
-
   const [faqResult, contactResult] = await Promise.all([
     supabase.from("faq_entries").select("id, question, answer").eq("published", true).order("position", { ascending: true }).order("id", { ascending: true }),
     supabase.from("contact_settings").select("phone, whatsapp_url, email, business_hours, response_expectation").eq("id", true).maybeSingle(),
@@ -58,11 +50,11 @@ export default async function ClientHelpPage() {
   const whatsapp = whatsappHref(contact?.whatsapp_url ?? null);
   const businessHours = contact?.business_hours?.trim();
   const responseExpectation = contact?.response_expectation?.trim();
-  const hasContactDetails = Boolean(phone || email || whatsapp);
+  const hasContactDetails = Boolean(phone || email || whatsapp || businessHours || responseExpectation);
 
   return <main className="account-page">
     <AccountHeader />
-    <div className="account-content account-detail">
+    <div className="account-content account-detail client-settings">
       <Link href="/account" className="account-back">В личный кабинет</Link>
 
       <h1>Помощь</h1>
@@ -84,7 +76,7 @@ export default async function ClientHelpPage() {
               {businessHours && <p>Время работы: {businessHours}</p>}
               {responseExpectation && <p>Срок ответа: {responseExpectation}</p>}
             </div>
-            : <p className="account-muted">Компания пока не опубликовала контакты поддержки. Если у вас уже есть дело, напишите сотруднику в его разделе «Переписка». До появления дела используйте канал, по которому вы обратились в компанию.</p>}
+            : <p className="account-muted">Доступных контактных данных пока нет.</p>}
       </section>
     </div>
   </main>;

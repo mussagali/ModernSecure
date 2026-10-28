@@ -6,7 +6,7 @@ import { SubmitButton } from "../../../../../components/SubmitButton";
 import { requireStaffCase } from "../../../../../lib/staff-case";
 import { addCaseNote } from "./actions";
 
-export const metadata: Metadata = { title: "Внутренние заметки — Современная защита" };
+export const metadata: Metadata = { title: "Внутренние заметки | Современная защита" };
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type Note = { id: string; author_name: string; body: string; created_at: string };
@@ -54,7 +54,7 @@ export default async function StaffCaseNotes({ params, searchParams }: {
     </section>
     <section className="staff-list-section"><div className="staff-section-heading"><h2>История заметок</h2><span>Автор и время сохраняются</span></div>
       {notes.length ? <ol className="staff-notes-list">{notes.map((note) => <li key={note.id}><div><strong>{note.author_name}</strong><time dateTime={note.created_at}>{dateTime(note.created_at)}</time></div><p>{note.body}</p></li>)}</ol>
-        : <div className="staff-empty-box"><h3>Заметок пока нет</h3><p>Зафиксируйте внутренний контекст дела — он останется доступен команде после переназначения.</p></div>}
+        : <div className="staff-empty-box"><h3>Заметок пока нет</h3><p>Зафиксируйте внутренний контекст дела | он останется доступен команде после переназначения.</p></div>}
       {olderHref && <div className="staff-pagination"><Link href={olderHref}>Более ранние заметки</Link></div>}
     </section>
   </>;

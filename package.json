@@ -54,14 +54,13 @@
     "test:financial-uuid": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-financial-upload-uuid-case.mjs",
     "test": "node scripts/run-tests.mjs",
     "test:live": "node scripts/run-tests.mjs live",
-    "test:audit-fixes": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-audit-fixes.mjs",
-    "staging:cleanup": "node scripts/cleanup-staged-uploads.mjs"
+    "test:audit-fixes": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-audit-fixes.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.3",
     "heic-decode": "^2.1.0",
-    "next": "16.4.0",
+    "next": "16.4.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "sharp": "^0.35.5"
@@ -72,7 +71,7 @@
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
     "eslint": "^9.39.1",
-    "eslint-config-next": "16.4.0",
+    "eslint-config-next": "16.4.3",
     "pg": "^8.23.1",
     "supabase": "^2.120.0",
     "typescript": "5.8.3"

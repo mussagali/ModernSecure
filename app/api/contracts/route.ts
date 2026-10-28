@@ -1,12 +1,11 @@
-import { readUploadFormData } from "../../../lib/staged-uploads";
 import { checkDocumentFile, MAX_DOCUMENT_BYTES, storageAdmin } from "../../../lib/document-files";
 import { toKztCents } from "../../../lib/money";
 import { createClient } from "../../../lib/supabase/server";
-import { UploadInputError } from "../../../lib/upload-request";
+import { readBoundedFormData, UploadInputError } from "../../../lib/upload-request";
 import { uuidPattern } from "../../../lib/uuid";
+import { staffWorkspaceEnabled } from "../../../lib/application-scope";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
 
 const moneyPattern = /^(?:0|[1-9][0-9]{0,11})(?:\.[0-9]{1,2})?$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -21,6 +20,7 @@ function field(form: FormData, name: string) {
 }
 
 export async function POST(request: Request) {
+  if (!staffWorkspaceEnabled) return new Response("Not found", { status: 404 });
   if (!process.env.APP_ORIGIN || request.headers.get("origin") !== process.env.APP_ORIGIN) {
     return new Response("Invalid origin", { status: 403 });
   }
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   const admin = storageAdmin();
   if (!admin) return new Response("Contract storage is not configured", { status: 503 });
   let form: FormData;
-  try { form = await readUploadFormData(request, MAX_DOCUMENT_BYTES + 1024 * 1024, userId, admin); }
+  try { form = await readBoundedFormData(request, MAX_DOCUMENT_BYTES + 1024 * 1024, { admin, userId: auth.claims.sub }); }
   catch (error) {
     return new Response("Invalid upload", { status: error instanceof UploadInputError ? error.status : 400 });
   }
@@ -82,6 +82,9 @@ export async function POST(request: Request) {
       return Response.redirect(returnTo(caseId, "contractError=conflict"), 303);
     }
     return Response.redirect(returnTo(caseId, "contractUploaded=1"), 303);
+  }
+  if (caseRecord.status !== "open" || caseRecord.is_suspended) {
+    return Response.redirect(returnTo(caseId, "contractError=access"), 303);
   }
   const bucket = admin.storage.from("modernsecure-files");
   const { error: uploadError } = await bucket.upload(path, checked.bytes, {

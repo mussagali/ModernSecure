@@ -1,11 +1,9 @@
-import { readUploadFormData } from "../../../lib/staged-uploads";
 import { checkDocumentFile, MAX_DOCUMENT_BYTES, storageAdmin } from "../../../lib/document-files";
 import { createClient } from "../../../lib/supabase/server";
-import { UploadInputError } from "../../../lib/upload-request";
+import { readBoundedFormData, UploadInputError } from "../../../lib/upload-request";
 import { uuidPattern } from "../../../lib/uuid";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
 
 const extensions: Record<string, string> = {
   "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png",
@@ -27,7 +25,7 @@ export async function POST(request: Request) {
   const admin = storageAdmin();
   if (!admin) return new Response("Receipt storage is not configured", { status: 503 });
   let form: FormData;
-  try { form = await readUploadFormData(request, MAX_DOCUMENT_BYTES + 1024 * 1024, userId, admin); }
+  try { form = await readBoundedFormData(request, MAX_DOCUMENT_BYTES + 1024 * 1024, { admin, userId: auth.claims.sub }); }
   catch (error) { return new Response("Invalid upload", { status: error instanceof UploadInputError ? error.status : 400 }); }
   const submittedCaseId = form.get("caseId");
   const submittedKey = form.get("key");
@@ -62,6 +60,9 @@ export async function POST(request: Request) {
       return Response.redirect(returnTo(caseId, "receiptError=conflict"), 303);
     }
     return Response.redirect(returnTo(caseId, "receiptUploaded=1"), 303);
+  }
+  if (item.status !== "open" || item.is_suspended) {
+    return Response.redirect(returnTo(caseId, "receiptError=access"), 303);
   }
   const bucket = admin.storage.from("modernsecure-files");
   const { error: uploadError } = await bucket.upload(path, checked.bytes, {

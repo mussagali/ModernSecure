@@ -1,11 +1,9 @@
-import { readUploadFormData } from "../../../../lib/staged-uploads";
 import { checkDocumentFile, MAX_DOCUMENT_BYTES, storageAdmin } from "../../../../lib/document-files";
-import { UploadInputError } from "../../../../lib/upload-request";
+import { readBoundedFormData, UploadInputError } from "../../../../lib/upload-request";
 import { createClient } from "../../../../lib/supabase/server";
 import { uuidPattern } from "../../../../lib/uuid";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
 
 const maxMultipartBytes = MAX_DOCUMENT_BYTES + 2 * 1024 * 1024;
 
@@ -25,7 +23,7 @@ export async function POST(request: Request) {
   if (!admin) return new Response("Document storage is not configured", { status: 503 });
 
   let form: FormData;
-  try { form = await readUploadFormData(request, maxMultipartBytes, auth.claims.sub, admin); }
+  try { form = await readBoundedFormData(request, maxMultipartBytes, { admin, userId: auth.claims.sub }); }
   catch (error) {
     return new Response("Invalid upload", { status: error instanceof UploadInputError ? error.status : 400 });
   }

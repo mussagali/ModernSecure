@@ -136,10 +136,15 @@ end;
 $$;
 
 revoke all on function public.admin_client_registrations(text, integer) from public, anon;
+
 revoke all on function public.admin_approve_client_registration(uuid) from public, anon;
+
 revoke all on function public.complete_own_client_identity(text, text) from public, anon;
+
 grant execute on function public.admin_client_registrations(text, integer) to authenticated;
+
 grant execute on function public.admin_approve_client_registration(uuid) to authenticated;
+
 grant execute on function public.complete_own_client_identity(text, text) to authenticated;
 
 -- Contacts entered after approval must also reach the card staff work with.
@@ -151,7 +156,9 @@ begin
   return new;
 end;
 $$;
+
 revoke all on function private.sync_client_profile_contacts() from public, anon, authenticated;
+
 create trigger modernsecure_client_profile_contacts
 after update of phone, city on public.profiles
 for each row when (old.phone is distinct from new.phone or old.city is distinct from new.city)

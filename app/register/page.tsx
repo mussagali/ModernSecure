@@ -4,12 +4,12 @@ import { AuthForm } from "../../components/AuthForm";
 import { AuthFrame } from "../../components/AuthFrame";
 import { createClient } from "../../lib/supabase/server";
 
-export const metadata: Metadata = { title: "Регистрация — Современная защита" };
+export const metadata: Metadata = { title: "Регистрация | Современная защита" };
 
 export default async function RegisterPage() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   if (data?.claims) redirect("/account");
 
-  return <AuthFrame title="Регистрация" description="Создайте аккаунт — администратор сразу увидит вашу заявку. Подтвердите почту для входа. ФИО и ИИН можно заполнить позже в профиле."><AuthForm mode="register" /></AuthFrame>;
+  return <AuthFrame title="Создать аккаунт" description="После подтверждения почты главный администратор назначит роль и откроет доступ."><AuthForm mode="register" /></AuthFrame>;
 }

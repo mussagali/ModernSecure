@@ -1,10 +1,11 @@
+import { LawyerDashboard } from "../../../components/LawyerDashboard";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { auditActionLabel, auditEntityLabel } from "../../../lib/audit-labels";
 import { requireStaff } from "../../../lib/staff";
-import { getStaffWorklist, worklistCount, worklistDate } from "../../../lib/staff-worklist";
+import { getStaffWorklist, worklistCount } from "../../../lib/staff-worklist";
 
-export const metadata: Metadata = { title: "Панель управления — Современная защита" };
+export const metadata: Metadata = { title: "Панель управления | Современная защита" };
 
 function casesLabel(count: number) {
   const form = new Intl.PluralRules("ru-RU").select(count);
@@ -15,18 +16,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
   const { supabase, staff } = await requireStaff();
   const query = await searchParams;
   const deniedAlert = query.error === "forbidden" ? <div className="staff-alert is-error" role="alert">У вашей роли нет доступа к запрошенному разделу. Для изменения прав обратитесь к главному администратору.</div> : null;
-  if (staff.role === "lawyer") {
-    const [all, unread, reviews, overdue, staleQueue] = await Promise.all([
-      getStaffWorklist(supabase),
-      getStaffWorklist(supabase, { attention: "unread" }),
-      getStaffWorklist(supabase, { attention: "documents" }),
-      getStaffWorklist(supabase, { attention: "overdue" }),
-      supabase.rpc("staff_stale_case_page", { p_page: 1 }),
-    ]);
-    return <>{deniedAlert}<div className="staff-page-heading"><div><h1>С чего начать сегодня</h1><p>Сначала ответьте клиентам и разберите просроченные задачи, затем проверьте новые документы.</p></div><span className="staff-role-pill">Юрист</span></div>
-      {[all, unread, reviews, overdue, staleQueue].some((result) => result.error) ? <div className="staff-alert is-error">Не удалось загрузить рабочий обзор. Обновите страницу.</div> : <><div className="staff-stats staff-priority-stats"><Link href="/staff/inbox?unread=1"><span>Новые диалоги</span><strong>{worklistCount(unread.items)}</strong><small>Ответить клиентам</small></Link><Link href="/staff/cases?attention=overdue"><span>Дела с просроченными задачами</span><strong>{worklistCount(overdue.items)}</strong><small>Посмотреть сроки</small></Link><Link href="/staff/cases?attention=documents"><span>Дела с документами на проверке</span><strong>{worklistCount(reviews.items)}</strong><small>Начать проверку</small></Link><Link href="/staff/cases"><span>Все мои дела</span><strong>{worklistCount(all.items)}</strong><small>Открыть список</small></Link></div><section className="staff-attention-strip staff-attention-strip-single"><Link href="/staff/cases/stale"><span>Дела без обновлений для клиента</span><strong>{Number(staleQueue.data?.[0]?.total_count ?? 0)}</strong><small>Открыть очередь</small></Link></section><section className="staff-list-section"><div className="staff-section-heading"><h2>Недавно обновлённые</h2><Link href="/staff/cases">Все дела</Link></div>{all.items.length ? <div className="staff-case-list">{all.items.slice(0, 5).map((item) => <Link href={`/staff/cases/${item.case_id}`} className="staff-case-list-row" key={item.case_id}><span className="staff-case-list-main"><span className="staff-case-list-meta">№ {item.case_number} · {item.client_name}</span><strong>{item.title}</strong><small>{item.stage_name ?? item.service_name}</small></span><span className="staff-case-list-side">{Number(item.unread_count) > 0 && <span className="staff-signal is-unread">{item.unread_count} новых</span>}<time dateTime={item.updated_at}>{worklistDate(item.updated_at)}</time></span><span className="staff-case-list-arrow" aria-hidden="true">›</span></Link>)}</div> : <div className="staff-empty-box"><h3>Назначений пока нет</h3><p>Администратор назначит вас на дело — оно появится здесь.</p></div>}</section></>}
-    </>;
-  }
+  if (staff.role === "lawyer") return <>{deniedAlert}<LawyerDashboard /></>;
   const [clients, cases, services, unlinked, recentCases, recentClients] = await Promise.all([
     supabase.from("clients").select("id", { count: "exact", head: true }),
     supabase.from("cases").select("id", { count: "exact", head: true }),
@@ -55,7 +45,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
     supabase.rpc("staff_stale_case_page", { p_page: 1 }),
   ]);
 
-  return <>{deniedAlert}<div className="staff-page-heading"><div><h1>{staff.role === "admin" ? "Панель администратора" : "Панель менеджера"}</h1><p>{staff.role === "admin" ? "Клиенты, команда, назначения, рабочие события и журнал изменений в одном месте." : "Клиенты, дела и услуги — реальные записи из Supabase."}</p></div><span className="staff-role-pill">{staff.role === "admin" ? (staff.is_primary_admin ? "Главный администратор" : "Администратор") : "Менеджер"}</span></div>
+  return <>{deniedAlert}<div className="staff-page-heading"><div><h1>{staff.role === "admin" ? "Панель администратора" : "Панель менеджера"}</h1><p>{staff.role === "admin" ? "Клиенты, команда, назначения, рабочие события и журнал изменений в одном месте." : "Клиенты, дела и услуги."}</p></div><span className="staff-role-pill">{staff.role === "admin" ? (staff.is_primary_admin ? "Главный администратор" : "Администратор") : "Менеджер"}</span></div>
     {[unreadWork, reviewWork, overdueWork, staleQueue].some((result) => result.error) ? <div className="staff-alert is-error">Не удалось загрузить рабочие очереди.</div> : <section className="staff-attention-strip" aria-label="Требует внимания"><Link href="/staff/inbox?unread=1"><span>Новые диалоги</span><strong>{worklistCount(unreadWork.items)}</strong><small>Открыть переписку</small></Link><Link href="/staff/cases?attention=documents"><span>Дела с документами на проверке</span><strong>{worklistCount(reviewWork.items)}</strong><small>Проверить файлы</small></Link><Link href="/staff/cases?attention=overdue"><span>Дела с просроченными задачами</span><strong>{worklistCount(overdueWork.items)}</strong><small>Посмотреть сроки</small></Link><Link href="/staff/cases/stale"><span>Дела без обновлений для клиента</span><strong>{Number(staleQueue.data?.[0]?.total_count ?? 0)}</strong><small>Открыть очередь</small></Link></section>}
     {failed ? <div className="staff-alert is-error" role="alert">Не удалось загрузить часть данных. Обновите страницу.</div> : <>
       <div className="staff-stats"><Link href="/staff/clients"><span>Клиенты</span><strong>{clients.count ?? 0}</strong><small>Открыть список</small></Link><Link href="/staff/cases"><span>Дела</span><strong>{cases.count ?? 0}</strong><small>Открыть список</small></Link><Link href="/staff/clients"><span>Без привязки</span><strong>{unlinked.count ?? 0}</strong><small>Подключить аккаунты</small></Link>{staff.role === "admin" && <Link href="/staff/services"><span>Услуги</span><strong>{services.count ?? 0}</strong><small>Настроить шаблоны</small></Link>}</div>

@@ -55,6 +55,18 @@ function storageClient() {
 const database = databaseClient();
 try {
   await database.connect();
+  // Signed staging uploads expire after two hours. Retain their rows for a
+  // full day so deleting bytes cannot reset the per-account daily quota.
+  const temporary = await database.query(`select id,user_id from public.temporary_uploads
+    where created_at < now()-interval '1 day' and expires_at < now() order by created_at limit 100`);
+  console.log(`Просроченных временных файлов: ${temporary.rows.length}.`);
+  if (apply && temporary.rows.length) {
+    const storage = storageClient();
+    const { error } = await storage.storage.from('modernsecure-staging')
+      .remove(temporary.rows.map(row => `${row.user_id}/${row.id}`));
+    if (error) throw new Error('Не удалось очистить временное хранилище; повторите запуск.');
+    await database.query('delete from public.temporary_uploads where id=any($1::uuid[])', [temporary.rows.map(row=>row.id)]);
+  }
   const { rows } = await database.query(`
     select us.id, us.status, us.cleanup_passes, us.last_cleanup_at,
       array_remove(array_agg(df.storage_path order by df.file_position), null) as paths

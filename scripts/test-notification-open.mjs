@@ -29,6 +29,10 @@ try {
   assert.equal(notificationHref(`/staff/cases/${colleague}/messages`, "staff"), `/staff/cases/${colleague}/messages`);
   const clientDocuments = `/account/cases/${colleague}/documents`;
   const clientTasks = `/account/cases/${colleague}/tasks`;
+  assert.equal(notificationDestination({ target_path: `${clientTasks}#task-${noticeOne}`, kind: "task_cancelled", dedupe_key: `task-cancelled:${noticeOne}` }, "client"), `${clientTasks}#task-${noticeOne}`);
+  assert.equal(notificationDestination({ target_path: `${clientDocuments}#request-${noticeOne}`, kind: "document_request_closed", dedupe_key: `document-request-closed:${noticeOne}` }, "client"), `${clientDocuments}#request-${noticeOne}`);
+  assert.equal(notificationActionLabel(`${clientTasks}#task-${noticeOne}`, "client"), "Открыть задачи →");
+  for (const path of [`${clientTasks}#request-${noticeOne}`, `${clientDocuments}#task-${noticeOne}`, `${clientTasks}#task-${noticeOne}?next=https://evil.test`]) assert.equal(notificationHref(path, "client"), "/account");
   assert.equal(notificationDestination({ target_path: clientDocuments, kind: "document_request",
     dedupe_key: `document-request:${noticeOne}` }, "client"), `${clientDocuments}#request-${noticeOne}`);
   assert.equal(notificationDestination({ target_path: clientDocuments, kind: "document_review",

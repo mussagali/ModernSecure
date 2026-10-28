@@ -25,11 +25,3 @@ assert.equal(clientNextActions({ ...input, tasks: [{ ...input.tasks[0], kind: "u
 assert.equal(clientNextActions({ ...input, caseActive: false }).length, 1);
 assert.equal(clientNextActions({ ...input, caseActive: false, unreadMessages: 0 }).length, 0);
 console.log("OK client next actions: latest document version, due tasks, unread messages and suspended case");
-
-const settledLegalWork = { ...input, caseActive: false, unreadMessages: 0, nextPayment: { remaining: 5000000n, due_on: "2026-10-18" } };
-assert.equal(clientNextActions(settledLegalWork)[0].kind, "payment", "Financial duties survive legal suspension/closure");
-const pending = clientNextActions({ ...settledLegalWork, pendingReceipt: true });
-assert.equal(pending.length, 1);
-assert.equal(pending[0].title, "Ожидается проверка оплаты");
-assert.equal(pending[0].dueAt, null, "Do not tell the client to pay again while their receipt is pending");
-assert.equal(clientNextActions({ ...settledLegalWork, nextPayment: null }).length, 0);

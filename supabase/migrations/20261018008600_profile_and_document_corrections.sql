@@ -23,10 +23,13 @@ begin
   return new;
 end;
 $$;
+
 revoke all on function private.seed_linked_profile_contacts() from public, anon, authenticated;
+
 create trigger modernsecure_seed_linked_profile_contacts
 after insert or update of user_id on public.clients
 for each row execute function private.seed_linked_profile_contacts();
+
 update public.profiles p set phone = coalesce(p.phone, cl.phone), city = coalesce(p.city, cl.city),
   updated_at = clock_timestamp()
 from public.clients cl where cl.user_id = p.user_id
@@ -42,7 +45,9 @@ begin
   perform public.update_own_profile(p_display_name, p_phone, p_city);
 end;
 $$;
+
 revoke all on function public.save_own_profile(text, text, text, timestamptz) from public, anon;
+
 grant execute on function public.save_own_profile(text, text, text, timestamptz) to authenticated;
 
 -- Identity corrections are explicit, version checked, and never copy IINs into audit history.
@@ -76,7 +81,9 @@ begin
       'iin_changed', card.iin is distinct from clean_iin, 'iin_provided', clean_iin is not null), clean_reason);
 end;
 $$;
+
 revoke all on function public.staff_correct_client_identity(uuid, timestamptz, text, text, text) from public, anon;
+
 grant execute on function public.staff_correct_client_identity(uuid, timestamptz, text, text, text) to authenticated;
 
 -- A reasoned waiver satisfies a template. Cancelling a mistaken request does not.
@@ -94,7 +101,9 @@ returns boolean language sql stable security definer set search_path = '' as $$
     )
   );
 $$;
+
 revoke all on function private.case_required_documents_complete(uuid, uuid) from public, anon, authenticated;
+
 create or replace function private.guard_case_close_document_versions()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin

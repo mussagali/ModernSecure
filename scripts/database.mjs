@@ -19,7 +19,7 @@ const projectTables = [
   "case_suspensions", "case_internal_notes", "document_requests", "upload_sessions",
   "document_files", "document_internal_notes", "tasks", "task_events", "messages",
   "message_attachments", "message_reads", "notifications", "contracts", "payment_schedule",
-  "payment_receipts", "payments", "payment_allocations", "temporary_uploads", "consent_records", "audit_events", "faq_entries",
+  "payment_receipts", "payments", "consent_records", "audit_events", "faq_entries",
   "contact_settings", "staff_invites", "staff_threads", "staff_messages", "staff_thread_reads", "staff_message_attachments", "staff_message_case_refs",
 ];
 const requiredWorkflows = [
@@ -33,8 +33,7 @@ const requiredWorkflows = [
   "begin_document_upload", "complete_document_upload", "staff_review_document_file", "retract_document_file",
   "admin_set_payment_permission", "staff_add_payment_installment", "staff_update_payment_installment",
   "staff_confirm_payment", "staff_void_payment",
-  "update_own_profile", "save_own_profile", "staff_correct_client_identity", "staff_record_payment", "staff_cancel_payment_installment", "server_prepare_temporary_upload",
-  "admin_client_registrations", "admin_approve_client_registration", "complete_own_client_identity",
+  "update_own_profile",
   "admin_save_contact_settings", "admin_upsert_faq",
   "mark_own_notifications_read",
   "open_own_notification",
@@ -64,7 +63,6 @@ const requiredWorkflows = [
   "staff_stale_case_days", "staff_stale_case_page", "admin_set_stale_case_days",
 ];
 const requiredWorkflowTriggers = [
-  "modernsecure_client_profile_contacts", "modernsecure_seed_linked_profile_contacts",
   "modernsecure_document_task_files", "modernsecure_document_task_closed", "modernsecure_linked_document_task_guard",
   "modernsecure_contract_file_insert_guard", "modernsecure_receipt_file_insert_guard",
   "modernsecure_contract_notify", "modernsecure_receipt_submitted_notify",
@@ -135,14 +133,13 @@ async function verify(url, preMigration = false) {
   const client = createClient(url);
   try {
     await client.connect();
-    const checkedTables = preMigration ? projectTables.filter((name) => !["payment_allocations", "temporary_uploads", "legal_documents", "staff_invites", "staff_threads", "staff_messages", "staff_thread_reads", "staff_message_attachments", "staff_message_case_refs"].includes(name)) : projectTables;
+    const checkedTables = preMigration ? projectTables.filter((name) => !["legal_documents", "staff_invites", "staff_threads", "staff_messages", "staff_thread_reads", "staff_message_attachments", "staff_message_case_refs"].includes(name)) : projectTables;
     const checkedWorkflows = preMigration ? [] : requiredWorkflows;
     const tables = await client.query("select tablename, rowsecurity from pg_tables where schemaname = 'public'");
     const matching = tables.rows.filter((row) => checkedTables.includes(row.tablename));
     const missing = checkedTables.filter((name) => !matching.some((row) => row.tablename === name));
     const withoutRls = matching.filter((row) => !row.rowsecurity).map((row) => row.tablename);
-    const expectedBuckets = preMigration ? ["modernsecure-files", "modernsecure-previews"] : ["modernsecure-files", "modernsecure-previews", "modernsecure-staging"];
-    const bucketRows = await client.query("select id, public from storage.buckets where id = any($1)", [expectedBuckets]);
+    const bucketRows = await client.query("select id, public from storage.buckets where id in ('modernsecure-files', 'modernsecure-previews')");
     const policies = await client.query("select count(*)::integer as count from pg_policies where schemaname = 'public' and tablename = any($1)", [projectTables]);
     const mfaPolicies = preMigration ? { rows: [] } : await client.query(`select tablename from pg_policies
       where schemaname = 'public' and tablename = any($1)
@@ -198,8 +195,8 @@ async function verify(url, preMigration = false) {
         }
       }
     }
-    console.log(`Проверка: ${matching.length}/${checkedTables.length} таблиц, ${policies.rows[0].count} политик RLS, ${bucketRows.rows.length}/${expectedBuckets.length} закрытых бакета, ${checkedWorkflows.length - missingWorkflows.length}/${checkedWorkflows.length} рабочих функций, ${triggerNames.length - missingTriggers.length}/${triggerNames.length} рабочих триггеров, напоминания ${reminderJobReady ? "активны" : "неактивны"}, realtime сообщений ${messageRealtimeReady ? "активен" : "неактивен"}, MFA ${preMigration ? "ожидает миграции" : `${mfaPolicies.rows.length}/${projectTables.length} таблиц`}.`);
-    if (missing.length || withoutRls.length || bucketRows.rows.length !== expectedBuckets.length || bucketRows.rows.some((row) => row.public) || missingWorkflows.length || missingTriggers.length || !reminderJobReady || !messageRealtimeReady || missingMfaPolicies.length || !readCursor.rows[0].ready || (!preMigration && (!mfaHook.rows.length || !mfaStoragePolicy.rows.length))) {
+    console.log(`Проверка: ${matching.length}/${checkedTables.length} таблиц, ${policies.rows[0].count} политик RLS, ${bucketRows.rows.length}/2 закрытых бакета, ${checkedWorkflows.length - missingWorkflows.length}/${checkedWorkflows.length} рабочих функций, ${triggerNames.length - missingTriggers.length}/${triggerNames.length} рабочих триггеров, напоминания ${reminderJobReady ? "активны" : "неактивны"}, realtime сообщений ${messageRealtimeReady ? "активен" : "неактивен"}, MFA ${preMigration ? "ожидает миграции" : `${mfaPolicies.rows.length}/${projectTables.length} таблиц`}.`);
+    if (missing.length || withoutRls.length || bucketRows.rows.length !== 2 || bucketRows.rows.some((row) => row.public) || missingWorkflows.length || missingTriggers.length || !reminderJobReady || !messageRealtimeReady || missingMfaPolicies.length || !readCursor.rows[0].ready || (!preMigration && (!mfaHook.rows.length || !mfaStoragePolicy.rows.length))) {
       throw new Error(`Схема неполная. Нет таблиц: [${missing.join(", ")}]. Без RLS: [${withoutRls.join(", ")}]. Нет функций: [${missingWorkflows.join(", ")}]. Нет триггеров: [${missingTriggers.join(", ")}]. Нет MFA-guard: [${missingMfaPolicies.join(", ")}]. MFA hook: ${mfaHook.rows.length > 0}. Storage MFA: ${mfaStoragePolicy.rows.length > 0}. Курсор чата: ${readCursor.rows[0].ready}. Напоминания: ${reminderJobReady}. Realtime сообщений: ${messageRealtimeReady}. Проверьте бакеты.`);
     }
   } finally {

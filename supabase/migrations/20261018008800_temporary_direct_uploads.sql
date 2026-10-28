@@ -2,6 +2,7 @@
 -- copy validated files to permanent storage; signed upload URLs never target it.
 insert into storage.buckets(id, name, public, file_size_limit)
 values('modernsecure-staging', 'modernsecure-staging', false, 20971520);
+
 create table public.temporary_uploads (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -12,12 +13,18 @@ create table public.temporary_uploads (
   created_at timestamptz not null default now(),
   expires_at timestamptz not null default now() + interval '2 hours'
 );
+
 create index temporary_uploads_owner_created_idx on public.temporary_uploads(user_id, created_at);
+
 alter table public.temporary_uploads enable row level security;
+
 revoke all on public.temporary_uploads from public, anon, authenticated;
+
 grant select, insert, delete on public.temporary_uploads to service_role;
+
 create policy staff_mfa_guard on public.temporary_uploads as restrictive for all to authenticated
   using((select private.staff_mfa_passed())) with check((select private.staff_mfa_passed()));
+
 create function public.server_prepare_temporary_upload(p_user_id uuid, p_target_path text,
   p_context jsonb, p_name text, p_size bigint)
 returns uuid language plpgsql security definer set search_path = '' as $$
@@ -35,6 +42,9 @@ begin
   return ticket_id;
 end;
 $$;
+
 revoke all on function public.server_prepare_temporary_upload(uuid, text, jsonb, text, bigint) from public, anon, authenticated;
+
 grant execute on function public.server_prepare_temporary_upload(uuid, text, jsonb, text, bigint) to service_role;
+
 notify pgrst, 'reload schema';

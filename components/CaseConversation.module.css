@@ -1,16 +1,16 @@
 .chat { display: flex; flex: 1; flex-direction: column; min-height: 0; min-width: 0; background: var(--surface); }
 .header { display: flex; align-items: center; gap: 12px; flex: none; min-height: 64px; padding: 8px 20px; border-bottom: 1px solid var(--line); }
-.backButton { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 8px; color: var(--muted); }
+.backButton { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius:10px; color: var(--muted); }
 .backButton:hover { color: var(--accent-ink); background: var(--accent-soft); }
 .backButton svg { width: 22px; height: 22px; }
-.avatar { display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 50%; color: var(--accent-ink); background: #e8efff; font-weight: 600; }
+.avatar { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius:50%; color: var(--accent-ink); background: var(--accent-soft); font-weight: 600; }
 .headerText { display: grid; gap: 3px; min-width: 0; }
 .headerText h1 { margin: 0; font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .headerText span { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .headerRight { display: flex; align-items: center; gap: 12px; margin-left: auto; }
-.unread { padding: 3px 8px; border-radius: 5px; background: var(--accent-soft); color: var(--accent-ink); font-size: 12px; white-space: nowrap; }
+.unread { padding: 3px 8px; border-radius:10px; background: var(--accent-soft); color: var(--accent-ink); font-size: 12px; white-space: nowrap; }
 .connection { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; white-space: nowrap; }
-.connection i { width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); }
+.connection i { width: 7px; height: 7px; border-radius:50%; background: var(--line-strong); }
 .connectionLive { color: var(--success); }
 .connectionLive i { background: var(--success); }
 .serviceInfo { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none; padding: 0 20px; border-bottom: 1px solid var(--line); color: var(--muted); background: var(--surface-soft); font-size: 13px; }
@@ -21,20 +21,20 @@
 .historyNav a, .historyNav button { display: inline-flex; align-items: center; min-height: 48px; padding: 8px; color: var(--accent-ink); background: transparent; font-size: 13px; }
 .historyNav button:hover { background: var(--accent-soft); }
 .historyNav [role=alert] { color: var(--danger); }
-.timeline { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 24px 32px; background: var(--surface-soft); scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.timeline { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 20px 28px; background: var(--canvas); scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 .messageStack { display: flex; flex-direction: column; justify-content: flex-end; min-height: 100%; }
 .messageGroup { display: grid; }
 .day { display: flex; justify-content: center; margin: 16px 0 24px; }
-.day span { color: var(--muted); font-size: 12px; }
-.bubble { max-width: min(85%, 75ch); min-width: 100px; margin-bottom: 14px; padding: 14px 16px 10px; border: 1px solid var(--line); border-radius: 12px 12px 12px 3px; background: var(--surface); overflow-wrap: anywhere; }
+.day span { padding: 4px 12px; border-radius: 12px; background: var(--surface); color: var(--muted); font-size: 12px; }
+.bubble { max-width: min(80%, 64ch); min-width: 100px; margin-bottom: 10px; padding: 12px 16px 8px; border: 0; border-radius:14px 14px 14px 4px; background: var(--surface); overflow-wrap: anywhere; }
 .bubble.other { justify-self: start; }
-.bubble.own { justify-self: end; border-color: #cbdafa; border-radius: 12px 12px 3px 12px; background: #edf3ff; }
+.bubble.own { justify-self: end; border-radius:14px 14px 4px 14px; background: var(--accent-soft); }
 .author { display: block; margin-bottom: 6px; color: var(--accent-ink); font-size: 13px; font-weight: 600; }
 .bubble p { margin: 0; font-size: 16px; line-height: 1.55; white-space: pre-wrap; }
-.bubble time { display: block; margin-top: 6px; color: var(--muted); font-size: 11px; text-align: right; }
+.bubble time { font-variant-numeric: tabular-nums; display: block; margin-top: 6px; color: var(--muted); font-size: 12px; text-align: right; }
 .attachments { display: grid; gap: 8px; margin-top: 10px; }
-.fileCard { display: flex; align-items: center; gap: 10px; min-width: 0; max-width: 420px; min-height: 56px; padding: 10px; border-radius: 8px; background: var(--surface-soft); color: var(--ink); text-decoration: none; }
-.fileCard:hover { background: #dbeafe; color: var(--accent-ink); }
+.fileCard { display: flex; align-items: center; gap: 10px; min-width: 0; max-width: 420px; min-height: 56px; padding: 10px; border-radius:10px; background: var(--surface-soft); color: var(--ink); text-decoration: none; }
+.fileCard:hover { background: var(--surface); color: var(--accent-ink); }
 .fileIcon, .queuedIcon { display: grid; place-items: center; flex: none; width: 32px; height: 32px; color: var(--accent-ink); }
 .fileIcon svg, .queuedIcon svg { width: 22px; height: 22px; }
 .fileInfo { display: grid; gap: 4px; min-width: 0; }
@@ -46,44 +46,44 @@
 .emptyIcon svg { width: 36px; height: 36px; }
 .empty h2 { margin: 16px 0 8px; color: var(--ink); font-size: 22px; }
 .empty p { margin: 0; font-size: 15px; }
-.jumpButton { z-index: 1; align-self: flex-end; margin: -58px 20px 14px; color: var(--accent-ink); background: var(--surface); box-shadow: var(--shadow-menu); }
-.jumpButton:hover { color: white; }
-.footer { flex: none; padding: 8px 12px; border-top: 1px solid var(--line); }
+.jumpButton { z-index: 1; align-self: flex-end; margin: -58px 20px 14px; color: var(--accent-ink); background: var(--surface); box-shadow:var(--shadow-menu); }
+.jumpButton:hover { color: var(--surface); }
+.footer { flex: none; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--line); }
 .readControl { margin-bottom: 8px; text-align: right; }
 .readControl button { color: var(--accent-ink); background: transparent; padding: 6px 0; font-size: 13px; }
 .readControl button:hover { background: transparent; text-decoration: underline; }
-.feedback { margin: 0 0 12px; padding: 12px; border-radius: 8px; background: var(--success-soft); color: var(--success); font-size: 14px; }
+.feedback { margin: 0 0 12px; padding: 12px; border-radius:10px; background: var(--success-soft); color: var(--success); font-size: 14px; }
 .feedbackError { background: var(--danger-soft); color: var(--danger); }
 .closed { padding: 20px; color: var(--muted); text-align: center; }
-.composer { position: relative; border: 1px solid var(--line-strong); border-radius: 12px; }
+.composer { position: relative; border: 1px solid var(--line); border-radius:18px; background: var(--canvas); }
 .composer:focus-within { border-color: var(--accent); }
 .composer.dragging { border-style: dashed; border-color: var(--accent); }
-.composeRow { display: flex; align-items: flex-end; gap: 8px; padding: 8px; }
+.composeRow { display: flex; align-items: flex-end; gap: 6px; padding: 5px; }
 .hiddenFile { position: absolute; width: 1px!important; min-height: 0!important; height: 1px; padding: 0!important; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.attachButton, .sendButton { display: grid; place-items: center; flex: none; width: 48px; height: 48px; padding: 10px; border: 0; border-radius: 8px; }
+.attachButton, .sendButton { display: grid; place-items: center; flex: none; width: 48px; height: 48px; padding: 10px; border: 0; border-radius:14px; }
 .attachButton { background: transparent; color: var(--muted); }
 .attachButton:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent-ink); }
 .attachButton svg, .sendButton svg { width: 22px; height: 22px; }
-.composeRow textarea { flex: 1; min-width: 0; min-height: 48px; max-height: 160px; padding: 10px 4px; border: 0; border-radius: 4px; font-size: 16px; line-height: 1.5; background: transparent; resize: vertical; }
+.composeRow textarea { flex: 1; min-width: 0; min-height: 48px; max-height: 160px; padding: 10px 4px; border: 0; border-radius:10px; font-size: 16px; line-height: 1.5; background: transparent; resize: vertical; }
 .composeRow textarea:focus-visible { outline-offset: 1px; outline-width: 2px; }
-.composeHint { display: flex; justify-content: space-between; gap: 12px; padding: 0 16px 10px; color: var(--muted); font-size: 11px; }
+.composeHint { display: flex; justify-content: space-between; gap: 12px; padding: 0 16px 10px; color: var(--muted); font-size: 12px; }
 .composeHint span:last-child { white-space: nowrap; }
 .queued { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 12px 0; }
-.queuedFile { display: flex; align-items: center; gap: 6px; max-width: min(100%, 320px); padding: 3px 6px; border-radius: 8px; background: var(--surface-soft); font-size: 12px; }
+.queuedFile { display: flex; align-items: center; gap: 6px; max-width: min(100%, 320px); padding: 3px 6px; border-radius:10px; background: var(--surface-soft); font-size: 12px; }
 .queuedFile > span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.queuedFile small { color: var(--muted); white-space: nowrap; font-size: 11px; }
+.queuedFile small { color: var(--muted); white-space: nowrap; font-size: 12px; }
 .queuedFile button { flex: none; width: 48px; height: 48px; padding: 10px; color: var(--danger); background: transparent; }
 .queuedFile button:hover { background: var(--danger-soft); }
-.dropOverlay { position: absolute; inset: 0; display: grid; place-items: center; border: 2px dashed var(--accent); border-radius: 12px; color: var(--accent-ink); background: var(--accent-soft); font-weight: 600; pointer-events: none; }
+.dropOverlay { position: absolute; inset: 0; display: grid; place-items: center; border: 2px dashed var(--accent); border-radius:10px; color: var(--accent-ink); background: var(--accent-soft); font-weight: 600; pointer-events: none; }
 @media(max-width: 700px) {
   .header { padding: 12px; gap: 8px; }
   .avatar { display: none; }
   .headerRight { flex-direction: column; align-items: flex-end; gap: 4px; }
   .headerText span { font-size: 12px; }
-  .connection { font-size: 11px; }
-  .timeline { padding: 16px; }
-  .bubble { max-width: 92%; padding: 12px; }
-  .footer { padding: 12px; }
+  .connection { font-size: 12px; }
+  .timeline { padding: 12px; }
+  .bubble { max-width: 90%; padding: 10px 12px 8px; }
+  .footer { padding: 8px; }
   .serviceInfo { padding: 0 12px; flex-wrap: wrap; }
   .historyNav { padding-inline: 12px; flex-wrap: wrap; }
   .composeHint span:first-child { display: none; }

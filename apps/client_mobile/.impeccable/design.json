@@ -1,0 +1,383 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T23:15:54.492252+00:00",
+  "title": "Design System: ModernSecure native client",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "oklch(15% 0.05153 263.52)",
+          "oklch(27% 0.05153 263.52)",
+          "oklch(39% 0.05153 263.52)",
+          "oklch(51% 0.05153 263.52)",
+          "oklch(63% 0.05153 263.52)",
+          "oklch(75% 0.05153 263.52)",
+          "oklch(87% 0.05153 263.52)",
+          "oklch(95% 0.05153 263.52)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "tonalRamp": [
+          "oklch(15% 0.04512 260.05)",
+          "oklch(27% 0.04512 260.05)",
+          "oklch(39% 0.04512 260.05)",
+          "oklch(51% 0.04512 260.05)",
+          "oklch(63% 0.04512 260.05)",
+          "oklch(75% 0.04512 260.05)",
+          "oklch(87% 0.04512 260.05)",
+          "oklch(95% 0.04512 260.05)"
+        ]
+      },
+      "blue": {
+        "role": "primary",
+        "displayName": "Blue",
+        "tonalRamp": [
+          "oklch(15% 0.17980 257.31)",
+          "oklch(27% 0.17980 257.31)",
+          "oklch(39% 0.17980 257.31)",
+          "oklch(51% 0.17980 257.31)",
+          "oklch(63% 0.17980 257.31)",
+          "oklch(75% 0.17980 257.31)",
+          "oklch(87% 0.17980 257.31)",
+          "oklch(95% 0.17980 257.31)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "tonalRamp": [
+          "oklch(15% 0.00623 255.47)",
+          "oklch(27% 0.00623 255.47)",
+          "oklch(39% 0.00623 255.47)",
+          "oklch(51% 0.00623 255.47)",
+          "oklch(63% 0.00623 255.47)",
+          "oklch(75% 0.00623 255.47)",
+          "oklch(87% 0.00623 255.47)",
+          "oklch(95% 0.00623 255.47)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "tonalRamp": [
+          "oklch(15% 0.00000 89.88)",
+          "oklch(27% 0.00000 89.88)",
+          "oklch(39% 0.00000 89.88)",
+          "oklch(51% 0.00000 89.88)",
+          "oklch(63% 0.00000 89.88)",
+          "oklch(75% 0.00000 89.88)",
+          "oklch(87% 0.00000 89.88)",
+          "oklch(95% 0.00000 89.88)"
+        ]
+      },
+      "green": {
+        "role": "semantic",
+        "displayName": "Green",
+        "tonalRamp": [
+          "oklch(15% 0.11312 162.54)",
+          "oklch(27% 0.11312 162.54)",
+          "oklch(39% 0.11312 162.54)",
+          "oklch(51% 0.11312 162.54)",
+          "oklch(63% 0.11312 162.54)",
+          "oklch(75% 0.11312 162.54)",
+          "oklch(87% 0.11312 162.54)",
+          "oklch(95% 0.11312 162.54)"
+        ]
+      },
+      "correction": {
+        "role": "semantic",
+        "displayName": "Correction",
+        "tonalRamp": [
+          "oklch(15% 0.15002 36.33)",
+          "oklch(27% 0.15002 36.33)",
+          "oklch(39% 0.15002 36.33)",
+          "oklch(51% 0.15002 36.33)",
+          "oklch(63% 0.15002 36.33)",
+          "oklch(75% 0.15002 36.33)",
+          "oklch(87% 0.15002 36.33)",
+          "oklch(95% 0.15002 36.33)"
+        ]
+      },
+      "divider": {
+        "role": "neutral",
+        "displayName": "Divider",
+        "tonalRamp": [
+          "oklch(15% 0.01086 256.70)",
+          "oklch(27% 0.01086 256.70)",
+          "oklch(39% 0.01086 256.70)",
+          "oklch(51% 0.01086 256.70)",
+          "oklch(63% 0.01086 256.70)",
+          "oklch(75% 0.01086 256.70)",
+          "oklch(87% 0.01086 256.70)",
+          "oklch(95% 0.01086 256.70)"
+        ]
+      },
+      "gradient-start": {
+        "role": "primary",
+        "displayName": "Gradient Start",
+        "tonalRamp": [
+          "oklch(15% 0.16160 257.43)",
+          "oklch(27% 0.16160 257.43)",
+          "oklch(39% 0.16160 257.43)",
+          "oklch(51% 0.16160 257.43)",
+          "oklch(63% 0.16160 257.43)",
+          "oklch(75% 0.16160 257.43)",
+          "oklch(87% 0.16160 257.43)",
+          "oklch(95% 0.16160 257.43)"
+        ]
+      },
+      "gradient-end": {
+        "role": "primary",
+        "displayName": "Gradient End",
+        "tonalRamp": [
+          "oklch(15% 0.12431 248.07)",
+          "oklch(27% 0.12431 248.07)",
+          "oklch(39% 0.12431 248.07)",
+          "oklch(51% 0.12431 248.07)",
+          "oklch(63% 0.12431 248.07)",
+          "oklch(75% 0.12431 248.07)",
+          "oklch(87% 0.12431 248.07)",
+          "oklch(95% 0.12431 248.07)"
+        ]
+      },
+      "disabled": {
+        "role": "semantic",
+        "displayName": "Disabled",
+        "tonalRamp": [
+          "oklch(15% 0.04559 253.91)",
+          "oklch(27% 0.04559 253.91)",
+          "oklch(39% 0.04559 253.91)",
+          "oklch(51% 0.04559 253.91)",
+          "oklch(63% 0.04559 253.91)",
+          "oklch(75% 0.04559 253.91)",
+          "oklch(87% 0.04559 253.91)",
+          "oklch(95% 0.04559 253.91)"
+        ]
+      },
+      "login-ice": {
+        "role": "semantic",
+        "displayName": "Login Ice",
+        "tonalRamp": [
+          "oklch(15% 0.01769 240.00)",
+          "oklch(27% 0.01769 240.00)",
+          "oklch(39% 0.01769 240.00)",
+          "oklch(51% 0.01769 240.00)",
+          "oklch(63% 0.01769 240.00)",
+          "oklch(75% 0.01769 240.00)",
+          "oklch(87% 0.01769 240.00)",
+          "oklch(95% 0.01769 240.00)"
+        ]
+      },
+      "login-light": {
+        "role": "semantic",
+        "displayName": "Login Light",
+        "tonalRamp": [
+          "oklch(15% 0.00512 247.88)",
+          "oklch(27% 0.00512 247.88)",
+          "oklch(39% 0.00512 247.88)",
+          "oklch(51% 0.00512 247.88)",
+          "oklch(63% 0.00512 247.88)",
+          "oklch(75% 0.00512 247.88)",
+          "oklch(87% 0.00512 247.88)",
+          "oklch(95% 0.00512 247.88)"
+        ]
+      },
+      "login-blue": {
+        "role": "semantic",
+        "displayName": "Login Blue",
+        "tonalRamp": [
+          "oklch(15% 0.02368 240.10)",
+          "oklch(27% 0.02368 240.10)",
+          "oklch(39% 0.02368 240.10)",
+          "oklch(51% 0.02368 240.10)",
+          "oklch(63% 0.02368 240.10)",
+          "oklch(75% 0.02368 240.10)",
+          "oklch(87% 0.02368 240.10)",
+          "oklch(95% 0.02368 240.10)"
+        ]
+      },
+      "shield": {
+        "role": "semantic",
+        "displayName": "Shield",
+        "tonalRamp": [
+          "oklch(15% 0.07994 247.07)",
+          "oklch(27% 0.07994 247.07)",
+          "oklch(39% 0.07994 247.07)",
+          "oklch(51% 0.07994 247.07)",
+          "oklch(63% 0.07994 247.07)",
+          "oklch(75% 0.07994 247.07)",
+          "oklch(87% 0.07994 247.07)",
+          "oklch(95% 0.07994 247.07)"
+        ]
+      },
+      "selected": {
+        "role": "semantic",
+        "displayName": "Selected",
+        "tonalRamp": [
+          "oklch(15% 0.01946 260.17)",
+          "oklch(27% 0.01946 260.17)",
+          "oklch(39% 0.01946 260.17)",
+          "oklch(51% 0.01946 260.17)",
+          "oklch(63% 0.01946 260.17)",
+          "oklch(75% 0.01946 260.17)",
+          "oklch(87% 0.01946 260.17)",
+          "oklch(95% 0.01946 260.17)"
+        ]
+      },
+      "incoming": {
+        "role": "neutral",
+        "displayName": "Incoming",
+        "tonalRamp": [
+          "oklch(15% 0.01085 256.70)",
+          "oklch(27% 0.01085 256.70)",
+          "oklch(39% 0.01085 256.70)",
+          "oklch(51% 0.01085 256.70)",
+          "oklch(63% 0.01085 256.70)",
+          "oklch(75% 0.01085 256.70)",
+          "oklch(87% 0.01085 256.70)",
+          "oklch(95% 0.01085 256.70)"
+        ]
+      },
+      "action-surface": {
+        "role": "semantic",
+        "displayName": "Action Surface",
+        "tonalRamp": [
+          "oklch(15% 0.01781 64.94)",
+          "oklch(27% 0.01781 64.94)",
+          "oklch(39% 0.01781 64.94)",
+          "oklch(51% 0.01781 64.94)",
+          "oklch(63% 0.01781 64.94)",
+          "oklch(75% 0.01781 64.94)",
+          "oklch(87% 0.01781 64.94)",
+          "oklch(95% 0.01781 64.94)"
+        ]
+      },
+      "architecture-screen": {
+        "role": "neutral",
+        "displayName": "Architecture Screen",
+        "tonalRamp": [
+          "oklch(15% 0.01692 236.71)",
+          "oklch(27% 0.01692 236.71)",
+          "oklch(39% 0.01692 236.71)",
+          "oklch(51% 0.01692 236.71)",
+          "oklch(63% 0.01692 236.71)",
+          "oklch(75% 0.01692 236.71)",
+          "oklch(87% 0.01692 236.71)",
+          "oklch(95% 0.01692 236.71)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "body": {
+        "displayName": "Native body",
+        "purpose": "Russian client content, Flutter logical pixels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "navigation",
+        "value": "0 -3px 20px rgba(11,49,84,0.03137)",
+        "purpose": "Subtle separation above bottom navigation."
+      }
+    ],
+    "motion": [],
+    "breakpoints": [
+      {
+        "name": "navigation-rail",
+        "value": "700px"
+      }
+    ],
+    "provenance": {
+      "sources": [
+        "lib/ui.dart",
+        "lib/main.dart",
+        "lib/workspace.dart"
+      ],
+      "units": "CSS px previews correspond to Flutter logical pixels.",
+      "previewLimitations": "HTML examples approximate native components; hover/focus are panel affordances. Roboto/Arial are preview fallbacks; ClientRoboto is the app family. Tonal ramps are synthesized OKLCH display metadata, not implemented palette tokens.",
+      "loginImageTreatment": "Flutter BlendMode.screen with architecture-screen tint, plus vertical opacity mask, preserves footer contrast.",
+      "currencyTypography": "Use Cyrillic text suffix тг; the bundled font does not reliably support the tenge currency symbol."
+    }
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Approximation of the native gradient action.",
+      "html": "<button class=\"ds-primary\">Войти <span aria-hidden=\"true\">→</span></button>",
+      "css": ".ds-primary{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:52px;padding:0 20px;border:0;border-radius:30px;background:linear-gradient(90deg,#0754B0,#347FC0);color:white;font:600 16px Roboto,Arial,sans-serif;cursor:pointer}.ds-primary:focus-visible{outline:2px solid #0862CB;outline-offset:3px}.ds-primary:hover{filter:brightness(1.05)}.ds-primary:active{filter:brightness(.95)}.ds-primary:disabled{background:#8196B0;cursor:default}"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Translucent field with blue focus border.",
+      "html": "<input class=\"ds-field\" aria-label=\"Электронная почта\" placeholder=\"Электронная почта\" type=\"email\">",
+      "css": ".ds-field{padding:18px;border:1px solid transparent;border-radius:16px;background:rgba(255,255,255,.85);color:#101C35;font:14px Roboto,Arial,sans-serif}.ds-field::placeholder{color:#61718B}.ds-field:hover{border-color:#E7ECF3}.ds-field:focus-visible{outline:none;border-color:#0862CB}"
+    },
+    {
+      "name": "Surface",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Flat case information surface.",
+      "html": "<article class=\"ds-card\"><span>Текущий этап</span><h3>Подготовка документов</h3></article>",
+      "css": ".ds-card{padding:18px;border-radius:20px;background:white;color:#101C35;font-family:Roboto,Arial,sans-serif}.ds-card span{font-size:12px;color:#61718B}.ds-card h3{font-size:22px;font-weight:700;margin:4px 0 0}"
+    },
+    {
+      "name": "Document status",
+      "kind": "chip",
+      "refersTo": "status",
+      "description": "Accepted document with visible status text.",
+      "html": "<span class=\"ds-status\">Принят</span>",
+      "css": ".ds-status{display:inline-block;padding:5px 10px;border-radius:20px;background:rgba(22,133,93,.08);color:#16855D;font:12px Roboto,Arial,sans-serif}"
+    },
+    {
+      "name": "Primary navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Four native destinations, approximated for the panel.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Основная навигация\"><button aria-current=\"page\">Главная</button><button>Дело</button><button>Документы</button><button>Сообщения</button></nav>",
+      "css": ".ds-nav{display:flex;gap:4px;padding:12px 8px;background:white;border-radius:26px 26px 0 0;box-shadow:0 -3px 20px rgba(11,49,84,.0314)}.ds-nav button{flex:1;padding:12px 4px;border:0;border-radius:20px;background:transparent;color:#61718B;font:12px Roboto,Arial,sans-serif;cursor:pointer}.ds-nav button[aria-current]{background:#EAF2FF;color:#0862CB}.ds-nav button:hover{background:#F4F7FB}.ds-nav button:focus-visible{outline:2px solid #0862CB}"
+    },
+    {
+      "name": "Chat bubbles",
+      "kind": "custom",
+      "refersTo": "chat",
+      "description": "Incoming grey-blue and outgoing blue.",
+      "html": "<div class=\"ds-chat\"><p class=\"ds-in\">Документы получили, спасибо.</p><p class=\"ds-out\">Спасибо за обновление.</p></div>",
+      "css": ".ds-chat{display:flex;flex-direction:column;gap:14px;font:14px/1.45 Roboto,Arial,sans-serif}.ds-chat p{max-width:77%;padding:14px;margin:0}.ds-in{align-self:flex-start;background:#E9EEF5;color:#101C35;border-radius:20px 20px 20px 4px}.ds-out{align-self:flex-end;background:#0862CB;color:white;border-radius:20px 20px 4px 20px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Calm client workspace",
+    "overview": "This scoped record describes the Flutter Android/iOS client in `apps/client_mobile`, extracted from `lib/ui.dart`, `lib/main.dart`, and `lib/workspace.dart`. The pinned visual direction is an icy blue architectural login, a navy shield with company wordmark, and a blue gradient sign-in action. Inside the account, light cards, a case timeline, labeled document statuses, and blue/grey conversation bubbles keep progress legible.\n\nThe north-star phrase summarizes the supplied reference; it is not a separately approved brand slogan. Root PRODUCT.md and DESIGN.md describe an older web scope and are not the visual authority for this app. This record captures implementation, not full design acceptance or device certification.",
+    "keyCharacteristics": [
+      "Icy architectural login and restrained navy identity.",
+      "Light surfaces with generous rounded corners.",
+      "Four primary destinations and profile-based secondary navigation.",
+      "Explicit status labels and calm, readable Russian copy."
+    ],
+    "rules": [
+      {
+        "name": "The Status Label Rule",
+        "body": "Pair semantic color with visible status text; color alone must not carry document state.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do preserve the icy architectural login and navy identity.",
+      "Do reuse the shared typography, surface and status treatments.",
+      "Do retain four primary tabs and expose More through the avatar.",
+      "Do show loading, empty, error and read-only states in clear Russian."
+    ],
+    "donts": [
+      "Don't replace this native client direction with the older root web design.",
+      "Don't imply that unavailable document upload or unverified native flows are complete."
+    ]
+  }
+}

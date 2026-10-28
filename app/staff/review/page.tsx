@@ -1,21 +1,28 @@
+import { loadListPage } from "../../../lib/list-page";
+import { ListSearch, ListPagination } from "../../../components/ListControls";
+import { queryPage, queryText, searchPattern, listHref } from "../../../lib/list-query";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "../../../lib/staff";
 
-export const metadata: Metadata = { title: "Проверка документов — Современная защита" };
+export const metadata: Metadata = { title: "Проверка документов | Современная защита" };
 
 export default async function DocumentReviewQueue({ searchParams }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; status?: string; q?: string }>;
 }) {
   const { supabase } = await requireStaff(["admin", "lawyer"]);
   const query = await searchParams;
-  const page = Math.max(1, Math.min(200, Number.parseInt(query.page ?? "1", 10) || 1));
+  let page = queryPage(query.page);
+  const q = queryText(query.q);
   const size = 25;
-  const files = await supabase.from("document_files")
-    .select("id, request_id, original_name, uploaded_at", { count: "exact" })
-    .eq("status", "under_review")
-    .order("uploaded_at", { ascending: false })
-    .range((page - 1) * size, page * size - 1);
+  const status = ["all", "accepted", "returned"].includes(query.status ?? "") ? query.status! : "under_review";
+  let fileQuery = supabase.from("document_files")
+    .select("id, request_id, original_name, uploaded_at, status", { count: "exact" });
+  fileQuery = status === "all" ? fileQuery.in("status", ["under_review", "accepted", "returned"]) : fileQuery.eq("status", status);
+  if (q) fileQuery = fileQuery.ilike("original_name", searchPattern(q));
+  fileQuery = fileQuery.order("uploaded_at", { ascending: false }).order("id");
+  const files = await loadListPage(target => fileQuery.range((target - 1) * size, target * size - 1), page, size);
+  page = files.page;
   if (files.error) throw new Error("Не удалось загрузить очередь проверки документов");
 
   const requestIds = [...new Set((files.data ?? []).map((file) => file.request_id))];
@@ -31,15 +38,16 @@ export default async function DocumentReviewQueue({ searchParams }: {
 
   const requestById = new Map((requests.data ?? []).map((request) => [request.id, request]));
   const caseById = new Map((cases.data ?? []).map((item) => [item.id, item]));
-  const pages = Math.ceil((files.count ?? 0) / size);
 
-  return <><div className="staff-page-heading"><div><h1>Проверка документов</h1><p>Файлы, которые клиенты или сотрудники загрузили и ещё не рассмотрели. Откройте дело, чтобы принять документ или вернуть его с причиной.</p></div><span className="staff-role-pill">{files.count ?? 0} на проверке</span></div>
-    {(files.data ?? []).length ? <div className="staff-work-list">{files.data?.map((file) => {
+  return <><div className="staff-page-heading"><div><h1>Документы</h1><p>Документы по доступным вам делам. Откройте файл, чтобы посмотреть его и принять решение.</p></div><span className="staff-role-pill">{files.count ?? 0} документов</span></div>
+    <nav className="staff-filter-tabs" aria-label="Статус документов">{[["all", "Все"], ["under_review", "Нужно проверить"], ["accepted", "Приняты"], ["returned", "Нужны исправления"]].map(([value, label]) => <Link key={value} href={listHref("/staff/review", { status: value, q })} className={status === value ? "is-active" : ""} aria-current={status === value ? "page" : undefined}>{label}</Link>)}</nav>
+    <ListSearch action="/staff/review" query={q} placeholder="Найти файл по названию" hidden={{ status }} resetHref={q ? listHref("/staff/review", { status }) : undefined} />
+    <div className="lawyer-table-wrap"><table className="lawyer-table"><thead><tr><th>Название</th><th>Дело</th><th>Статус</th><th>Дата</th><th>Действие</th></tr></thead><tbody>{files.data?.map(file => {
       const request = requestById.get(file.request_id);
       const item = request ? caseById.get(request.case_id) : null;
-      if (!request || !item) return null;
-      return <article className="staff-work-card" key={file.id}><div className="staff-work-head"><h2>{file.original_name}</h2><span className="staff-tag">На проверке</span></div><p>№ {item.case_number} · {item.title}</p><small>{request.title} · {new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Almaty" }).format(new Date(file.uploaded_at))}</small><p>{item.status !== "open" || item.is_suspended ? "Рассмотрение недоступно, пока дело не вернётся в активную работу." : <Link href={`/staff/cases/${item.id}/documents#file-${file.id}`}>Рассмотреть документ</Link>}</p></article>;
-    })}</div> : <div className="staff-empty-box"><h3>Очередь пуста</h3><p>Новые файлы появятся здесь сразу после завершения загрузки.</p></div>}
-    {pages > 1 && <nav className="staff-pagination" aria-label="Страницы документов">{page > 1 && <Link href={`/staff/review?page=${page - 1}`}>Назад</Link>}<span>Страница {page} из {pages}</span>{page < pages && <Link href={`/staff/review?page=${page + 1}`}>Далее</Link>}</nav>}
+      if (!item) return null;
+      return <tr key={file.id}><td data-label="Название"><strong>{file.original_name}</strong><small>{request?.title}</small></td><td data-label="Дело"><Link href={`/staff/cases/${item.id}`}>№ {item.case_number}</Link></td><td data-label="Статус"><span className={`lawyer-status ${file.status === "accepted" ? "green" : ""}`}>{file.status === "accepted" ? "Принят" : file.status === "returned" ? "Нужны исправления" : "На проверке"}</span></td><td data-label="Дата">{new Intl.DateTimeFormat("ru-RU", { dateStyle: "short", timeZone: "Asia/Almaty" }).format(new Date(file.uploaded_at))}</td><td data-label="Действие"><Link href={`/staff/review/${file.id}`}>{file.status === "under_review" ? "Проверить" : "Открыть"}</Link></td></tr>;
+    })}</tbody></table>{!files.data?.length && <div className="lawyer-empty"><h3>{q ? "Документы не найдены" : "Нет документов в этом списке"}</h3><p>{q ? "Попробуйте другую часть названия файла." : "Выберите другой статус или дождитесь загрузки документов."}</p></div>}</div>
+    <ListPagination path="/staff/review" page={page} count={files.count ?? 0} params={{ status, q }} />
   </>;
 }

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireStaff } from "../../../../lib/staff";
 import { worklistDate, worklistPage } from "../../../../lib/staff-worklist";
 
-export const metadata: Metadata = { title: "Дела без обновлений — Современная защита" };
+export const metadata: Metadata = { title: "Дела без обновлений | Современная защита" };
 
 type StaleCase = {
   case_id: string; case_number: string; title: string; client_name: string;
@@ -37,7 +37,7 @@ export default async function StaleCasesPage({ searchParams }: {
   }
   const pages = Math.ceil(count / 25);
   return <>
-    <div className="staff-page-heading"><div><h1>Дела без обновлений</h1><p>Открытые дела, в которых клиенту давно не публиковали обновление этапа. Порог — {settings.data} дней; приостановленные дела тоже остаются под контролем.</p></div><span className="staff-role-pill">{count} дел</span></div>
+    <div className="staff-page-heading"><div><h1>Дела без обновлений</h1><p>Открытые дела, в которых клиенту давно не публиковали обновление этапа. Порог | {settings.data} дней; приостановленные дела тоже остаются под контролем.</p></div><span className="staff-role-pill">{count} дел</span></div>
     <p className="staff-case-audit-link"><Link href="/staff/cases">Все дела</Link></p>
     {rows.length ? <div className="staff-case-list">{rows.map((item) => <Link key={item.case_id} href={`/staff/cases/${item.case_id}`} className="staff-case-list-row"><span className="staff-case-list-main"><span className="staff-case-list-meta">№ {item.case_number} · {item.client_name}</span><strong>{item.title}</strong><small>{item.is_suspended ? "Приостановлено · " : ""}Последнее обновление для клиента: {worklistDate(item.last_update_at)}</small></span><span className="staff-case-list-side"><span className="staff-signal is-overdue">{item.days_without_update} дней без обновления</span></span><span className="staff-case-list-arrow" aria-hidden="true">›</span></Link>)}</div>
       : <div className="staff-empty-box"><h3>Нет дел без обновлений</h3><p>Все доступные вам дела обновлялись в пределах установленного срока.</p></div>}

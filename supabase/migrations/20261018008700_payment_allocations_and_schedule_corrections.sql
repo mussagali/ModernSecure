@@ -4,8 +4,11 @@ alter table public.payment_schedule add column cancelled_at timestamptz,
   add constraint payment_schedule_cancellation_check check (
     (cancelled_at is null and cancellation_reason is null) or
     (cancelled_at is not null and length(trim(cancellation_reason)) between 1 and 500));
+
 alter table public.payment_schedule add constraint payment_schedule_id_case_key unique(id, case_id);
+
 alter table public.payments add constraint payments_id_case_key unique(id, case_id);
+
 create table public.payment_allocations (
   payment_id uuid not null,
   schedule_id uuid not null,
@@ -15,15 +18,23 @@ create table public.payment_allocations (
   foreign key(payment_id, case_id) references public.payments(id, case_id) on delete restrict,
   foreign key(schedule_id, case_id) references public.payment_schedule(id, case_id) on delete restrict
 );
+
 create index payment_allocations_schedule_idx on public.payment_allocations(schedule_id);
+
 create index payment_allocations_case_idx on public.payment_allocations(case_id);
+
 insert into public.payment_allocations(payment_id, schedule_id, case_id, amount_kzt)
   select id, schedule_id, case_id, amount_kzt from public.payments where schedule_id is not null;
+
 alter table public.payment_allocations enable row level security;
+
 revoke all on public.payment_allocations from anon, authenticated;
+
 grant select on public.payment_allocations to authenticated;
+
 create policy payment_allocations_case_read on public.payment_allocations for select to authenticated
   using(private.can_read_case(case_id));
+
 create policy staff_mfa_guard on public.payment_allocations as restrictive for all to authenticated
   using((select private.staff_mfa_passed())) with check((select private.staff_mfa_passed()));
 
@@ -39,6 +50,7 @@ begin
   if not found then raise exception 'Case not found'; end if;
 end;
 $$;
+
 revoke all on function private.lock_financial_case(uuid) from public, anon, authenticated;
 
 create function private.installment_paid(p_schedule_id uuid)
@@ -46,6 +58,7 @@ returns numeric language sql stable security definer set search_path = '' as $$
   select coalesce(sum(a.amount_kzt), 0) from public.payment_allocations a
   join public.payments p on p.id = a.payment_id where a.schedule_id = p_schedule_id and p.status = 'confirmed';
 $$;
+
 revoke all on function private.installment_paid(uuid) from public, anon, authenticated;
 
 -- Prices are total prices of contract versions. Paid money plus active future
@@ -61,6 +74,7 @@ begin
   if price is null or outstanding > greatest(0, price - paid) then raise exception 'Schedule exceeds remaining contract price'; end if;
 end;
 $$;
+
 revoke all on function private.assert_schedule_within_contract(uuid) from public, anon, authenticated;
 
 create function public.staff_record_payment(p_case_id uuid, p_amount_kzt numeric, p_paid_on date,
@@ -126,7 +140,9 @@ begin
   return result_payment_id;
 end;
 $$;
+
 revoke all on function public.staff_record_payment(uuid, numeric, date, text, text, uuid, uuid, uuid) from public, anon;
+
 grant execute on function public.staff_record_payment(uuid, numeric, date, text, text, uuid, uuid, uuid) to authenticated;
 
 -- Keep old API callers on the same accounting path.
@@ -139,6 +155,7 @@ begin
   return public.staff_record_payment(target_case, p_amount_kzt, p_paid_on, p_reference, p_client_note, p_idempotency_key, null, p_schedule_id);
 end;
 $$;
+
 create or replace function public.staff_confirm_payment_with_receipt(p_schedule_id uuid, p_amount_kzt numeric, p_paid_on date,
   p_reference text, p_client_note text, p_idempotency_key uuid, p_receipt_id uuid)
 returns uuid language plpgsql security definer set search_path = '' as $$
@@ -171,9 +188,10 @@ begin
   end if;
 end;
 $$;
-revoke all on function public.staff_cancel_payment_installment(uuid, timestamptz, text) from public, anon;
-grant execute on function public.staff_cancel_payment_installment(uuid, timestamptz, text) to authenticated;
 
+revoke all on function public.staff_cancel_payment_installment(uuid, timestamptz, text) from public, anon;
+
+grant execute on function public.staff_cancel_payment_installment(uuid, timestamptz, text) to authenticated;
 
 create or replace function public.staff_add_payment_installment(p_case_id uuid, p_due_on date,
   p_amount_kzt numeric, p_description text default null)

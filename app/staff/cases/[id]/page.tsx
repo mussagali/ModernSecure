@@ -5,7 +5,7 @@ import { SubmitButton } from "../../../../components/SubmitButton";
 import { requireStaff } from "../../../../lib/staff";
 import { assignCase, changeCaseStage, closeCase, resumeCase, revokeCaseAssignment, suspendCase } from "../../actions";
 
-export const metadata: Metadata = { title: "Карточка дела — Современная защита" };
+export const metadata: Metadata = { title: "Карточка дела | Современная защита" };
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

@@ -1,0 +1,30 @@
+ModernSecure — SQL package validation — 2026-10-23
+
+Local execution: node scripts/test-supabase-upload.mjs
+Result: PASS
+
+Executed exact package SQL files 00–05 against isolated PGlite PostgreSQL.
+Supabase Auth and Storage catalog tables were simulated locally.
+
+37 public tables, 74 public RLS policies.
+All 72 literal RPC names used by the application's app/ and lib/ sources exist.
+
+Verified:
+- complete 84-migration schema installation without any old owner account;
+- profile creation for an Auth account existing before installation;
+- primary operator provisioning and safe repeat;
+- client account linking and safe repeat;
+- service template, stages and first case creation;
+- own case visibility and cross-client case/task/message isolation;
+- rejection of client attempts to create cases or write case rows directly;
+- client task response and rejection of a different client's response;
+- message send and idempotent replay;
+- anonymous access denial;
+- schema/RLS/private bucket verification script;
+- repeated installation refused without deleting existing case data;
+- duplicate case setup refused.
+
+Not tested against the destination Supabase project:
+Auth delivery and login, live PostgREST, Storage HTTP/file transfer,
+Realtime network subscriptions, pg_cron execution and production backups.
+No remote database or Auth account was changed by this validation.

@@ -3,7 +3,7 @@
 import { parseAlmatyDeadline } from "../../lib/deadlines";
 
 import { redirect } from "next/navigation";
-import { requireStaff } from "../../lib/staff";
+import { requireStaff, requirePrimaryAdmin } from "../../lib/staff";
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -57,7 +57,7 @@ export async function createClientCard(formData: FormData) {
 }
 
 export async function linkClientAccount(formData: FormData) {
-  const { supabase } = await requireStaff(["manager", "admin"]);
+  const { supabase } = await requirePrimaryAdmin();
   const clientId = value(formData, "clientId");
   const email = value(formData, "email");
   if (!uuidPattern.test(clientId) || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -290,7 +290,7 @@ export async function markStaffMessagesRead(formData: FormData) {
 }
 
 export async function addStaffMember(formData: FormData) {
-  const { supabase, staff } = await requireStaff(["admin"]);
+  const { supabase, staff } = await requirePrimaryAdmin();
   const email = value(formData, "email").toLowerCase();
   const displayName = value(formData, "displayName");
   const role = value(formData, "role");
@@ -311,7 +311,7 @@ export async function cancelStaffInvitation(formData: FormData) {
 }
 
 export async function changeStaffAccess(formData: FormData) {
-  const { supabase, staff } = await requireStaff(["admin"]);
+  const { supabase, staff } = await requirePrimaryAdmin();
   const staffUserId = value(formData, "staffUserId");
   const role = value(formData, "role");
   const active = value(formData, "active");
@@ -350,4 +350,21 @@ export async function revokeCaseAssignment(formData: FormData) {
   const { error } = await supabase.rpc("admin_revoke_case_assignment", { p_assignment_id: assignmentId, p_reason: reason });
   if (error) redirect(`/staff/cases/${caseId}?error=revoke`);
   redirect(`/staff/cases/${caseId}?revoked=1`);
+}
+
+export async function approveAccount(formData: FormData) {
+  const { supabase } = await requirePrimaryAdmin();
+  const userId = value(formData, "userId");
+  const role = value(formData, "role");
+  const displayName = value(formData, "displayName");
+  const clientId = role === "client" ? value(formData, "clientId") : "";
+  if (!uuidPattern.test(userId) || !["client", "lawyer", "manager", "admin"].includes(role)
+    || !displayName || displayName.length > 160 || (clientId && !uuidPattern.test(clientId))) {
+    redirect("/staff/team?error=approval-invalid");
+  }
+  const { error } = await supabase.rpc("admin_approve_account", {
+    p_user_id: userId, p_role: role, p_display_name: displayName, p_client_id: clientId || null,
+  });
+  if (error) redirect("/staff/team?error=approval");
+  redirect("/staff/team?approved=1");
 }

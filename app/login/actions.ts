@@ -1,6 +1,6 @@
 "use server";
 
-import { safeAccountReturn } from "../../lib/return-path";
+import { workspaceDestination } from "../../lib/workspace-destination";
 import { redirect } from "next/navigation";
 import { createClient } from "../../lib/supabase/server";
 import { getStaffStatus } from "../../lib/staff";
@@ -29,7 +29,7 @@ export async function loginAction(_previous: AuthState, formData: FormData): Pro
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     return {
       status: "error",
@@ -42,15 +42,13 @@ export async function loginAction(_previous: AuthState, formData: FormData): Pro
             : "Сервис входа сейчас недоступен. Попробуйте позже; если проблема повторится, сообщите администратору.",
     };
   }
-  const userId = data.user?.id;
-  if (userId) {
-    const { error: inviteError } = await supabase.rpc("claim_staff_invite");
-    if (inviteError) redirect("/account?inviteError=1");
-    const { staff, error: staffError } = await getStaffStatus(supabase);
-    if (staffError) redirect("/account?staffLookupError=1");
-    if (staff?.active) redirect(staff.mfa_passed ? "/staff" : "/staff-security");
+  const { error: inviteError } = await supabase.rpc("claim_staff_invite");
+  const { staff, error: staffError } = await getStaffStatus(supabase);
+  if (inviteError || staffError) {
+    await supabase.auth.signOut();
+    return { status: "error", message: "Не удалось проверить доступ. Попробуйте позже." };
   }
-  redirect(safeAccountReturn(formData.get("next")));
+  redirect(workspaceDestination(staff, formData.get("next")));
 }
 
 export async function registerAction(_previous: AuthState, formData: FormData): Promise<AuthState> {
@@ -70,7 +68,7 @@ export async function registerAction(_previous: AuthState, formData: FormData): 
     options: { emailRedirectTo: `${process.env.APP_ORIGIN}/auth/callback` },
   });
   if (error) return { status: "error", message: "Не удалось создать аккаунт. Попробуйте позже." };
-  return { status: "success", message: "Проверьте почту и подтвердите email по ссылке в письме. Новые аккаунты автоматически поступают администратору на одобрение; ФИО и ИИН можно заполнить позже в профиле." };
+  return { status: "success", message: "Проверьте почту и подтвердите email по ссылке в письме." };
 }
 
 export async function forgotPasswordAction(_previous: AuthState, formData: FormData): Promise<AuthState> {
@@ -98,10 +96,5 @@ export async function updatePasswordAction(_previous: AuthState, formData: FormD
   if (!data?.claims) return { status: "error", message: "Ссылка недействительна или срок её действия истёк." };
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { status: "error", message: "Не удалось обновить пароль. Попробуйте ещё раз." };
-  const { error: inviteError } = await supabase.rpc("claim_staff_invite");
-  if (inviteError) redirect("/account?inviteError=1");
-  const { staff, error: staffError } = await getStaffStatus(supabase);
-  if (staffError) redirect("/account?staffLookupError=1");
-  if (staff?.active) redirect(staff.mfa_passed ? "/staff" : "/staff-security");
   redirect("/account");
 }

@@ -1,4 +1,5 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { staffWorkspaceEnabled } from "./application-scope";
 import { createClient } from "./supabase/server";
 
 export type StaffStatus = {
@@ -16,6 +17,7 @@ export async function getStaffStatus(supabase: Awaited<ReturnType<typeof createC
 }
 
 export async function requireStaff(allowedRoles: Array<"lawyer" | "manager" | "admin"> = ["lawyer", "manager", "admin"]) {
+  if (!staffWorkspaceEnabled) notFound();
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
   const userId = auth?.claims?.sub;
@@ -28,4 +30,10 @@ export async function requireStaff(allowedRoles: Array<"lawyer" | "manager" | "a
   const email = typeof auth.claims.email === "string" ? auth.claims.email : "";
   const aal = auth.claims.aal;
   return { supabase, userId, staff, email, aal };
+}
+
+export async function requirePrimaryAdmin() {
+  const context = await requireStaff(["admin"]);
+  if (!context.staff.is_primary_admin) redirect("/staff?error=forbidden");
+  return context;
 }

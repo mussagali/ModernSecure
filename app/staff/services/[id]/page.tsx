@@ -6,7 +6,7 @@ import { SubmitButton } from "../../../../components/SubmitButton";
 import { requireStaff } from "../../../../lib/staff";
 import { publishServiceVersion } from "../../actions";
 
-export const metadata: Metadata = { title: "Версии услуги — Современная защита" };
+export const metadata: Metadata = { title: "Версии услуги | Современная защита" };
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -38,7 +38,7 @@ export default async function ServiceDetail({ params, searchParams }: {
   const totalPages = Math.ceil((count ?? 0) / pageSize);
 
   return <><Link href="/staff/services" className="staff-back">Все услуги</Link>
-    <div className="staff-page-heading"><div><h1>{service.name}</h1><p>Дела используют версию, опубликованную на момент открытия. Новая версия предназначена для будущих дел.</p></div><span className="staff-role-pill">Версия {latest?.version_no ?? "—"}</span></div>
+    <div className="staff-page-heading"><div><h1>{service.name}</h1><p>Дела используют версию, опубликованную на момент открытия. Новая версия предназначена для будущих дел.</p></div><span className="staff-role-pill">Версия {latest?.version_no ?? "Не указано"}</span></div>
     {query.published === "1" && <div className="staff-alert is-success" role="status">Новая версия опубликована. Существующие дела остались на прежней версии.</div>}
     {query.error && <div className="staff-alert is-error" role="alert">{query.error === "stale" ? "Пока форма была открыта, появилась новая версия. Обновите страницу и внесите изменения поверх актуального списка." : "Не удалось опубликовать версию. Проверьте этапы и документы, затем повторите попытку."}</div>}
     {service.active && latest && <section className="staff-form-panel"><div><h2>Обновить маршрут и документы</h2><p>Поля заполнены из последней версии. Изменения вступят в силу только для дел, созданных после публикации.</p></div><form action={publishServiceVersion} className="staff-form"><input type="hidden" name="serviceId" value={id} /><input type="hidden" name="expectedVersionId" value={latest.id} /><label>Этапы по одному на строку<textarea name="stages" required rows={Math.max(5, latestStages.length + 1)} defaultValue={latestStages.map((stage) => stage.title).join("\n")} /></label><span className="staff-form-hint">От 1 до 12 этапов. История старой версии сохранится.</span><ServiceDocumentFields initialDocuments={latestDocuments.map((document) => ({ title: document.title, instructions: document.instructions ?? "", required: document.required }))} /><SubmitButton>Опубликовать новую версию</SubmitButton></form></section>}

@@ -1,5 +1,6 @@
 "use client";
-import { postFiles } from "../lib/direct-upload";
+
+import { uploadForm } from "../lib/direct-upload";
 
 import { NavIcon } from "./NavIcon";
 
@@ -242,7 +243,7 @@ export default function CaseConversation({ caseId, caseNumber, caseTitle, backHr
     const candidates = [...files, ...incoming];
     if (candidates.length > maxFiles) { setError("Можно прикрепить не более 5 файлов за раз."); return; }
     if (candidates.some((file) => !allowedExtensions.test(file.name) || file.name.length > 180 || file.size < 1 || file.size > maxFileBytes)) {
-      setError("Подойдут PDF, JPG, PNG, HEIC и HEIF до 20 МБ каждый; имя файла — до 180 символов."); return;
+      setError("Подойдут PDF, JPG, PNG, HEIC и HEIF до 20 МБ каждый; имя файла | до 180 символов."); return;
     }
     if (candidates.reduce((sum, file) => sum + file.size, 0) > maxTotalBytes) {
       setError("Общий размер вложений не должен превышать 40 МБ."); return;
@@ -272,7 +273,7 @@ export default function CaseConversation({ caseId, caseNumber, caseTitle, backHr
     event.preventDefault();
     if (sending || !canSend) return;
     if (!body.trim() && !files.length) { setError("Напишите сообщение или прикрепите файл."); return; }
-    if (!navigator.onLine) { setError("Нет соединения. Сообщение и файлы остались в форме — отправьте их после восстановления сети."); return; }
+    if (!navigator.onLine) { setError("Нет соединения. Сообщение и файлы остались в форме | отправьте их после восстановления сети."); return; }
     setSending(true);
     setError("");
     setNotice("");
@@ -285,7 +286,7 @@ export default function CaseConversation({ caseId, caseNumber, caseTitle, backHr
     form.set("body", body);
     files.forEach((file) => form.append("files", file));
     try {
-      const response = await postFiles("/api/message-attachments", form);
+      const response = await uploadForm("/api/message-attachments", form);
       const result = await response.json().catch(() => null) as { ok?: boolean; error?: string } | null;
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Сообщение не отправлено. Попробуйте ещё раз.");
       setBody("");
@@ -295,7 +296,7 @@ export default function CaseConversation({ caseId, caseNumber, caseTitle, backHr
       router.refresh();
     } catch (cause) {
       setError(cause instanceof TypeError
-        ? "Не удалось связаться с сервером. Сообщение и файлы остались в форме — повторите отправку."
+        ? "Не удалось связаться с сервером. Сообщение и файлы остались в форме | повторите отправку."
         : cause instanceof Error ? cause.message : "Не удалось отправить сообщение. Проверьте соединение и попробуйте ещё раз.");
     } finally { setSending(false); }
   }
@@ -362,7 +363,7 @@ export default function CaseConversation({ caseId, caseNumber, caseTitle, backHr
             <textarea value={body} onChange={(event) => changeDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} placeholder="Напишите сообщение…" aria-label="Сообщение" rows={1} maxLength={4000} disabled={sending} />
             <button className={styles.sendButton} type="submit" disabled={sending || (!body.trim() && files.length === 0)} aria-label={sending ? "Отправляется" : "Отправить сообщение"} title="Отправить сообщение"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m5 12 14-7-3 14-4-6-7-1Z"/><path d="m12 13 7-8"/></svg></button>
           </div>
-          <div className={styles.composeHint}><span>PDF и изображения до 20 МБ · Enter — отправить, Shift+Enter — новая строка</span><span>{files.length}/5 файлов</span></div>
+          <div className={styles.composeHint}><span>PDF и изображения до 20 МБ · Enter | отправить, Shift+Enter | новая строка</span><span>{files.length}/5 файлов</span></div>
           {dragging && <div className={styles.dropOverlay}>Отпустите файлы, чтобы прикрепить</div>}
         </form>}
     </div>

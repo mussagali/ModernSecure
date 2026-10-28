@@ -25,7 +25,6 @@ export async function addInstallment(formData: FormData) {
   const { error } = await supabase.rpc("staff_add_payment_installment", {
     p_case_id: caseId, p_due_on: dueOn, p_amount_kzt: amount, p_description: description || null,
   });
-  if (error?.message === "Schedule exceeds remaining contract price") redirect(`/staff/cases/${caseId}/payments?error=over-scheduled`);
   if (error) redirect(`/staff/cases/${caseId}/payments?error=schedule`);
   redirect(`/staff/cases/${caseId}/payments?created=1`);
 }
@@ -69,15 +68,15 @@ export async function updateInstallment(formData: FormData) {
     p_amount_kzt: amount, p_description: description || null, p_reason: reason,
   });
   if (error?.message === "Installment changed by another user") redirect(`/staff/cases/${caseId}/payments?error=conflict`);
-  if (error?.message === "Schedule exceeds remaining contract price") redirect(`/staff/cases/${caseId}/payments?error=over-scheduled`);
   if (error) redirect(`/staff/cases/${caseId}/payments?error=schedule`);
   redirect(`/staff/cases/${caseId}/payments?updated=1`);
 }
 
 export async function confirmPayment(formData: FormData) {
   const caseId = field(formData, "caseId");
+  const scheduleId = field(formData, "scheduleId");
   const key = field(formData, "key");
-  if (!uuidPattern.test(caseId) || !uuidPattern.test(key)) redirect("/staff/cases");
+  if (!uuidPattern.test(caseId) || !uuidPattern.test(scheduleId) || !uuidPattern.test(key)) redirect("/staff/cases");
   const { supabase } = await requireStaffCase(caseId);
   const amount = field(formData, "amount");
   const paidOn = field(formData, "paidOn");
@@ -89,12 +88,14 @@ export async function confirmPayment(formData: FormData) {
     || (receiptId && !uuidPattern.test(receiptId))) {
     redirect(`/staff/cases/${caseId}/payments?error=invalid`);
   }
-  const { error } = await supabase.rpc("staff_record_payment", {
-    p_case_id: caseId, p_amount_kzt: amount, p_paid_on: paidOn,
+  const { data: schedule } = await supabase.from("payment_schedule").select("case_id").eq("id", scheduleId).maybeSingle();
+  if (schedule?.case_id !== caseId) redirect(`/staff/cases/${caseId}/payments?error=invalid`);
+  const { error } = await supabase.rpc("staff_confirm_payment_with_receipt", {
+    p_schedule_id: scheduleId, p_amount_kzt: amount, p_paid_on: paidOn,
     p_reference: reference, p_client_note: clientNote || null, p_idempotency_key: key,
     p_receipt_id: receiptId || null,
   });
-  if (error?.message === "Payment exceeds active schedule") redirect(`/staff/cases/${caseId}/payments?error=exceeds`);
+  if (error?.message === "Payment exceeds installment") redirect(`/staff/cases/${caseId}/payments?error=exceeds`);
   if (error?.code === "23505") redirect(`/staff/cases/${caseId}/payments?error=duplicate`);
   if (error) redirect(`/staff/cases/${caseId}/payments?error=payment`);
   redirect(`/staff/cases/${caseId}/payments?confirmed=1`);
@@ -133,17 +134,4 @@ export async function reviewReceipt(formData: FormData) {
   });
   if (error) redirect(`/staff/cases/${caseId}/payments?receiptError=review`);
   redirect(`/staff/cases/${caseId}/payments?receiptReviewed=1`);
-}
-
-export async function cancelInstallment(formData: FormData) {
-  const caseId = field(formData, "caseId"), scheduleId = field(formData, "scheduleId"), reason = field(formData, "reason");
-  if (!uuidPattern.test(caseId) || !uuidPattern.test(scheduleId)) redirect("/staff/cases");
-  const { supabase } = await requireStaffCase(caseId);
-  const { data: schedule } = await supabase.from("payment_schedule").select("case_id").eq("id", scheduleId).maybeSingle();
-  if (schedule?.case_id !== caseId || !reason || reason.length > 500) redirect(`/staff/cases/${caseId}/payments?error=invalid`);
-  const { error } = await supabase.rpc("staff_cancel_payment_installment", {
-    p_schedule_id: scheduleId, p_expected_updated_at: field(formData, "expectedUpdatedAt"), p_reason: reason,
-  });
-  if (error) redirect(`/staff/cases/${caseId}/payments?error=${error.message === "Installment changed by another user" ? "conflict" : "schedule"}`);
-  redirect(`/staff/cases/${caseId}/payments?updated=1`);
 }
