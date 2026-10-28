@@ -24,7 +24,7 @@ iOS-проект сгенерирован XcodeGen, Swift-файлы прошл�
 
 ## Запуск готового APK на этом Mac
 
-Готовый `artifacts/modernsecure-debug.apk` использует `https://modernsecure.shpshka.work`: локальный сервер, USB и `adb reverse` для работы сайта не нужны. Нужен интернет. Это debug-сборка для проверки, не подписанный релиз Google Play.
+Готовый APK закоммичен в `public/downloads/modernsecure-debug.apk` и доступен по [прямой ссылке](https://modernsecure.shpshka.work/downloads/modernsecure-debug.apk). Он использует `https://modernsecure.shpshka.work`: локальный сервер, USB и `adb reverse` для работы сайта не нужны. Нужен интернет. Это debug-сборка для проверки, не подписанный релиз Google Play.
 
 Запуск эмулятора и установка:
 
@@ -37,7 +37,7 @@ export ANDROID_SDK_ROOT=/opt/homebrew/share/android-commandlinetools
 
 ```sh
 export ANDROID_SDK_ROOT=/opt/homebrew/share/android-commandlinetools
-"$ANDROID_SDK_ROOT/platform-tools/adb" -e install -r artifacts/modernsecure-debug.apk
+"$ANDROID_SDK_ROOT/platform-tools/adb" -e install -r public/downloads/modernsecure-debug.apk
 "$ANDROID_SDK_ROOT/platform-tools/adb" -e shell am start -n kz.modernsecure.app.debug/kz.modernsecure.app.MainActivity
 ```
 
@@ -53,7 +53,7 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 ./gradlew assembleDebug testDebugUnitTest lintDebug -PsiteUrl=https://modernsecure.shpshka.work
 ```
 
-APK: `app/build/outputs/apk/debug/app-debug.apk`. После успешной проверки скопируйте его в `../../../artifacts/modernsecure-debug.apk`, чтобы выдаваемый файл совпадал с проверенной сборкой. Для другого домена после развёртывания:
+APK: `app/build/outputs/apk/debug/app-debug.apk`. После успешной проверки скопируйте его в `../../../public/downloads/modernsecure-debug.apk`, обновите соседний файл `.sha256` и закоммитьте оба файла. После деплоя скачайте APK по публичной ссылке и сравните SHA-256 с проверенной сборкой. `artifacts/` остаётся локальной папкой и не попадает в Git. Для другого домена после развёртывания:
 
 ```sh
 ./gradlew assembleDebug -PsiteUrl=https://YOUR_DOMAIN

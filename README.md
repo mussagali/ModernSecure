@@ -43,7 +43,11 @@ npm run dev
 
 ## Мобильные приложения
 
-Android WebView и iOS WKWebView для всех ролей находятся в [apps/mobile_webview](apps/mobile_webview/README.md). После регистрации и подтверждения email главный администратор назначает роль и открывает доступ. Настройка push-доставки требует Firebase и рабочего HTTPS-окружения.
+[Скачать Android APK](https://modernsecure.shpshka.work/downloads/modernsecure-debug.apk) — откройте ссылку на Android, скачайте файл и установите его. При запросе Android разрешите установку для браузера, из которого открыт файл. Приложение использует опубликованный сайт; компьютер и доступ к GitHub не нужны. После регистрации подтвердите email и дождитесь активации администратором.
+
+Это debug-сборка для тестирования: проверена в Android-эмуляторе, push пока не подключён. Сам APK хранится в [public/downloads](public/downloads/), рядом опубликована [контрольная сумма SHA-256](https://modernsecure.shpshka.work/downloads/modernsecure-debug.apk.sha256). Эта папка содержит только публичные файлы загрузки и обслуживается без проверки сессии.
+
+Android WebView и iOS WKWebView для всех ролей находятся в [apps/mobile_webview](apps/mobile_webview/README.md). Администратор активирует клиентов, юристов и менеджеров; администраторов назначает главный. Настройка push-доставки требует Firebase и рабочего HTTPS-окружения.
 
 ## Аккаунты и права
 
