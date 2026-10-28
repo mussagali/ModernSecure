@@ -14,7 +14,7 @@
 
 Редизайн от 28 октября 2026 года объединяет веб и оболочки: светлая палитра с зелёным акцентом, постоянная мобильная навигация, компактные формы, списки и чаты. Android получил новые иконку, системные панели, индикатор загрузки и экран повторной попытки; соответствующие исходники iOS обновлены. Android-экран кабинета и состояние без соединения проверены в эмуляторе. Снимки этой проверки находятся в `.impeccable/review/redesign/`; заполненные дела и переписка не создавались ради демонстрации.
 
-Android debug APK собран и проверен на Pixel 7 / Android API 36. Проверены вход, ожидание активации, сохранение сессии при пересоздании Activity и закрытый доступ к кабинету. Пройдены Android unit tests и lint. Полный набор веб-проверок: 37 скриптов, ESLint и production build.
+Android debug APK собран и проверен на Pixel 7 / Android API 36. Проверены вход, ожидание активации, сохранение сессии при пересоздании Activity и закрытый доступ к кабинету. Пройдены Android unit tests и lint. Полный набор веб-проверок: 41 скрипт, ESLint и production build.
 
 Реальная загрузка и скачивание 6 МиБ через подписанные Storage URL проверены с совпадением SHA-256. Тестовые объекты удалены. Это проверка транспорта, не полного сценария каждого вида документа.
 
@@ -24,39 +24,36 @@ iOS-проект сгенерирован XcodeGen, Swift-файлы прошл�
 
 ## Запуск готового APK на этом Mac
 
-Из корня проекта:
+Готовый `artifacts/modernsecure-debug.apk` использует `https://modernsecure.shpshka.work`: локальный сервер, USB и `adb reverse` для работы сайта не нужны. Нужен интернет. Это debug-сборка для проверки, не подписанный релиз Google Play.
 
-```sh
-npm run dev -- --hostname 127.0.0.1
-```
-
-В другом терминале:
+Запуск эмулятора и установка:
 
 ```sh
 export ANDROID_SDK_ROOT=/opt/homebrew/share/android-commandlinetools
 "$ANDROID_SDK_ROOT/emulator/emulator" -avd ModernSecure_API_36
 ```
 
-После запуска эмулятора:
+В другом терминале из корня проекта:
 
 ```sh
 export ANDROID_SDK_ROOT=/opt/homebrew/share/android-commandlinetools
-"$ANDROID_SDK_ROOT/platform-tools/adb" -e reverse tcp:3000 tcp:3000
 "$ANDROID_SDK_ROOT/platform-tools/adb" -e install -r artifacts/modernsecure-debug.apk
 "$ANDROID_SDK_ROOT/platform-tools/adb" -e shell am start -n kz.modernsecure.app.debug/kz.modernsecure.app.MainActivity
 ```
 
-`adb reverse` направляет localhost телефона на этот Mac. Для физического Android подключите USB, разрешите отладку и используйте `-d` вместо `-e`. Перенос APK на телефон без этого подключения пока не даст доступа к сайту. Эмулятор и Android Studio уже установлены.
+На физическом Android установите этот APK. Для установки через ADB подключите USB, разрешите отладку и замените `-e` на `-d`; после установки USB не требуется.
+
+Локальная сборка без `-PsiteUrl` использует `http://localhost:3000`. Только для неё нужны запущенный `npm run dev` и `adb reverse tcp:3000 tcp:3000`. Не распространяйте её как сборку с опубликованным сайтом.
 
 ## Сборка Android
 
 ```sh
 cd apps/mobile_webview/android
 export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
-./gradlew assembleDebug testDebugUnitTest lintDebug
+./gradlew assembleDebug testDebugUnitTest lintDebug -PsiteUrl=https://modernsecure.shpshka.work
 ```
 
-APK: `app/build/outputs/apk/debug/app-debug.apk`. Для домена после развёртывания:
+APK: `app/build/outputs/apk/debug/app-debug.apk`. После успешной проверки скопируйте его в `../../../artifacts/modernsecure-debug.apk`, чтобы выдаваемый файл совпадал с проверенной сборкой. Для другого домена после развёртывания:
 
 ```sh
 ./gradlew assembleDebug -PsiteUrl=https://YOUR_DOMAIN
