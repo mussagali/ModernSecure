@@ -4,6 +4,7 @@ import { AccountHeader } from "../../../components/AccountHeader";
 import { NavIcon, type NavIconName } from "../../../components/NavIcon";
 import { createClient } from "../../../lib/supabase/server";
 import { signOutAction } from "../actions";
+import { installmentPaidAmounts } from "../../../lib/payment-summary";
 import { formatKzt, toKztCents } from "../../../lib/money";
 import { formatKzDate } from "../../../lib/client-case";
 
@@ -16,15 +17,17 @@ export default async function MorePage() {
     supabase.from("clients").select("id, full_name").eq("user_id", auth.claims.sub).maybeSingle(),
   ]);
   if (error || clientError) throw new Error("Не удалось загрузить профиль");
-  const { data: cases, error: casesError } = client ? await supabase.from("cases").select("id, title").eq("client_id", client.id).order("updated_at", { ascending: false }) : { data: [], error: null };
+  const { data: cases, error: casesError } = client ? await supabase.from("cases").select("id, title, status").eq("client_id", client.id).order("updated_at", { ascending: false }) : { data: [], error: null };
   if (casesError) throw new Error("Не удалось загрузить дела");
   const caseId = cases?.[0]?.id;
-  const [schedule, payments] = caseId ? await Promise.all([
-    supabase.from("payment_schedule").select("id, due_on, amount_kzt").eq("case_id", caseId).order("due_on"),
-    supabase.from("payments").select("schedule_id, amount_kzt").eq("case_id", caseId).eq("status", "confirmed"),
-  ]) : [{ data: [], error: null }, { data: [], error: null }];
-  if (schedule.error || payments.error) throw new Error("Не удалось загрузить оплаты");
-  const nextPayment = (schedule.data ?? []).map(row => ({ ...row, remaining: toKztCents(row.amount_kzt) - (payments.data ?? []).filter(payment => payment.schedule_id === row.id).reduce((sum, payment) => sum + toKztCents(payment.amount_kzt), BigInt(0)) })).find(row => row.remaining > BigInt(0));
+  const [schedule, payments, allocations] = caseId ? await Promise.all([
+    supabase.from("payment_schedule").select("id, due_on, amount_kzt, cancelled_at").eq("case_id", caseId).order("due_on"),
+    supabase.from("payments").select("id, status").eq("case_id", caseId).eq("status", "confirmed"),
+    supabase.from("payment_allocations").select("payment_id, schedule_id, amount_kzt").eq("case_id", caseId),
+  ]) : [{ data: [], error: null }, { data: [], error: null }, { data: [], error: null }];
+  if (schedule.error || payments.error || allocations.error) throw new Error("Не удалось загрузить оплаты");
+  const paidByInstallment = installmentPaidAmounts(payments.data ?? [], allocations.data ?? []);
+  const nextPayment = cases?.[0]?.status !== "open" ? undefined : (schedule.data ?? []).filter(row => !row.cancelled_at).map(row => ({ ...row, remaining: toKztCents(row.amount_kzt) - (paidByInstallment.get(row.id) ?? BigInt(0)) })).find(row => row.remaining > BigInt(0));
   const name = profile?.display_name || client?.full_name || "Личный кабинет";
   const links: { href: string; title: string; icon: NavIconName }[] = [
     { href: cases?.[0] ? `/account/cases/${cases[0].id}/payments` : "/account/select-case?section=payments", title: "Договор и оплаты", icon: "payments" },

@@ -76,7 +76,7 @@ export async function confirmPayment(formData: FormData) {
   const caseId = field(formData, "caseId");
   const scheduleId = field(formData, "scheduleId");
   const key = field(formData, "key");
-  if (!uuidPattern.test(caseId) || !uuidPattern.test(scheduleId) || !uuidPattern.test(key)) redirect("/staff/cases");
+  if (!uuidPattern.test(caseId) || (scheduleId && !uuidPattern.test(scheduleId)) || !uuidPattern.test(key)) redirect("/staff/cases");
   const { supabase } = await requireStaffCase(caseId);
   const amount = field(formData, "amount");
   const paidOn = field(formData, "paidOn");
@@ -88,17 +88,39 @@ export async function confirmPayment(formData: FormData) {
     || (receiptId && !uuidPattern.test(receiptId))) {
     redirect(`/staff/cases/${caseId}/payments?error=invalid`);
   }
-  const { data: schedule } = await supabase.from("payment_schedule").select("case_id").eq("id", scheduleId).maybeSingle();
-  if (schedule?.case_id !== caseId) redirect(`/staff/cases/${caseId}/payments?error=invalid`);
-  const { error } = await supabase.rpc("staff_confirm_payment_with_receipt", {
-    p_schedule_id: scheduleId, p_amount_kzt: amount, p_paid_on: paidOn,
+  if (scheduleId) {
+    const { data: schedule } = await supabase.from("payment_schedule").select("case_id, cancelled_at").eq("id", scheduleId).maybeSingle();
+    if (schedule?.case_id !== caseId || schedule.cancelled_at) redirect(`/staff/cases/${caseId}/payments?error=invalid`);
+  }
+  const { error } = await supabase.rpc("staff_record_payment", {
+    p_case_id: caseId, p_schedule_id: scheduleId || null, p_amount_kzt: amount, p_paid_on: paidOn,
     p_reference: reference, p_client_note: clientNote || null, p_idempotency_key: key,
     p_receipt_id: receiptId || null,
   });
-  if (error?.message === "Payment exceeds installment") redirect(`/staff/cases/${caseId}/payments?error=exceeds`);
+  if (error?.message === "Payment exceeds active schedule") redirect(`/staff/cases/${caseId}/payments?error=exceeds`);
   if (error?.code === "23505") redirect(`/staff/cases/${caseId}/payments?error=duplicate`);
   if (error) redirect(`/staff/cases/${caseId}/payments?error=payment`);
   redirect(`/staff/cases/${caseId}/payments?confirmed=1`);
+}
+
+export async function cancelInstallment(formData: FormData) {
+  const caseId = field(formData, "caseId");
+  const scheduleId = field(formData, "scheduleId");
+  if (!uuidPattern.test(caseId) || !uuidPattern.test(scheduleId)) redirect("/staff/cases");
+  const { supabase } = await requireStaffCase(caseId);
+  const expected = field(formData, "expectedUpdatedAt");
+  const reason = field(formData, "reason");
+  if (Number.isNaN(Date.parse(expected)) || !reason || reason.length > 500) {
+    redirect(`/staff/cases/${caseId}/payments?error=invalid`);
+  }
+  const { data: schedule } = await supabase.from("payment_schedule").select("case_id").eq("id", scheduleId).maybeSingle();
+  if (schedule?.case_id !== caseId) redirect(`/staff/cases/${caseId}/payments?error=invalid`);
+  const { error } = await supabase.rpc("staff_cancel_payment_installment", {
+    p_schedule_id: scheduleId, p_expected_updated_at: expected, p_reason: reason,
+  });
+  if (error?.message === "Installment changed by another user") redirect(`/staff/cases/${caseId}/payments?error=conflict`);
+  if (error) redirect(`/staff/cases/${caseId}/payments?error=cancel`);
+  redirect(`/staff/cases/${caseId}/payments?cancelled=1`);
 }
 
 export async function voidPayment(formData: FormData) {

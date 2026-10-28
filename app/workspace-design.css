@@ -21,6 +21,8 @@
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .product-ui h1 { font-size: 28px; letter-spacing: -.025em; }
 .product-ui h2 { font-size: 19px; letter-spacing: -.015em; }
+.staff-admin-metrics.staff-payment-summary article { min-width: 0; grid-template-columns: minmax(0, 1fr); align-content: start; }
+.staff-admin-metrics.staff-payment-summary strong { grid-column: 1; grid-row: auto; min-width: 0; overflow-wrap: anywhere; font-size: 21px; }
 .product-ui input:focus, .product-ui select:focus, .product-ui textarea:focus { border-color: var(--accent); }
 .product-ui .staff-sidebar, .client-sidebar { width: var(--sidebar-width); background: var(--rail); color: var(--rail-text); border: 0; padding: 24px 14px 16px; }
 .product-ui .staff-sidebar > .brand, .client-sidebar > .brand { margin: 0 12px 28px; color: #fff; }

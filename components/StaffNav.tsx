@@ -25,7 +25,7 @@ function isActive(path: string, href: string, role: StaffRole) {
   return (role !== "lawyer" && path === "/staff" && href === "/staff/overview") || (role === "lawyer" && path === "/staff/overview" && href === "/staff") || path === href || (href !== "/staff" && path.startsWith(`${href}/`));
 }
 
-export function StaffNav({ role, unreadCount }: { role: StaffRole; unreadCount: number }) {
+export function StaffNav({ role, unreadCount, pendingCount = 0 }: { role: StaffRole; unreadCount: number; pendingCount?: number }) {
   const path = usePathname();
   const unreadCases = useStaffUnreadCaseCount();
   const [filter, setFilter] = useState("");
@@ -42,11 +42,11 @@ export function StaffNav({ role, unreadCount }: { role: StaffRole; unreadCount: 
         className={className}><span className="staff-nav-icon"><NavIcon name={item.icon} /></span>{item.label}
         {unreadCases !== null && unreadCases > 0 && <b className="staff-nav-count" aria-hidden="true">{unreadCases > 99 ? "99+" : unreadCases}</b>}</Link>;
     }
-    return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={className}><span className="staff-nav-icon"><NavIcon name={item.icon} /></span>{item.label}</Link>;
+    return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} aria-label={item.href === "/staff/team" && pendingCount > 0 ? `${item.label}, заявок на активацию: ${pendingCount}` : undefined} className={className}><span className="staff-nav-icon"><NavIcon name={item.icon} /></span>{item.label}{item.href === "/staff/team" && pendingCount > 0 && <b className="staff-nav-count" aria-hidden="true">{pendingCount > 99 ? "99+" : pendingCount}</b>}</Link>;
   })}{available.length === 0 && <p className="nav-no-results">Раздел не найден</p>}</nav></>;
 }
 
-export function StaffMobileNav({ role, unreadCount }: { role: StaffRole; unreadCount: number }) {
+export function StaffMobileNav({ role, unreadCount, pendingCount = 0 }: { role: StaffRole; unreadCount: number; pendingCount?: number }) {
   const path = usePathname();
   const liveUnreadCount = useUnreadNotificationsCount(unreadCount);
   const unreadCases = useStaffUnreadCaseCount();
@@ -93,10 +93,10 @@ export function StaffMobileNav({ role, unreadCount }: { role: StaffRole; unreadC
       }
     }}>
       <summary className={`staff-mobile-primary-link${moreActive ? " is-active" : ""}`}
-        aria-label={liveUnreadCount > 0 ? `Ещё разделы, ${liveUnreadCount} непрочитанных уведомлений` : "Ещё разделы"}>
+        aria-label={`Ещё разделы${liveUnreadCount > 0 ? `, непрочитанных уведомлений: ${liveUnreadCount}` : ""}${pendingCount > 0 ? `, заявок на активацию: ${pendingCount}` : ""}`}>
         <span className="staff-nav-icon"><NavIcon name="more" /></span>
         <span>Ещё</span>
-        {liveUnreadCount > 0 && <b className="staff-mobile-more-badge" aria-hidden="true">{liveUnreadCount > 99 ? "99+" : liveUnreadCount}</b>}
+        {liveUnreadCount + pendingCount > 0 && <b className="staff-mobile-more-badge" aria-hidden="true">{liveUnreadCount + pendingCount > 99 ? "99+" : liveUnreadCount + pendingCount}</b>}
       </summary>
       <div className="staff-mobile-more-panel">
         <p>Остальные разделы</p>
@@ -107,6 +107,7 @@ export function StaffMobileNav({ role, unreadCount }: { role: StaffRole; unreadC
             onClick={() => detailsRef.current?.removeAttribute("open")}>
             <span className="staff-nav-icon"><NavIcon name={item.icon} /></span>
             <span>{item.label}</span>
+            {item.href === "/staff/team" && pendingCount > 0 && <b aria-label={`Заявок на активацию: ${pendingCount}`}>{pendingCount > 99 ? "99+" : pendingCount}</b>}
             {item.href === "/staff/notifications" && liveUnreadCount > 0 && <b aria-hidden="true">{liveUnreadCount > 99 ? "99+" : liveUnreadCount}</b>}
           </Link>;
         })}

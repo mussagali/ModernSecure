@@ -1,8 +1,15 @@
 const actions: Record<string, string> = {
   accepted: "Принято",
+  approved: "Аккаунт активирован",
+  registration_approved: "Регистрация одобрена",
+  installment_cancelled: "Платёж графика отменён",
+  installment_updated: "Платёж графика изменён",
+  voided: "Оплата аннулирована",
   account_linked: "Аккаунт привязан",
   acknowledged: "Ознакомление подтверждено",
   cancelled: "Отменено",
+  cancelled_on_case_cancel: "Отменено при отмене дела",
+  reopened: "Запрос восстановлен",
   closed: "Дело завершено",
   completed: "Завершено",
   confirmed: "Подтверждено",
@@ -32,6 +39,7 @@ const actions: Record<string, string> = {
 };
 
 const entities: Record<string, string> = {
+  account: "Аккаунт",
   case: "Дело",
   case_assignment: "Назначение на дело",
   case_internal_note: "Внутренняя заметка",

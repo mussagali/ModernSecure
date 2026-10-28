@@ -1,4 +1,4 @@
-ModernSecure — SQL package validation — 2026-10-23
+ModernSecure — SQL package validation — 2026-10-28
 
 Local execution: node scripts/test-supabase-upload.mjs
 Result: PASS
@@ -6,11 +6,11 @@ Result: PASS
 Executed exact package SQL files 00–05 against isolated PGlite PostgreSQL.
 Supabase Auth and Storage catalog tables were simulated locally.
 
-37 public tables, 74 public RLS policies.
-All 72 literal RPC names used by the application's app/ and lib/ sources exist.
+All literal RPC names used by the application's app/ and lib/ sources exist.
+The package includes migrations 001–095; its manifest hashes match the sources.
 
 Verified:
-- complete 84-migration schema installation without any old owner account;
+- complete 95-migration schema installation without any old owner account;
 - profile creation for an Auth account existing before installation;
 - primary operator provisioning and safe repeat;
 - client account linking and safe repeat;

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { AuthFrame } from "../../components/AuthFrame";
 import { createClient } from "../../lib/supabase/server";
 import { signOutAction } from "../account/actions";
+import { AccountAccessRefresh } from "../../components/AccountAccessRefresh";
 
 export const metadata: Metadata = { title: "Ожидание активации | Современная защита" };
 
@@ -19,7 +20,8 @@ export default async function AwaitingApprovalPage() {
     .select("email, phone, business_hours").eq("id", true).maybeSingle();
   const email = contacts?.email?.trim();
   const phone = contacts?.phone?.replace(/[^\d+]/g, "");
-  return <AuthFrame title="Ожидаем активацию" description="Аккаунт создан. Главный администратор проверит регистрацию, назначит роль и откроет доступ к кабинету.">
+  return <AuthFrame title="Ожидаем активацию" description="Аккаунт создан. Администратор проверит регистрацию, назначит роль и откроет доступ к кабинету. Статус обновляется автоматически.">
+    <AccountAccessRefresh />
     <div className="auth-identity"><span>Ваш аккаунт</span><strong>{auth.claims.email as string}</strong></div>
     <Link href="/account" className="primary-action auth-status-action">Проверить статус</Link>
     <section className="auth-support" aria-labelledby="approval-support"><h2 id="approval-support">Нужна помощь?</h2>

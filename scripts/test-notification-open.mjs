@@ -19,6 +19,13 @@ async function asUser(id, sql, params = []) {
 }
 
 try {
+  assert.equal(notificationHref("/staff/team?tab=pending", "staff"), "/staff/team?tab=pending");
+  assert.equal(notificationActionLabel("/staff/team?tab=pending", "staff"), "Открыть заявки →");
+  assert.equal(notificationHref("/staff/team?tab=pending", "client"), "/account");
+  assert.equal(notificationHref("/staff/team?tab=pending&next=https://evil.test", "staff"), "/staff/cases");
+  assert.equal(notificationHref("/staff", "staff"), "/staff");
+  assert.equal(notificationActionLabel("/staff", "staff"), "Открыть кабинет →");
+  assert.equal(notificationActionLabel("/account", "client"), "Открыть кабинет →");
   assert.equal(notificationHref(`/staff/chat?to=${colleague}`, "staff"), `/staff/chat?to=${colleague}`);
   assert.equal(notificationActionLabel(`/staff/chat?to=${colleague}`, "staff"), "Открыть диалог →");
   assert.equal(notificationHref(`/staff/chat?to=${colleague}`, "client"), "/account");

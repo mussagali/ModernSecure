@@ -30,11 +30,14 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
     supabase.from("staff_members").select("user_id", { count: "exact", head: true }).eq("active", true),
     supabase.from("case_assignments").select("id", { count: "exact", head: true }).is("revoked_at", null),
     supabase.from("tasks").select("id", { count: "exact", head: true }).eq("status", "response_sent"),
-    supabase.from("document_files").select("id", { count: "exact", head: true }).eq("status", "under_review"),
+    supabase.from("document_files").select("id, document_requests!inner(status, cases!inner(status, is_suspended))", { count: "exact", head: true }).eq("status", "under_review").eq("document_requests.status", "active").eq("document_requests.cases.status", "open").eq("document_requests.cases.is_suspended", false),
     supabase.from("messages").select("id", { count: "exact", head: true }),
     supabase.from("audit_events").select("id, action, entity_type, case_id, occurred_at").order("occurred_at", { ascending: false }).limit(5),
   ]) : null;
   const handoffData = staff.role === "admin" ? await supabase.rpc("admin_unassigned_cases") : null;
+  const pendingAccounts = staff.role === "admin" ? await supabase.rpc("admin_pending_account_summary") : null;
+  const pendingCount = Number(pendingAccounts?.data?.total_count ?? 0);
+  const readyCount = Number(pendingAccounts?.data?.ready_count ?? 0);
   const unassignedItems = (handoffData?.data ?? []) as Array<{
     case_id: string; case_number: string; title: string; total_count: number;
   }>;
@@ -46,6 +49,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
   ]);
 
   return <>{deniedAlert}<div className="staff-page-heading"><div><h1>{staff.role === "admin" ? "Панель администратора" : "Панель менеджера"}</h1><p>{staff.role === "admin" ? "Клиенты, команда, назначения, рабочие события и журнал изменений в одном месте." : "Клиенты, дела и услуги."}</p></div><span className="staff-role-pill">{staff.role === "admin" ? (staff.is_primary_admin ? "Главный администратор" : "Администратор") : "Менеджер"}</span></div>
+    {pendingAccounts && (pendingAccounts.error ? <div className="staff-alert is-error" role="alert">Не удалось проверить новые регистрации. <Link href="/staff/team?tab=pending">Открыть заявки</Link></div> : pendingCount > 0 && <section className="staff-next-step" aria-label="Заявки на активацию"><div><h2>Новые аккаунты ожидают доступа: {pendingCount}</h2><p>{readyCount > 0 ? `Почту подтвердили: ${readyCount}. Проверьте данные и назначьте доступную вам роль.` : "Пользователи ещё не подтвердили почту. После подтверждения вы сможете открыть им доступ."}</p></div><Link href="/staff/team?tab=pending" className="staff-primary-link">Рассмотреть заявки</Link></section>)}
     {[unreadWork, reviewWork, overdueWork, staleQueue].some((result) => result.error) ? <div className="staff-alert is-error">Не удалось загрузить рабочие очереди.</div> : <section className="staff-attention-strip" aria-label="Требует внимания"><Link href="/staff/inbox?unread=1"><span>Новые диалоги</span><strong>{worklistCount(unreadWork.items)}</strong><small>Открыть переписку</small></Link><Link href="/staff/cases?attention=documents"><span>Дела с документами на проверке</span><strong>{worklistCount(reviewWork.items)}</strong><small>Проверить файлы</small></Link><Link href="/staff/cases?attention=overdue"><span>Дела с просроченными задачами</span><strong>{worklistCount(overdueWork.items)}</strong><small>Посмотреть сроки</small></Link><Link href="/staff/cases/stale"><span>Дела без обновлений для клиента</span><strong>{Number(staleQueue.data?.[0]?.total_count ?? 0)}</strong><small>Открыть очередь</small></Link></section>}
     {failed ? <div className="staff-alert is-error" role="alert">Не удалось загрузить часть данных. Обновите страницу.</div> : <>
       <div className="staff-stats"><Link href="/staff/clients"><span>Клиенты</span><strong>{clients.count ?? 0}</strong><small>Открыть список</small></Link><Link href="/staff/cases"><span>Дела</span><strong>{cases.count ?? 0}</strong><small>Открыть список</small></Link><Link href="/staff/clients"><span>Без привязки</span><strong>{unlinked.count ?? 0}</strong><small>Подключить аккаунты</small></Link>{staff.role === "admin" && <Link href="/staff/services"><span>Услуги</span><strong>{services.count ?? 0}</strong><small>Настроить шаблоны</small></Link>}</div>

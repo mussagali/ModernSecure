@@ -36,7 +36,7 @@ try {
   }
   for (let n=2;n<=10;n++) await db.query('insert into auth.users values($1,$2,$3)', [uid(n), `user${n}@example.test`, n===7 ? null : new Date()]);
   await db.query("insert into public.staff_members(user_id,display_name,role,is_primary_admin) values($1,'Admin','admin',false),($2,'Manager','manager',false)",[uid(2),uid(3)]);
-  for (const n of [2,3,4]) {
+  for (const n of [3,4]) {
     await assert.rejects(as(n,'select public.admin_pending_accounts()'), /Not authorized/);
     await assert.rejects(as(n,"select public.admin_approve_account($1,'admin','Escalation')",[uid(4)]), /Not authorized/);
     await assert.rejects(as(n,"select public.admin_add_staff('user4@example.test','Escalation','lawyer')"), /Not authorized/);
@@ -44,6 +44,10 @@ try {
     await assert.rejects(as(n,"select public.admin_set_staff_access($1,'lawyer',true,'Escalation')",[uid(3)]), /Not authorized/);
     await assert.rejects(as(n,"select public.link_client_account($1,'user4@example.test')",[uid(99)]), /Not authorized/);
   }
+  await as(2,'select public.admin_pending_accounts()');
+  await assert.rejects(as(2,"select public.admin_approve_account($1,'admin','Escalation')",[uid(4)]), /Not authorized/);
+  await assert.rejects(as(2,"select public.admin_add_staff('user4@example.test','Escalation','admin')"), /Not authorized/);
+  await assert.rejects(as(2,"select public.admin_invite_staff('user4@example.test','Escalation','admin')"), /Not authorized/);
   assert.equal((await as(4,'select public.account_access_status() as status')).rows[0].status,'pending');
   assert.equal((await as(4,'select * from public.cases')).rows.length,0);
   await as(4,"select set_config('request.path','rpc/update_own_profile',false)");
@@ -57,9 +61,9 @@ try {
   await as(1,"select public.admin_invite_staff('user5@example.test','Lawyer','lawyer')");
   assert.equal((await as(5,'select public.claim_staff_invite() as claimed')).rows[0].claimed,false);
   assert.equal((await as(5,'select public.account_access_status() as status')).rows[0].status,'pending');
-  await as(1,"select public.admin_approve_account($1,'lawyer','Lawyer')",[uid(5)]);
+  await as(2,"select public.admin_approve_account($1,'lawyer','Lawyer')",[uid(5)]);
   assert.equal((await as(5,'select public.account_access_status() as status')).rows[0].status,'approved');
-  await as(1,"select public.admin_approve_account($1,'client','Client')",[uid(4)]);
+  await as(2,"select public.admin_approve_account($1,'client','Client')",[uid(4)]);
   const card=(await as(4,'select id from public.clients where user_id=$1',[uid(4)])).rows[0].id;
   assert.ok(card);
   await assert.rejects(as(1,"select public.admin_approve_account($1,'admin','Again')",[uid(4)]),/Account already assigned/);
@@ -69,12 +73,52 @@ try {
   assert.equal((await as(6,'select public.account_access_status() as status')).rows[0].status,'approved');
   await as(1,"select public.admin_approve_account($1,'admin','Another admin')",[uid(8)]);
   assert.equal((await as(8,'select is_primary_admin from public.staff_members where user_id=$1',[uid(8)])).rows[0].is_primary_admin,false);
-  await assert.rejects(as(8,"select public.admin_approve_account($1,'client','Client')",[uid(9)]),/Not authorized/);
-  await as(1,"select public.admin_set_staff_access($1,'lawyer',false,'Test disable')",[uid(5)]);
+  await assert.rejects(as(8,"select public.admin_approve_account($1,'admin','Escalation')",[uid(9)]),/Not authorized/);
+  await as(2,"select public.admin_set_staff_access($1,'lawyer',false,'Test disable')",[uid(5)]);
   assert.equal((await as(5,'select public.account_access_status() as status')).rows[0].status,'disabled');
   await db.query("insert into auth.mfa_factors values(gen_random_uuid(),$1,'verified')",[uid(1)]);
   await assert.rejects(as(1,"select public.admin_approve_account($1,'client','Client')",[uid(9)],'aal1'),/Not authorized/);
   await assert.rejects(as(4,'select private.admin_add_staff($1,$2,$3)',['user9@example.test','Bypass','lawyer']), /permission denied/);
   assert.equal((await db.query("select count(*)::int as n from public.audit_events where entity_type='account' and action='approved'")).rows[0].n,4);
-  console.log('OK account activation: primary-only RPCs, MFA, pending API gate, email verification, invitations, roles, existing cards, duplicate/dual-role rejection and audit');
+  for (const target of [1,2,8]) await assert.rejects(as(2,"select public.admin_set_staff_access($1,'lawyer',false,'Protected')",[uid(target)]), /Protected administrator|Invalid staff access change/);
+  await assert.rejects(as(2,"select public.admin_set_staff_access($1,'admin',true,'Escalation')",[uid(3)]), /Not authorized/);
+  await assert.rejects(as(2,"select public.admin_approve_account($1,'client','Wrong role')",[uid(1)]), /Account already assigned/);
+  await as(2,"select public.admin_set_staff_access($1,'manager',true,'Restore staff')",[uid(5)]);
+  for (let n=20;n<=24;n++) await db.query('insert into auth.users values($1,$2,now())',[uid(n),`user${n}@example.test`]);
+  await as(2,"select public.admin_invite_staff('user20@example.test','Manager','manager')");
+  assert.equal((await as(20,'select public.account_access_status() as status')).rows[0].status,'pending');
+  await as(2,"select public.admin_approve_account($1,'manager','Manager')",[uid(20)]);
+  await as(2,"select public.admin_add_staff('user21@example.test','Lawyer','lawyer')");
+  const ordinaryCard=(await as(2,"select public.staff_create_client('Ordinary linked','user22@example.test') as id")).rows[0].id;
+  await as(2,'select public.link_client_account($1,$2)',[ordinaryCard,'user22@example.test']);
+  await as(2,'select public.admin_approve_client_registration($1)',[uid(23)]);
+  await as(1,"select public.admin_invite_staff('user24@example.test','Future administrator','admin')");
+  await db.query("update public.staff_invites set expires_at=now()-interval '1 day' where email='user24@example.test'");
+  for (const sql of ["select public.admin_approve_account($1,'client','Hijack')", "select public.admin_approve_client_registration($1)"]) {
+    await assert.rejects(as(2,sql,[uid(24)]),/Protected administrator/);
+  }
+  for (const sql of ["select public.admin_add_staff('user24@example.test','Hijack','lawyer')", "select public.admin_invite_staff('user24@example.test','Hijack','lawyer')"]) await assert.rejects(as(2,sql),/Protected administrator/);
+  const protectedCard=(await as(2,"select public.staff_create_client('Protected','user24@example.test') as id")).rows[0].id;
+  await assert.rejects(as(2,'select public.link_client_account($1,$2)',[protectedCard,'user24@example.test']),/Protected administrator/);
+  const queue=(await as(2,'select public.admin_pending_account_page(99999) as page')).rows[0].page;
+  assert.equal(queue.page,1);
+  assert.equal(queue.items.find(row=>row.user_id===uid(24)).can_approve,false);
+  await assert.rejects(as(2,"select private.admin_add_staff('user24@example.test','Bypass','admin')"),/permission denied/);
+  await db.query("insert into auth.mfa_factors values(gen_random_uuid(),$1,'verified')",[uid(2)]);
+  const guarded = [
+    ['select public.admin_pending_accounts()',[]],
+    ['select public.admin_pending_account_summary()',[]],
+    ['select public.admin_pending_account_page()',[]],
+    ["select public.admin_approve_account($1,'client','Client')",[uid(9)]],
+    ["select public.admin_add_staff('user9@example.test','Lawyer','lawyer')",[]],
+    ["select public.admin_invite_staff('user9@example.test','Lawyer','lawyer')",[]],
+    ["select public.admin_set_staff_access($1,'lawyer',true,'Reason')",[uid(5)]],
+    ['select public.link_client_account($1,$2)',[protectedCard,'user9@example.test']],
+    ['select public.admin_client_registrations()',[]],
+    ['select public.admin_approve_client_registration($1)',[uid(9)]],
+  ];
+  for (const [sql,params] of guarded) await assert.rejects(as(2,sql,params,'aal1'),/Not authorized/);
+  await as(1,"select public.admin_set_staff_access($1,'admin',false,'Disable administrator')",[uid(2)]);
+  for (const [sql,params] of guarded) await assert.rejects(as(2,sql,params),/Not authorized/);
+  console.log('OK account activation: ordinary-admin client/staff activation, primary-only administrator management, all legacy gates, protected invitations, disabled/MFA denial, stale paging, verification, role exclusivity and audit');
 } finally { await db.close(); }

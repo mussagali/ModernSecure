@@ -3,12 +3,13 @@ import { randomUUID } from "node:crypto";
 import { formatKzDate } from "../../../../../lib/client-case";
 import { formatKzt, toKztCents } from "../../../../../lib/money";
 import { requireStaffCase } from "../../../../../lib/staff-case";
-import { addInstallment, confirmPayment, enableOwnPaymentPermission, reviewReceipt, updateInstallment, voidPayment } from "./actions";
+import { installmentPaidAmounts } from "../../../../../lib/payment-summary";
+import { addInstallment, cancelInstallment, confirmPayment, enableOwnPaymentPermission, reviewReceipt, updateInstallment, voidPayment } from "./actions";
 
 const previewableReceiptTypes = new Set(["application/pdf", "image/jpeg", "image/png", "image/heic", "image/heif"]);
 
 type PaymentQuery = {
-  created?: string; updated?: string; confirmed?: string; voided?: string; contractUploaded?: string; contractError?: string; receiptReviewed?: string; receiptError?: string; financeEnabled?: string; error?: string;
+  created?: string; updated?: string; cancelled?: string; confirmed?: string; voided?: string; contractUploaded?: string; contractError?: string; receiptReviewed?: string; receiptError?: string; financeEnabled?: string; error?: string;
 };
 
 export default async function StaffPayments({ params, searchParams }: {
@@ -17,14 +18,15 @@ export default async function StaffPayments({ params, searchParams }: {
 }) {
   const { id } = await params;
   const { supabase, userId, staff, item } = await requireStaffCase(id);
-  const [permissionResult, scheduleResult, paymentsResult, receiptsResult, contractsResult] = await Promise.all([
+  const [permissionResult, scheduleResult, paymentsResult, receiptsResult, contractsResult, allocationsResult] = await Promise.all([
     supabase.from("staff_members").select("can_confirm_payments").eq("user_id", userId).maybeSingle(),
-    supabase.from("payment_schedule").select("id, contract_id, due_on, amount_kzt, description, updated_at").eq("case_id", id).order("due_on"),
+    supabase.from("payment_schedule").select("id, contract_id, due_on, amount_kzt, description, updated_at, cancelled_at, cancellation_reason").eq("case_id", id).order("due_on"),
     supabase.from("payments").select("id, schedule_id, receipt_id, amount_kzt, paid_on, status, payment_reference, client_note, created_at").eq("case_id", id).order("created_at", { ascending: false }),
     supabase.from("payment_receipts").select("id, original_name, detected_mime_type, status, review_note, created_at").eq("case_id", id).order("created_at", { ascending: false }),
     supabase.from("contracts").select("id, contract_number, signed_on, price_kzt, version_no").eq("case_id", id).order("version_no", { ascending: false }),
+    supabase.from("payment_allocations").select("payment_id, schedule_id, amount_kzt").eq("case_id", id),
   ]);
-  if ([permissionResult, scheduleResult, paymentsResult, receiptsResult, contractsResult].some((result) => result.error)) {
+  if ([permissionResult, scheduleResult, paymentsResult, receiptsResult, contractsResult, allocationsResult].some((result) => result.error)) {
     throw new Error("Не удалось загрузить оплаты");
   }
   const query = await searchParams;
@@ -38,30 +40,31 @@ export default async function StaffPayments({ params, searchParams }: {
   const contractsById = new Map(contracts.map((contract) => [contract.id, contract]));
   const scheduleById = new Map(schedule.map((row) => [row.id, row]));
   const payments = paymentsResult.data ?? [];
+  const allocations = allocationsResult.data ?? [];
+  const paidByInstallment = installmentPaidAmounts(payments, allocations);
   const confirmed = payments.filter((payment) => payment.status === "confirmed");
   const linkedReceiptIds = new Set(confirmed.map((payment) => payment.receipt_id).filter(Boolean));
   const availableReceipts = (receiptsResult.data ?? []).filter((receipt) => receipt.status === "accepted" && !linkedReceiptIds.has(receipt.id));
   const totalPaid = confirmed.reduce((sum, payment) => sum + toKztCents(payment.amount_kzt), BigInt(0));
   const price = latestContract ? toKztCents(latestContract.price_kzt) : null;
   const difference = price === null ? null : price - totalPaid;
-  const nextDue = schedule.find((row) => {
-    const paid = confirmed.filter((payment) => payment.schedule_id === row.id)
-      .reduce((sum, payment) => sum + toKztCents(payment.amount_kzt), BigInt(0));
-    return paid < toKztCents(row.amount_kzt);
-  });
+  const outstandingSchedule = schedule.filter((row) => !row.cancelled_at
+    && (paidByInstallment.get(row.id) ?? BigInt(0)) < toKztCents(row.amount_kzt));
+  const nextDue = outstandingSchedule[0];
   const errorText: Record<string, string> = {
     invalid: "Проверьте заполненные поля.", schedule: "Не удалось сохранить график. Проверьте право и сумму.",
     conflict: "График уже изменил другой сотрудник. Обновите страницу и внесите изменение заново.",
-    exceeds: "Платёж превышает остаток по этому пункту графика.",
+    exceeds: "Сумма превышает остаток выбранных сроков. Проверьте сумму или выберите весь график.",
     duplicate: "Этот номер операции уже учтён в деле. Проверьте банковскую выписку и историю оплат.",
     payment: "Не удалось подтвердить оплату. Проверьте право, дату и банковский референс.",
+    cancel: "Не удалось отменить остаток срока. Обновите страницу и проверьте право управления оплатами.",
     void: "Не удалось отменить запись об оплате.",
     finance: "Не удалось включить финансовое право. Проверьте свою роль и попробуйте снова.",
   };
 
   return <>
     <div className="staff-page-heading"><div><h2>Договоры и оплаты</h2><p>Только подтверждённые уполномоченным сотрудником платежи входят в расчёт.</p></div></div>
-    {(query.created || query.updated || query.confirmed || query.voided || query.contractUploaded || query.receiptReviewed) && <div className="staff-alert is-success">Изменение сохранено и записано в журнал.</div>}
+    {(query.created || query.updated || query.cancelled || query.confirmed || query.voided || query.contractUploaded || query.receiptReviewed) && <div className="staff-alert is-success">Изменение сохранено и записано в журнал.</div>}
     {query.financeEnabled && <div className="staff-alert is-success" role="status">Управление оплатами включено. Изменение записано в журнал.</div>}
     {query.error && <div className="staff-alert is-error">{errorText[query.error] ?? "Не удалось выполнить действие."}</div>}
     {query.contractError && <div className="staff-alert is-error" role="alert">{query.contractError === "access" ? "Нет права добавить договор или дело сейчас недоступно." : query.contractError === "storage" ? "Не удалось сохранить PDF в закрытом хранилище. Повторите попытку." : query.contractError === "conflict" ? "Форма уже использована для другого файла. Обновите страницу и повторите." : "Не удалось добавить договор. Проверьте номер, цену, дату и PDF-файл."}</div>}
@@ -85,29 +88,33 @@ export default async function StaffPayments({ params, searchParams }: {
     {canChange && latestContract && <details className="form-disclosure"><summary>Добавить срок оплаты</summary><div className="staff-form-panel"><div><p>Новый срок будет связан с договором № {latestContract.contract_number}, версия {latestContract.version_no}. Сумма появится у клиента как ожидаемый платёж, но не как подтверждённая оплата.</p></div>
       <form action={addInstallment} className="staff-form"><input type="hidden" name="caseId" value={id} /><label>Дата оплаты<input name="dueOn" type="date" required /></label><label>Сумма, ₸<input name="amount" type="number" min="0.01" max="999999999999.99" step="0.01" required /></label><label>Описание<input name="description" maxLength={500} /></label><button type="submit">Добавить в график</button></form>
     </div></details>}
+    {canChange && outstandingSchedule.length > 0 && <details className="form-disclosure"><summary>Подтвердить фактическую оплату</summary><div className="staff-form-panel"><form action={confirmPayment} className="staff-form"><input type="hidden" name="caseId" value={id} /><input type="hidden" name="key" value={randomUUID()} /><label>Сумма банковской операции, ₸<input name="amount" type="number" min="0.01" max="999999999999.99" step="0.01" required /></label><label>Распределить оплату<select name="scheduleId" defaultValue=""><option value="">По всему графику, начиная с ближайшего срока</option>{outstandingSchedule.map((row) => <option key={row.id} value={row.id}>{formatKzDate(row.due_on)} · остаток {formatKzt(toKztCents(row.amount_kzt) - (paidByInstallment.get(row.id) ?? BigInt(0)))}</option>)}</select></label><label>Дата поступления<input name="paidOn" type="date" required /></label><label>Уникальный номер банковской операции или кассового ордера<input name="reference" minLength={4} maxLength={120} required /></label><label>Чек, если клиент его отправил<select name="receiptId" defaultValue=""><option value="">Без чека</option>{availableReceipts.map((receipt) => <option key={receipt.id} value={receipt.id}>{receipt.original_name}</option>)}</select></label><label>Комментарий клиенту<input name="clientNote" maxLength={500} /></label><p>Одна банковская операция может покрывать несколько сроков. Проверьте поступление по банковским данным: загруженный чек сам по себе оплатой не считается.</p><button type="submit">Подтвердить фактическую оплату</button></form></div></details>}
     <section className="staff-list-section"><div className="staff-section-heading"><h2>График</h2><span>{schedule.length}</span></div>
       {schedule.length ? <div className="staff-work-list">{schedule.map((row) => {
         const amount = toKztCents(row.amount_kzt);
-        const paid = confirmed.filter((payment) => payment.schedule_id === row.id)
-          .reduce((sum, payment) => sum + toKztCents(payment.amount_kzt), BigInt(0));
+        const paid = paidByInstallment.get(row.id) ?? BigInt(0);
         const contract = row.contract_id ? contractsById.get(row.contract_id) : null;
         return <article className="staff-work-card" key={row.id}>
-          <div className="staff-work-head"><h3>{formatKzDate(row.due_on)}</h3><span className="staff-tag">{paid >= amount ? "Оплачено" : paid > BigInt(0) ? "Частично" : "Ожидается"}</span></div>
+          <div className="staff-work-head"><h3>{formatKzDate(row.due_on)}</h3><span className="staff-tag">{row.cancelled_at ? "Остаток отменён" : paid >= amount ? "Оплачено" : paid > BigInt(0) ? "Частично" : "Ожидается"}</span></div>
           <p>{row.description ?? "Платёж по договору"}</p><p>{contract ? `Договор № ${contract.contract_number} · версия ${contract.version_no}` : row.contract_id ? "Версия договора недоступна" : "Ранее созданный срок · версия договора не установлена"}</p><small>{formatKzt(paid)} из {formatKzt(amount)} подтверждено</small>
-          {canChange && <details className="staff-payment-details"><summary>Изменить график</summary><form action={updateInstallment} className="staff-form"><input type="hidden" name="caseId" value={id} /><input type="hidden" name="scheduleId" value={row.id} /><input type="hidden" name="expectedUpdatedAt" value={row.updated_at} /><label>Дата<input name="dueOn" type="date" defaultValue={row.due_on} required /></label><label>Сумма, ₸<input name="amount" type="number" min="0.01" max="999999999999.99" step="0.01" defaultValue={String(row.amount_kzt)} required /></label><label>Описание<input name="description" defaultValue={row.description ?? ""} maxLength={500} /></label><label>Причина изменения<input name="reason" maxLength={500} required /></label><button type="submit">Сохранить изменение</button></form></details>}
-          {canChange && paid < amount && <details className="staff-payment-details"><summary>Подтвердить оплату</summary><form action={confirmPayment} className="staff-form"><input type="hidden" name="caseId" value={id} /><input type="hidden" name="scheduleId" value={row.id} /><input type="hidden" name="key" value={randomUUID()} /><label>Сумма, ₸<input name="amount" type="number" min="0.01" max="999999999999.99" step="0.01" required /></label><label>Дата поступления<input name="paidOn" type="date" required /></label><label>Уникальный номер банковской операции или кассового ордера<input name="reference" minLength={4} maxLength={120} required /></label><label>Чек, если клиент его отправил<select name="receiptId" defaultValue=""><option value="">Без чека</option>{availableReceipts.map((receipt) => <option key={receipt.id} value={receipt.id}>{receipt.original_name}</option>)}</select></label><label>Комментарий клиенту<input name="clientNote" maxLength={500} /></label><p>Проверьте поступление по банковским данным перед подтверждением. Один номер операции учитывается только один раз в деле. Загруженный чек сам по себе оплатой не считается.</p><button type="submit">Подтвердить фактическую оплату</button></form></details>}
+          {row.cancelled_at && <p>Причина отмены: {row.cancellation_reason}</p>}
+          {canChange && !row.cancelled_at && <details className="staff-payment-details"><summary>Изменить график</summary><form action={updateInstallment} className="staff-form"><input type="hidden" name="caseId" value={id} /><input type="hidden" name="scheduleId" value={row.id} /><input type="hidden" name="expectedUpdatedAt" value={row.updated_at} /><label>Дата<input name="dueOn" type="date" defaultValue={row.due_on} required /></label><label>Сумма, ₸<input name="amount" type="number" min="0.01" max="999999999999.99" step="0.01" defaultValue={String(row.amount_kzt)} required /></label><label>Описание<input name="description" defaultValue={row.description ?? ""} maxLength={500} /></label><label>Причина изменения<input name="reason" maxLength={500} required /></label><button type="submit">Сохранить изменение</button></form></details>}
+          {canChange && !row.cancelled_at && paid < amount && <details className="staff-payment-details"><summary>Отменить остаток срока</summary><form action={cancelInstallment} className="staff-form"><input type="hidden" name="caseId" value={id} /><input type="hidden" name="scheduleId" value={row.id} /><input type="hidden" name="expectedUpdatedAt" value={row.updated_at} /><p>Будет отменён остаток {formatKzt(amount - paid)}. Подтверждённые оплаты сохранятся в истории.</p><label>Причина отмены<input name="reason" maxLength={500} required /></label><button type="submit">Отменить остаток срока</button></form></details>}
         </article>;
       })}</div> : <div className="staff-empty-box"><h3>График не добавлен</h3></div>}
     </section>
     <section className="staff-list-section"><div className="staff-section-heading"><h2>История оплат</h2></div>
       {payments.length ? <div className="staff-work-list">{payments.map((payment) => {
-        const term = scheduleById.get(payment.schedule_id);
-        const contract = term?.contract_id ? contractsById.get(term.contract_id) : null;
+        const paymentAllocations = allocations.filter((allocation) => allocation.payment_id === payment.id);
         return <article className="staff-work-card" key={payment.id}>
         <div className="staff-work-head"><h3>{formatKzt(toKztCents(payment.amount_kzt))}</h3><span className="staff-tag">{payment.status === "confirmed" ? "Подтверждено" : "Отменено"}</span></div>
         <p>{formatKzDate(payment.paid_on)} · {payment.payment_reference ?? "Основание не указано"}{payment.client_note ? ` · ${payment.client_note}` : ""}{payment.receipt_id ? ` · чек: ${receiptsResult.data?.find((receipt) => receipt.id === payment.receipt_id)?.original_name ?? "приложен"}` : ""}</p>
-        <p>{contract ? `Договор № ${contract.contract_number} · версия ${contract.version_no}` : "Версия договора для этой оплаты не указана"}</p>
-        {canManage && payment.status === "confirmed" && <form action={voidPayment} className="staff-form staff-payment-void"><input type="hidden" name="caseId" value={id} /><input type="hidden" name="paymentId" value={payment.id} /><label>Причина исправления<input name="reason" maxLength={500} required /></label><button type="submit">Отменить запись об оплате</button></form>}
+        {paymentAllocations.map((allocation) => {
+          const term = scheduleById.get(allocation.schedule_id);
+          const contract = term?.contract_id ? contractsById.get(term.contract_id) : null;
+          return <p key={allocation.schedule_id}>{formatKzt(toKztCents(allocation.amount_kzt))}{term ? ` · срок ${formatKzDate(term.due_on)}` : ""} · {contract ? `договор № ${contract.contract_number}, версия ${contract.version_no}` : "версия договора не указана"}</p>;
+        })}
+        {canChange && payment.status === "confirmed" && <form action={voidPayment} className="staff-form staff-payment-void"><input type="hidden" name="caseId" value={id} /><input type="hidden" name="paymentId" value={payment.id} /><label>Причина исправления<input name="reason" maxLength={500} required /></label><button type="submit">Отменить запись об оплате</button></form>}
       </article>;
       })}</div> : <div className="staff-empty-box"><h3>Подтверждённых оплат пока нет</h3></div>}
     </section>

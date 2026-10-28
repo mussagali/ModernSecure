@@ -3,6 +3,7 @@ import Link from "next/link";
 import { formatKzDate, requireClientCase } from "../../../../lib/client-case";
 import { clientNextActions } from "../../../../lib/client-next-actions";
 import { documentRequestState } from "../../../../lib/document-request-state";
+import { installmentPaidAmounts } from "../../../../lib/payment-summary";
 import { formatKzt, toKztCents } from "../../../../lib/money";
 import { markClientNotificationsRead } from "./actions";
 import { openClientNotification } from "../../notifications/actions";
@@ -10,7 +11,7 @@ import { openClientNotification } from "../../notifications/actions";
 export default async function ClientCaseOverview({ params, summary = false }: { params: Promise<{ id: string }>; summary?: boolean }) {
   const { id } = await params;
   const { supabase, userId, item } = await requireClientCase(id);
-  const [stagesResult, eventsResult, suspensionsResult, tasksResult, docsResult, unreadResult, assignmentsResult, scheduleResult, paymentsResult, contractsResult, noticesResult, versionResult] = await Promise.all([
+  const [stagesResult, eventsResult, suspensionsResult, tasksResult, docsResult, unreadResult, assignmentsResult, scheduleResult, paymentsResult, contractsResult, noticesResult, versionResult, allocationsResult] = await Promise.all([
     supabase.from("stage_templates").select("id, position, title, client_description").eq("version_id", item.service_version_id).order("position"),
     supabase.from("case_stage_events").select("id, to_stage_id, client_note, occurred_at").eq("case_id", id).order("occurred_at", { ascending: false }).limit(10),
     supabase.from("case_suspensions").select("id, reason_for_client, control_at, started_at, ended_at").eq("case_id", id).order("started_at", { ascending: false }).limit(20),
@@ -18,13 +19,14 @@ export default async function ClientCaseOverview({ params, summary = false }: { 
     supabase.from("document_requests").select("id, title, status, due_at, required").eq("case_id", id).eq("status", "active"),
     supabase.rpc("case_unread_message_count", { p_case_id: id }),
     supabase.from("case_assignments").select("staff_user_id").eq("case_id", id).is("revoked_at", null),
-    supabase.from("payment_schedule").select("id, contract_id, due_on, amount_kzt").eq("case_id", id).order("due_on"),
-    supabase.from("payments").select("schedule_id, amount_kzt").eq("case_id", id).eq("status", "confirmed"),
+    supabase.from("payment_schedule").select("id, contract_id, due_on, amount_kzt, cancelled_at").eq("case_id", id).order("due_on"),
+    supabase.from("payments").select("id, status").eq("case_id", id).eq("status", "confirmed"),
     supabase.from("contracts").select("id, contract_number, version_no").eq("case_id", id),
     supabase.from("notifications").select("id, title, target_path, created_at").eq("case_id", id).eq("recipient_user_id", userId).is("read_at", null).order("created_at", { ascending: false }).limit(5),
     supabase.from("service_template_versions").select("service_id").eq("id", item.service_version_id).maybeSingle(),
+    supabase.from("payment_allocations").select("payment_id, schedule_id, amount_kzt").eq("case_id", id),
   ]);
-  if ([stagesResult, eventsResult, suspensionsResult, tasksResult, docsResult, unreadResult, assignmentsResult, scheduleResult, paymentsResult, contractsResult, noticesResult, versionResult].some((result) => result.error) || !versionResult.data) throw new Error("Не удалось загрузить данные дела");
+  if ([stagesResult, eventsResult, suspensionsResult, tasksResult, docsResult, unreadResult, assignmentsResult, scheduleResult, paymentsResult, contractsResult, noticesResult, versionResult, allocationsResult].some((result) => result.error) || !versionResult.data) throw new Error("Не удалось загрузить данные дела");
   const stages = stagesResult.data ?? [];
   const events = eventsResult.data ?? [];
   const currentStage = stages.find((stage) => stage.id === item.current_stage_id);
@@ -56,23 +58,23 @@ export default async function ClientCaseOverview({ params, summary = false }: { 
   const lawyers = (staff ?? []).filter((person) => person.role === "lawyer");
   const lastUpdateAt = events[0]?.occurred_at ?? item.updated_at;
   const contractsById = new Map((contractsResult.data ?? []).map((contract) => [contract.id, contract]));
-  const nextPayment = (scheduleResult.data ?? []).map((row) => ({
+  const paidByInstallment = installmentPaidAmounts(paymentsResult.data ?? [], allocationsResult.data ?? []);
+  const isArchived = item.status !== "open";
+  const nextPayment = isArchived ? undefined : (scheduleResult.data ?? []).filter((row) => !row.cancelled_at).map((row) => ({
     due_on: row.due_on,
     contract: row.contract_id ? contractsById.get(row.contract_id) : null,
-    remaining: toKztCents(row.amount_kzt) - (paymentsResult.data ?? [])
-      .filter((payment) => payment.schedule_id === row.id)
-      .reduce((sum, payment) => sum + toKztCents(payment.amount_kzt), BigInt(0)),
+    remaining: toKztCents(row.amount_kzt) - (paidByInstallment.get(row.id) ?? BigInt(0)),
   })).find((row) => row.remaining > BigInt(0));
   return <div className="case-overview">
 
-    <section className="account-detail-card client-current-stage"><p className="client-stage-label">Текущий этап</p><h2>{currentStage?.title ?? "Этап ещё не назначен"}</h2><p>{currentStage?.client_description ?? "Информация о ходе дела появится после обновления сотрудником."}</p>{item.is_suspended && activeSuspension && <p className="account-detail-note">Причина приостановки: {activeSuspension.reason_for_client}</p>}{item.next_review_at && <p className="account-detail-note">Следующая проверка: {formatKzDate(item.next_review_at)}</p>}{item.status === "closed" && item.result_summary && <p className="account-detail-note">Результат: {item.result_summary}</p>}
+    <section className="account-detail-card client-current-stage"><p className="client-stage-label">Текущий этап</p><h2>{currentStage?.title ?? "Этап ещё не назначен"}</h2><p>{currentStage?.client_description ?? "Информация о ходе дела появится после обновления сотрудником."}</p>{item.is_suspended && activeSuspension && <p className="account-detail-note">Причина приостановки: {activeSuspension.reason_for_client}</p>}{item.next_review_at && <p className="account-detail-note">Следующая проверка: {formatKzDate(item.next_review_at)}</p>}{["closed", "cancelled"].includes(item.status) && item.result_summary && <p className="account-detail-note">{item.status === "cancelled" ? "Причина отмены" : "Результат"}: {item.result_summary}</p>}
       {!summary && <div className="account-case-facts"><div><span>Услуга</span><strong>{service.name}</strong></div><div><span>Ответственный юрист</span><strong>{lawyers.length ? lawyers.map((person) => person.display_name).join(", ") : "Юрист пока не назначен"}</strong></div><div><span>Обновлено</span><strong>{formatKzDate(lastUpdateAt)}</strong></div></div>}
     </section>
     {!summary && <div className="case-overview-grid">
       <Link href={`/account/cases/${id}/tasks`}><span>Задачи</span><strong>{tasksResult.data?.filter((task) => task.status === "new").length ?? 0}</strong><small>Ожидают вашего ответа</small></Link>
       <Link href={`/account/cases/${id}/documents`}><span>Документы</span><strong>{requiredRequests.length ? `${acceptedRequired}/${requiredRequests.length}` : "0"}</strong><small>{requiredRequests.length ? "Обязательных документов принято" : "Нет обязательных запросов"}</small></Link>
       <Link href={`/account/cases/${id}/messages`}><span>Сообщения</span><strong>{unreadMessages}</strong><small>Непрочитанные</small></Link>
-      <Link href={`/account/cases/${id}/payments`}><span>Ближайшая оплата</span><strong>{nextPayment ? formatKzt(nextPayment.remaining) : "Нет"}</strong><small>{nextPayment ? `${formatKzDate(nextPayment.due_on)}${nextPayment.contract ? ` · договор № ${nextPayment.contract.contract_number}, версия ${nextPayment.contract.version_no}` : " · версия договора не указана"}` : "Нет платежей к оплате"}</small></Link>
+      <Link href={`/account/cases/${id}/payments`}><span>{isArchived ? "Оплаты" : "Ближайшая оплата"}</span><strong>{isArchived ? "История" : nextPayment ? formatKzt(nextPayment.remaining) : "Нет"}</strong><small>{isArchived ? "Открыть договор и историю оплат" : nextPayment ? `${formatKzDate(nextPayment.due_on)}${nextPayment.contract ? ` · договор № ${nextPayment.contract.contract_number}, версия ${nextPayment.contract.version_no}` : " · версия договора не указана"}` : "Нет платежей к оплате"}</small></Link>
     </div>}
     <section className="case-next-actions" aria-labelledby="case-next-actions-title"><div className="case-next-actions-heading"><div><h2 id="case-next-actions-title">Что нужно сделать</h2></div>{nextActions.length > 0 && <span>{nextActions.length}</span>}</div>
       {nextActions.length ? <ul>{nextActions.slice(0, 5).map((action) => <li key={action.href}><Link href={action.href}><span className="case-next-action-kind">{action.kind === "task" ? "Задача" : action.kind === "document" ? "Документ" : "Переписка"}</span><strong>{action.title}</strong><small>{action.detail}{action.dueAt ? ` · срок ${formatKzDate(action.dueAt)}` : ""}</small><span className="case-next-action-arrow"><NavIcon name="arrow" size={18} /></span></Link></li>)}</ul>

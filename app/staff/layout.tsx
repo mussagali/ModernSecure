@@ -17,18 +17,20 @@ export default async function StaffLayout({ children }: { children: React.ReactN
     const { error } = await supabase.rpc("record_staff_mfa_entry");
     if (error) throw new Error("Не удалось записать подтверждённый вход сотрудника");
   }
-  const [notifications, unreadCases] = await Promise.all([
+  const [notifications, unreadCases, pendingAccounts] = await Promise.all([
     supabase.from("notifications").select("id", { count: "exact", head: true })
       .eq("recipient_user_id", userId).is("read_at", null),
     supabase.rpc("staff_unread_case_count"),
+    staff.role === "admin" ? supabase.rpc("admin_pending_account_summary") : Promise.resolve(null),
   ]);
   const unreadCount = notifications.count ?? 0;
   const unreadCaseCount = unreadCases.error ? null : Number(unreadCases.data ?? 0);
+  const pendingCount = pendingAccounts?.error ? 0 : Number(pendingAccounts?.data?.total_count ?? 0);
   const roleLabel = staff.role === "admin" ? (staff.is_primary_admin ? "Главный администратор" : "Администратор") : staff.role === "manager" ? "Менеджер" : "Юрист";
   return <StaffUnreadCaseProvider initialCount={unreadCaseCount}><div className={`staff-shell${staff.role === "lawyer" ? " lawyer-shell" : ""}`}><a className="skip-link" href="#main-content">К содержимому</a>
     <aside className="staff-sidebar">
       <Brand href="/staff" />
-      <StaffNav role={staff.role} unreadCount={unreadCount} />
+      <StaffNav role={staff.role} unreadCount={unreadCount} pendingCount={pendingCount} />
       <div className="staff-sidebar-foot"><div className="workspace-identity-mark" aria-hidden="true">{staff.display_name.trim().slice(0, 1)}</div><span>{staff.display_name}</span><small>{roleLabel}</small>{email && <small className="staff-current-email">{email}</small>}<Link href="/staff-security"><NavIcon name="settings" size={17} />Безопасность аккаунта</Link></div>
     </aside>
     <div className="staff-workspace">
@@ -40,7 +42,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
           <form action={signOutAction}><button type="submit">Выйти</button></form>
         </div>
       </header>
-      <div className="staff-mobile-nav"><StaffMobileNav role={staff.role} unreadCount={unreadCount} /></div>
+      <div className="staff-mobile-nav"><StaffMobileNav role={staff.role} unreadCount={unreadCount} pendingCount={pendingCount} /></div>
       <main id="main-content" className="staff-page">{children}<MobilePush /></main>
     </div>
   </div></StaffUnreadCaseProvider>;

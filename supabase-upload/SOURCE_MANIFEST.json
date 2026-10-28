@@ -1,6 +1,6 @@
 {
-  "schemaVersion": "20261027009000",
-  "installSha256": "d71c7cd06064ca7330770f9f1eb234774a04dfd27a6c60d5f44bd5ee31d5339a",
+  "schemaVersion": "20261028009500",
+  "installSha256": "5c057bf32a2887608f86f77f8bf765a2ab6f692dadfaac543ef167908619faa3",
   "note": "Migration 008 owner-specific provisioning removed. Original migrations remain unchanged. Supabase CLI migration history is not modified.",
   "migrations": [
     {
@@ -451,6 +451,31 @@
     {
       "file": "20261027009000_mobile_push.sql",
       "sha256": "1441c1f7a69b8722f9f74464891dd3b9b0015736eb18fb6761d5c227c89e816e",
+      "adapted": false
+    },
+    {
+      "file": "20261028009100_admin_account_activation.sql",
+      "sha256": "c67956391edc9c4fd169fe09fac8199d2af796e93e50dd30bc2a464ddab00cee",
+      "adapted": false
+    },
+    {
+      "file": "20261028009200_case_recovery_and_cancellation.sql",
+      "sha256": "52b6911bb5758031c07bcc15551702940178768ded7c2084fdcf11b6cd78248e",
+      "adapted": false
+    },
+    {
+      "file": "20261028009300_active_financial_case_guard.sql",
+      "sha256": "46375bbdd2581c50220a734339a33d80e76c591520d40a39c9896045316c3a10",
+      "adapted": false
+    },
+    {
+      "file": "20261028009400_staff_message_append_order.sql",
+      "sha256": "d94f6dbb19df581fe52244be4a858b6b7fadc5d062469260acfece2fa7705123",
+      "adapted": false
+    },
+    {
+      "file": "20261028009500_resolve_payments_before_case_end.sql",
+      "sha256": "a046519a7f0a413a11e02c0d0107c0d06fa85c2eda32cfda75d527455b4cf6b4",
       "adapted": false
     }
   ]

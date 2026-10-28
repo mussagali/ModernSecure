@@ -17,8 +17,10 @@ export default async function DocumentReviewQueue({ searchParams }: {
   const size = 25;
   const status = ["all", "accepted", "returned"].includes(query.status ?? "") ? query.status! : "under_review";
   let fileQuery = supabase.from("document_files")
-    .select("id, request_id, original_name, uploaded_at, status", { count: "exact" });
+    .select("id, request_id, original_name, uploaded_at, status, document_requests!inner(status, cases!inner(status, is_suspended))", { count: "exact" });
   fileQuery = status === "all" ? fileQuery.in("status", ["under_review", "accepted", "returned"]) : fileQuery.eq("status", status);
+  if (status === "under_review") fileQuery = fileQuery.eq("document_requests.status", "active")
+    .eq("document_requests.cases.status", "open").eq("document_requests.cases.is_suspended", false);
   if (q) fileQuery = fileQuery.ilike("original_name", searchPattern(q));
   fileQuery = fileQuery.order("uploaded_at", { ascending: false }).order("id");
   const files = await loadListPage(target => fileQuery.range((target - 1) * size, target * size - 1), page, size);
@@ -27,7 +29,7 @@ export default async function DocumentReviewQueue({ searchParams }: {
 
   const requestIds = [...new Set((files.data ?? []).map((file) => file.request_id))];
   const requests = requestIds.length
-    ? await supabase.from("document_requests").select("id, case_id, title").in("id", requestIds)
+    ? await supabase.from("document_requests").select("id, case_id, title, status").in("id", requestIds)
     : { data: [], error: null };
   if (requests.error) throw new Error("Не удалось загрузить дела для проверки документов");
   const caseIds = [...new Set((requests.data ?? []).map((request) => request.case_id))];
@@ -46,7 +48,8 @@ export default async function DocumentReviewQueue({ searchParams }: {
       const request = requestById.get(file.request_id);
       const item = request ? caseById.get(request.case_id) : null;
       if (!item) return null;
-      return <tr key={file.id}><td data-label="Название"><strong>{file.original_name}</strong><small>{request?.title}</small></td><td data-label="Дело"><Link href={`/staff/cases/${item.id}`}>№ {item.case_number}</Link></td><td data-label="Статус"><span className={`lawyer-status ${file.status === "accepted" ? "green" : ""}`}>{file.status === "accepted" ? "Принят" : file.status === "returned" ? "Нужны исправления" : "На проверке"}</span></td><td data-label="Дата">{new Intl.DateTimeFormat("ru-RU", { dateStyle: "short", timeZone: "Asia/Almaty" }).format(new Date(file.uploaded_at))}</td><td data-label="Действие"><Link href={`/staff/review/${file.id}`}>{file.status === "under_review" ? "Проверить" : "Открыть"}</Link></td></tr>;
+      const canReview = file.status === "under_review" && request?.status === "active" && item.status === "open" && !item.is_suspended;
+      return <tr key={file.id}><td data-label="Название"><strong>{file.original_name}</strong><small>{request?.title}</small></td><td data-label="Дело"><Link href={`/staff/cases/${item.id}`}>№ {item.case_number}</Link></td><td data-label="Статус"><span className={`lawyer-status ${file.status === "accepted" ? "green" : ""}`}>{file.status === "accepted" ? "Принят" : file.status === "returned" ? "Нужны исправления" : "На проверке"}</span></td><td data-label="Дата">{new Intl.DateTimeFormat("ru-RU", { dateStyle: "short", timeZone: "Asia/Almaty" }).format(new Date(file.uploaded_at))}</td><td data-label="Действие"><Link href={`/staff/review/${file.id}`}>{canReview ? "Проверить" : "Открыть"}</Link></td></tr>;
     })}</tbody></table>{!files.data?.length && <div className="lawyer-empty"><h3>{q ? "Документы не найдены" : "Нет документов в этом списке"}</h3><p>{q ? "Попробуйте другую часть названия файла." : "Выберите другой статус или дождитесь загрузки документов."}</p></div>}</div>
     <ListPagination path="/staff/review" page={page} count={files.count ?? 0} params={{ status, q }} />
   </>;

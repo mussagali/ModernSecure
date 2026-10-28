@@ -3,7 +3,7 @@
 import { parseAlmatyDeadline } from "../../lib/deadlines";
 
 import { redirect } from "next/navigation";
-import { requireStaff, requirePrimaryAdmin } from "../../lib/staff";
+import { requireStaff } from "../../lib/staff";
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -57,7 +57,7 @@ export async function createClientCard(formData: FormData) {
 }
 
 export async function linkClientAccount(formData: FormData) {
-  const { supabase } = await requirePrimaryAdmin();
+  const { supabase } = await requireStaff(["admin"]);
   const clientId = value(formData, "clientId");
   const email = value(formData, "email");
   if (!uuidPattern.test(clientId) || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -175,6 +175,7 @@ export async function closeCase(formData: FormData) {
   const result = value(formData, "result");
   if (!uuidPattern.test(caseId) || !result || result.length > 4000) redirect("/staff/cases?error=invalid");
   const { error } = await supabase.rpc("staff_close_case", { p_case_id: caseId, p_result_summary: result });
+  if (error?.message === "Outstanding payment schedule must be resolved before ending case") redirect(`/staff/cases/${caseId}?error=outstanding-payments`);
   if (error?.message === "Required documents are not accepted") redirect(`/staff/cases/${caseId}?error=required-documents`);
   if (error) redirect(`/staff/cases/${caseId}?error=close`);
   redirect(`/staff/cases/${caseId}?closed=1`);
@@ -188,6 +189,18 @@ export async function assignCase(formData: FormData) {
   const { error } = await supabase.rpc("staff_assign_case", { p_case_id: caseId, p_staff_user_id: staffUserId });
   if (error) redirect(`/staff/cases/${caseId}?error=assignment`);
   redirect(`/staff/cases/${caseId}?assigned=1`);
+}
+
+export async function cancelCase(formData: FormData) {
+  const { supabase } = await requireStaff(["lawyer", "admin"]);
+  const caseId = value(formData, "caseId");
+  const reason = value(formData, "reason");
+  if (!uuidPattern.test(caseId)) redirect("/staff/cases?error=invalid");
+  if (!reason || reason.length > 2000) redirect(`/staff/cases/${caseId}?error=cancel`);
+  const { error } = await supabase.rpc("staff_cancel_case", { p_case_id: caseId, p_reason: reason });
+  if (error?.message === "Outstanding payment schedule must be resolved before ending case") redirect(`/staff/cases/${caseId}?error=outstanding-payments`);
+  if (error) redirect(`/staff/cases/${caseId}?error=cancel`);
+  redirect(`/staff/cases/${caseId}?cancelled=1`);
 }
 
 export async function createTask(formData: FormData) {
@@ -208,10 +221,12 @@ export async function reviewTask(formData: FormData) {
   const { supabase } = await requireStaff();
   const caseId = value(formData, "caseId");
   const taskId = value(formData, "taskId");
+  const expectedResponseId = value(formData, "expectedResponseId");
   const decision = value(formData, "decision");
   const note = value(formData, "note");
-  if (!uuidPattern.test(caseId) || !uuidPattern.test(taskId) || !["accept", "return"].includes(decision) || note.length > 2000 || (decision === "return" && !note)) redirect("/staff/cases?error=invalid");
-  const { error } = await supabase.rpc("staff_review_task", { p_task_id: taskId, p_accept: decision === "accept", p_note: note || null });
+  if (!uuidPattern.test(caseId) || !uuidPattern.test(taskId) || !uuidPattern.test(expectedResponseId) || !["accept", "return"].includes(decision) || note.length > 2000 || (decision === "return" && !note)) redirect("/staff/cases?error=invalid");
+  const { error } = await supabase.rpc("staff_review_task", { p_task_id: taskId, p_expected_response_id: expectedResponseId, p_accept: decision === "accept", p_note: note || null });
+  if (error?.message === "Task response changed") redirect(`/staff/cases/${caseId}/tasks?error=stale`);
   if (error) redirect(`/staff/cases/${caseId}/tasks?error=review`);
   redirect(`/staff/cases/${caseId}/tasks?reviewed=1`);
 }
@@ -252,6 +267,18 @@ export async function createDocumentRequest(formData: FormData) {
   redirect(`/staff/cases/${caseId}/documents?created=1`);
 }
 
+export async function reopenTemplateDocumentRequest(formData: FormData) {
+  const { supabase } = await requireStaff(["lawyer", "admin"]);
+  const caseId = value(formData, "caseId");
+  const requestId = value(formData, "requestId");
+  const reason = value(formData, "reason");
+  if (!uuidPattern.test(caseId) || !uuidPattern.test(requestId)) redirect("/staff/cases?error=invalid");
+  if (!reason || reason.length > 1000) redirect(`/staff/cases/${caseId}/documents?error=restore`);
+  const { error } = await supabase.rpc("staff_reopen_template_document_request", { p_request_id: requestId, p_reason: reason });
+  if (error) redirect(`/staff/cases/${caseId}/documents?error=restore`);
+  redirect(`/staff/cases/${caseId}/documents?restored=1`);
+}
+
 export async function reviewDocumentFile(formData: FormData) {
   const { supabase } = await requireStaff(["lawyer", "admin"]);
   const caseId = value(formData, "caseId");
@@ -290,7 +317,7 @@ export async function markStaffMessagesRead(formData: FormData) {
 }
 
 export async function addStaffMember(formData: FormData) {
-  const { supabase, staff } = await requirePrimaryAdmin();
+  const { supabase, staff } = await requireStaff(["admin"]);
   const email = value(formData, "email").toLowerCase();
   const displayName = value(formData, "displayName");
   const role = value(formData, "role");
@@ -311,7 +338,7 @@ export async function cancelStaffInvitation(formData: FormData) {
 }
 
 export async function changeStaffAccess(formData: FormData) {
-  const { supabase, staff } = await requirePrimaryAdmin();
+  const { supabase, staff } = await requireStaff(["admin"]);
   const staffUserId = value(formData, "staffUserId");
   const role = value(formData, "role");
   const active = value(formData, "active");
@@ -353,18 +380,24 @@ export async function revokeCaseAssignment(formData: FormData) {
 }
 
 export async function approveAccount(formData: FormData) {
-  const { supabase } = await requirePrimaryAdmin();
+  const { supabase, staff } = await requireStaff(["admin"]);
   const userId = value(formData, "userId");
   const role = value(formData, "role");
   const displayName = value(formData, "displayName");
   const clientId = role === "client" ? value(formData, "clientId") : "";
-  if (!uuidPattern.test(userId) || !["client", "lawyer", "manager", "admin"].includes(role)
+  const requestedPage = Number(value(formData, "accountPage"));
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(10000, requestedPage) : 1;
+  const returnTo = `/staff/team?tab=pending&accountPage=${page}`;
+  if (!uuidPattern.test(userId) || !(staff.is_primary_admin ? ["client", "lawyer", "manager", "admin"] : ["client", "lawyer", "manager"]).includes(role)
     || !displayName || displayName.length > 160 || (clientId && !uuidPattern.test(clientId))) {
-    redirect("/staff/team?error=approval-invalid");
+    redirect(`${returnTo}&error=approval-invalid`);
   }
   const { error } = await supabase.rpc("admin_approve_account", {
     p_user_id: userId, p_role: role, p_display_name: displayName, p_client_id: clientId || null,
   });
-  if (error) redirect("/staff/team?error=approval");
-  redirect("/staff/team?approved=1");
+  if (error?.message === "Account already assigned") redirect(`${returnTo}&error=approval-assigned`);
+  if (error?.message === "Verified account not found") redirect(`${returnTo}&error=approval-unverified`);
+  if (error?.message === "Protected administrator" || error?.message === "Not authorized") redirect(`${returnTo}&error=approval-forbidden`);
+  if (error) redirect(`${returnTo}&error=approval`);
+  redirect(`${returnTo}&approved=1`);
 }

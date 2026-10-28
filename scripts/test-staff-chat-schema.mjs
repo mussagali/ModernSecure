@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 
-const pg = new PGlite();
+// Match PostgREST's lossless timestamp strings when testing microsecond cursors.
+const pg = new PGlite({ parsers: { 1184: value => value } });
 const migration = (name) => readFileSync(`supabase/migrations/${name}`, "utf8");
 async function asUser(id, sql, params = []) {
   await pg.query("select set_config('request.jwt.claim.sub', $1, false)", [id]);
@@ -103,17 +104,25 @@ try {
   assert(!audit.rows[0].body.includes("Hello team"));
   await asUser(manager, "select public.staff_mark_thread_read($1)", [thread]);
   await pg.exec(migration("20261012007500_staff_read_cursor.sql"));
+  await pg.exec(migration("20261028009400_staff_message_append_order.sql"));
   assert.equal((await asUser(manager, "select last_read_message_id from public.staff_thread_reads where thread_id=$1", [thread])).rows[0].last_read_message_id, message,
     "Existing read timestamp must migrate to the last already-read message");
   assert.equal(Number((await asUser(manager, "select unread_count from public.staff_chat_sidebar() where user_id=$1", [lawyer])).rows[0].unread_count), 0);
   assert.equal((await asUser(manager, "select * from public.staff_thread_reads where thread_id=$1", [thread])).rowCount, 1);
   assert.equal((await asUser(lawyer, "select * from public.staff_thread_reads where thread_id=$1", [thread])).rowCount, 0);
   await assert.rejects(asUser(client, "select public.staff_mark_thread_read($1,$2)", [thread, message]), /Not authorized/);
+  // Pin the same transaction timestamp and descending UUIDs to reproduce the
+  // real same-clock race deterministically, without relying on machine speed.
+  await pg.exec("begin; alter table public.staff_messages alter column id set default 'f0000000-0000-4000-8000-000000000002'::uuid");
   const secondId = (await asUser(manager, "select public.staff_send_message($1,$2,$3) as id", [thread, "Second", "10000000-0000-4000-8000-000000000002"])).rows[0].id;
+  await pg.exec("alter table public.staff_messages alter column id set default '10000000-0000-4000-8000-000000000003'::uuid");
   const thirdId = (await asUser(lawyer, "select public.staff_send_message($1,$2,$3) as id", [thread, "Third", "10000000-0000-4000-8000-000000000003"])).rows[0].id;
+  await pg.exec("alter table public.staff_messages alter column id set default gen_random_uuid(); commit");
+  const chronology = await pg.query("select id, body, created_at::text from public.staff_messages where id in ($1,$2) order by created_at,id", [secondId, thirdId]);
+  assert.deepEqual(chronology.rows.map(row => row.id), [secondId, thirdId], "Append order must not depend on random UUID order");
   await asUser(manager, "select public.staff_mark_thread_read($1,$2)", [thread, secondId]);
   assert.equal(Number((await asUser(manager, "select unread_count from public.staff_chat_sidebar() where user_id=$1", [lawyer])).rows[0].unread_count), 1,
-    "A message arriving after the rendered cursor must remain unread");
+    `A message arriving after the rendered cursor must remain unread: ${JSON.stringify(chronology.rows)}`);
   assert.equal((await asUser(manager, "select read_at from public.notifications where dedupe_key=$1", [`staff-message:${thirdId}`])).rows[0].read_at, null,
     "An unseen message notification must remain unread");
   await asUser(manager, "select public.staff_mark_thread_read($1,$2)", [thread, thirdId]);
@@ -174,6 +183,10 @@ try {
   assert.equal((await asUser(other, "select * from public.staff_message_attachments")).rowCount, 0);
   const retried = await asUser(lawyer, fileCall, [thread, "Вложение", attachmentKey, JSON.stringify([file])]);
   assert.deepEqual(retried.rows[0].result, { id: attachedMessageId, created: false });
+  assert.equal((await pg.query("select t.last_message_at = m.created_at as same from public.staff_threads t join public.staff_messages m on m.id=$2 where t.id=$1", [thread, attachedMessageId])).rows[0].same, true,
+    "Attachment sends and retry preserve the same persisted thread/message timestamp");
+  await asUser(manager, "select public.staff_mark_thread_read($1,$2)", [thread, attachedMessageId]);
+  assert.equal(Number((await asUser(manager, "select unread_count from public.staff_chat_sidebar() where user_id=$1", [lawyer])).rows[0].unread_count), 0);
   const caseFileKey = "30000000-0000-4000-8000-000000000007";
   const caseFile = { ...file, id: "30000000-0000-4000-8000-000000000008",
     path: `staff-messages/${thread}/${lawyer}/${caseFileKey}/30000000-0000-4000-8000-000000000008` };
@@ -188,6 +201,8 @@ try {
   assert.deepEqual((await asUser(lawyer, caseFileCall,
     [thread, "Case file", caseFileKey, JSON.stringify([caseFile]), caseId])).rows[0].result,
   { id: caseAttached.rows[0].result.id, created: false });
+  assert.equal(Number((await asUser(manager, "select unread_count from public.staff_chat_sidebar() where user_id=$1", [lawyer])).rows[0].unread_count), 1,
+    "A case-reference attachment after the rendered attachment cursor remains unread, including on retry");
   await assert.rejects(asUser(lawyer, fileCall, [thread, "Вложение", attachmentKey,
     JSON.stringify([{ ...file, sha256: "b".repeat(64) }])]), /key cannot be reused/);
   await assert.rejects(pg.query("update public.staff_message_attachments set original_name='changed.pdf' where id=$1", [attachmentId]), /immutable/);
