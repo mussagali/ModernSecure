@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { cache } from "react";
 import { staffWorkspaceEnabled } from "./application-scope";
 import { createClient } from "./supabase/server";
 
@@ -16,7 +17,9 @@ export async function getStaffStatus(supabase: Awaited<ReturnType<typeof createC
   return { staff: data as StaffStatus | null, error };
 }
 
-export async function requireStaff(allowedRoles: Array<"lawyer" | "manager" | "admin"> = ["lawyer", "manager", "admin"]) {
+// Layouts, pages and nested server components share this lookup only within
+// one request. A new request always rechecks current access and MFA.
+const loadStaffContext = cache(async () => {
   if (!staffWorkspaceEnabled) notFound();
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
@@ -26,8 +29,19 @@ export async function requireStaff(allowedRoles: Array<"lawyer" | "manager" | "a
   if (error) throw new Error("Не удалось проверить роль сотрудника");
   if (!staff?.active) redirect("/account?staffAccess=denied");
   if (!staff.mfa_passed) redirect("/staff-security");
-  if (!allowedRoles.includes(staff.role)) redirect("/staff?error=forbidden");
   const email = typeof auth.claims.email === "string" ? auth.claims.email : "";
   const aal = auth.claims.aal;
   return { supabase, userId, staff, email, aal };
+});
+
+export async function requireStaff(allowedRoles: Array<"lawyer" | "manager" | "admin"> = ["lawyer", "manager", "admin"]) {
+  const context = await loadStaffContext();
+  if (!allowedRoles.includes(context.staff.role)) redirect("/staff?error=forbidden");
+  return context;
+}
+
+export async function requirePrimaryAdmin() {
+  const context = await requireStaff(["admin"]);
+  if (!context.staff.is_primary_admin) redirect("/staff?error=forbidden");
+  return context;
 }

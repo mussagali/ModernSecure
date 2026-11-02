@@ -1,19 +1,19 @@
 .staff-security-page { min-height: 100svh; }
 .staff-security-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px max(24px, calc((100vw - 1120px) / 2)); border-bottom: 1px solid var(--line); background: var(--surface); }
 .staff-security-top button { color: var(--muted); border-color: var(--line); background: var(--surface); }
-.staff-security-content { width: min(600px, calc(100% - 32px)); margin: 48px auto; }
+.staff-security-content { width: min(600px, calc(100% - 32px)); margin: 32px auto; }
 .staff-security-intro { color: var(--muted); margin: 16px 0 28px; }
-.staff-security-card { padding: 28px; border: 1px solid var(--line); border-radius:0; background: var(--surface); }
+.staff-security-card { padding: 28px; border: 1px solid var(--line); border-radius:var(--control-radius); background: var(--surface); }
 .staff-security-card h2 { margin-bottom: 12px; }
 .staff-security-card > p { color: var(--muted); }
-.staff-security-card .staff-security-error { padding: 12px; border-radius:0; color: var(--danger); background: var(--danger-soft); font-size: 14px; }
+.staff-security-card .staff-security-error { padding: 12px; border-radius:var(--control-radius); color: var(--danger); background: var(--danger-soft); font-size: 14px; }
 .staff-security-form { display: grid; gap: 12px; margin-top: 24px; }
 .staff-security-form label { margin-top: 8px; }
 .staff-security-primary, .staff-security-secondary, .staff-security-form button { min-height: 48px; }
 .staff-security-secondary { color: var(--accent-ink); border-color: var(--line); background: var(--surface); }
 .staff-security-secondary:hover:not(:disabled) { background: var(--accent-soft); }
 .staff-security-qr { display: block; width: min(230px, 100%); height: auto; margin: 24px auto; }
-.staff-security-secret { display: grid; gap: 8px; padding: 16px; background: var(--surface-soft); border-radius:0; }
+.staff-security-secret { display: grid; gap: 8px; padding: 16px; background: var(--surface-soft); border-radius:var(--control-radius); }
 .staff-security-secret span { font-size: 13px; color: var(--muted); }
 .staff-security-secret code { overflow-wrap: anywhere; font-size: 15px; }
 .staff-security-hint, .staff-security-help { color: var(--muted); font-size: 14px; }

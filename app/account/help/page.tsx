@@ -54,7 +54,7 @@ export default async function ClientHelpPage() {
 
   return <main className="account-page">
     <AccountHeader />
-    <div className="account-content account-detail">
+    <div className="account-content account-detail client-settings">
       <Link href="/account" className="account-back">В личный кабинет</Link>
 
       <h1>Помощь</h1>

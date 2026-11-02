@@ -1,19 +1,17 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Brand } from "./Brand";
+import { NavIcon } from "./NavIcon";
 
-export function AuthFrame({ children, title, description }: {
-  children: ReactNode; title: string; description: string;
+export function AuthFrame({ children, title, description, wide = false }: {
+  children: ReactNode; title: string; description: string; wide?: boolean;
 }) {
-  return <main className="auth-page">
+  return <main className={`auth-page${wide ? " auth-page-wide" : ""}`}>
     <header className="auth-header"><Brand href="/login" /></header>
+    <aside className="auth-context"><div><h2>Всё, что нужно<br />для работы с делом.</h2><p>Личное пространство клиента и команды «Современной защиты».</p><ul><li><NavIcon name="cases" /><span><strong>Дела и сроки</strong><small>Этапы, задачи и ближайшие действия</small></span></li><li><NavIcon name="documents" /><span><strong>Документы</strong><small>Файлы, замечания и история версий</small></span></li><li><NavIcon name="messages" /><span><strong>Связь с командой</strong><small>Переписка в контексте вашего дела</small></span></li></ul></div></aside>
     <div className="auth-layout">
-      <section className="auth-intro" aria-label="О сервисе">
-        <h2>Каждое дело.<br />Вся команда.</h2>
-        <p>Документы, сроки и переписка в общем пространстве компании.</p>
-      </section>
-      <section className="auth-main"><div className="auth-content"><h1>{title}</h1><p className="auth-description">{description}</p>{children}</div></section>
+      <section className="auth-main" aria-labelledby="auth-title"><div className="auth-content"><h1 id="auth-title">{title}</h1><p className="auth-description">{description}</p>{children}</div></section>
     </div>
-    <footer className="auth-footer"><span>Современная защита</span><nav aria-label="Правовая информация"><Link href="/terms">Условия использования</Link><Link href="/privacy">Конфиденциальность</Link></nav></footer>
+    <footer className="auth-footer"><nav aria-label="Правовая информация"><Link href="/terms">Условия использования</Link><Link href="/privacy">Конфиденциальность</Link></nav></footer>
   </main>;
 }

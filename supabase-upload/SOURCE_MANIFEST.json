@@ -1,426 +1,486 @@
 {
-  "schemaVersion": "20261017008400",
-  "installSha256": "1186d36b1b4a672af7c1cf1a34767d14390b11df3929850ec7133fd78e795a9f",
+  "schemaVersion": "20261028009600",
+  "installSha256": "22d5a1c4bd76211f78dbad75361fb3942d4e6b198c3b9c6ecec6c87be9c384ed",
   "note": "Migration 008 owner-specific provisioning removed. Original migrations remain unchanged. Supabase CLI migration history is not modified.",
   "migrations": [
     {
       "file": "20261010000100_core_schema.sql",
-      "sha256": "42d6dc5c728bb57aec0a597574626f81689af8e324c9f8200b6628ef5d8d1456",
+      "sha256": "72098e35aa4aedeea3fb2d5d0d1f86d7d1bd9ffed62ee8eb8f6788b58d462726",
       "adapted": false
     },
     {
       "file": "20261010000200_access_policies.sql",
-      "sha256": "7f3cdb8f2e3a5717365e1fb0298993f4c0c0bf2b52d70222597c6a6ce6e8934a",
+      "sha256": "a254d6560d324adcda00b72d50d09ba3ff8075222c0bef2b22391326b6144655",
       "adapted": false
     },
     {
       "file": "20261010000300_private_storage.sql",
-      "sha256": "a4c0ffe63e132c86b5ecb4e2bb4fdb5667e90fcb86f6ac118d60c621c1015863",
+      "sha256": "5b4d591815ef790c0f3efe50c63b616a41642095dd334c10a44a540abee5f908",
       "adapted": false
     },
     {
       "file": "20261010000400_client_account_link.sql",
-      "sha256": "cd30355ab9cc7b046b676ebef466b22c290d3520b0bbe737668fe462c7a83017",
+      "sha256": "1e3ab0ee7938e5846085ea1cb993e942c1392597cfe7775f7c83ecb78d58d94f",
       "adapted": false
     },
     {
       "file": "20261010000500_staff_workflows.sql",
-      "sha256": "93bc63816808cef989db568a36546b3f3ee38a005090c7bb74fbabf4d5b02f5d",
+      "sha256": "b0e6b9a1455de253ca429fc0f4bfae78885af9b526af6f227cb92c6e20405b68",
       "adapted": false
     },
     {
       "file": "20261011000600_case_workflows.sql",
-      "sha256": "b2f10b5823bb4cf49ecef1330db669269e907b96f010d50d73983d2d658c90de",
+      "sha256": "e0535ea1b6667ab11d566fe86d91a322c8e6eec7e9bda331983c1013cc437c21",
       "adapted": false
     },
     {
       "file": "20261011000700_admin_scope.sql",
-      "sha256": "e00013287c13aa9b937b2128b1e9c42d93431407b58fc139b6d800263f18196e",
+      "sha256": "4063971bddcd92b9a1841244823119d7546d1c5076922e05a3f7f30e9cb4ca95",
       "adapted": false
     },
     {
       "file": "20261011000800_role_boundaries.sql",
-      "sha256": "e956dfb3426b2fd816d8d6c7c6b38e6756e6763511ae6c3a670ae9fc21a3f5cc",
+      "sha256": "c01ce2c312511f628eb87484e54acef6f113a4fb76f6c97b5c8861e9bd17b3bf",
       "adapted": true
     },
     {
       "file": "20261011000900_staff_access_management.sql",
-      "sha256": "83d4a0d749f4df3625bfb93feab346d67430c2b8aef501d9375129f86f5e339d",
+      "sha256": "371265c94ca4e0a4dee20c699f4b2d4ac15d6bd65071a2dc0db9510047cb16fb",
       "adapted": false
     },
     {
       "file": "20261011001000_staff_invitations.sql",
-      "sha256": "019188147c04afef0ae56a14641e6dda776e540f62eb94fc00042446c28c226e",
+      "sha256": "bdb5d20e059b1d260dd0971d3101b9be057bd14e660dee0ccb6ad0fe9b4eeefe",
       "adapted": false
     },
     {
       "file": "20261011001100_exclusive_account_roles.sql",
-      "sha256": "736c1275c785c08d8482096a481761852a654ae4516d0ce4961c56f69b4f91b6",
+      "sha256": "7e7336fb39758c28f45f316a338cc760e421fdda0ed9950b37f59d45055a61f4",
       "adapted": false
     },
     {
       "file": "20261011001200_document_uploads.sql",
-      "sha256": "096efe88c8c6018e582a19afb1e80919836c8aa8c554a8c20c90bdaedd567032",
+      "sha256": "497821bf8902d373b80bcc07220452493d7cd01b3ff32d8ac74f87773e954b7b",
       "adapted": false
     },
     {
       "file": "20261011001300_payment_workflows.sql",
-      "sha256": "5532be6613e9473837f396d6fe8b6d4932555ab7cd18d0e18eced9632982e936",
+      "sha256": "10de9d038272273ec6a2ccadac98c41673fa05c1120af1395708fd6b62a4df03",
       "adapted": false
     },
     {
       "file": "20261011001400_document_access_hardening.sql",
-      "sha256": "4f1505e63a0affec0cdfb37176b4f9c8f0ef1daf6dd3b8bbf64985ed76715b38",
+      "sha256": "48fcebe654d8540d3376ada7c4d68305006cd9e25b5a9d1609cbe45156c4b70b",
       "adapted": false
     },
     {
       "file": "20261011001500_payment_reference_uniqueness.sql",
-      "sha256": "d24752d4f6620eee9f7b76d163f963e6b6d69e8026b7748c802b7d1dfb1ff90f",
+      "sha256": "fc314fee2777ed73bd3bb2843319b6188b2a87338d71f96ede2e0077507dbb0a",
       "adapted": false
     },
     {
       "file": "20261011001600_own_profile.sql",
-      "sha256": "5bf86eb142f5b8bed77201ba6b23c2c4f4afcf842dc96d509f8f558aa3914f84",
+      "sha256": "7f755c65a113d2a06b98cfd89ebad105608650b1c3e16fd000024ab5a7ee5ff0",
       "adapted": false
     },
     {
       "file": "20261011001700_message_rate_limit.sql",
-      "sha256": "c78fe0cbb9bf83018cb9891e881ebf224696c1f317b7247939cfcb98268100c3",
+      "sha256": "d938ae4955453970917d1b83eecb9624087a724ccc4a021fc5aaf9fe03717a72",
       "adapted": false
     },
     {
       "file": "20261011001800_help_settings.sql",
-      "sha256": "3a0ff5f4f24bbcfe06d940e4e9d75ede680bad6d20402a747ab14bd8fe8ff943",
+      "sha256": "acbab411e1dc09652cd177ba3bf8c44c2a8cb4fd2eb4513002d8808f9ee02797",
       "adapted": false
     },
     {
       "file": "20261011001900_notification_inbox.sql",
-      "sha256": "6057090073da7816ba24dba56bc5ad58efe1961f210aa6e68f8ab5a4a4d4a7ac",
+      "sha256": "c914d523b50d84e27c27c34c9c7f2e3df7bd18d9eb98331921ee2854f5567619",
       "adapted": false
     },
     {
       "file": "20261011002000_resume_document_upload.sql",
-      "sha256": "5f3fe0ea2066a648d654869f68ffb4e33742a816193065a362c3813fbf690ad0",
+      "sha256": "d9a36e6a959072a6f0bc6af5c49f2d492a19ab4fb20028c7d5125d8a4e78537b",
       "adapted": false
     },
     {
       "file": "20261011002100_upload_cleanup_safety.sql",
-      "sha256": "5c96e2678640304c6658bd2391198f852bd2cc2eb49c158ec03f4ac82a9a1208",
+      "sha256": "124282b415e15068d25db8efb38ee693d52a2aeae618450878c555f3cd12ae61",
       "adapted": false
     },
     {
       "file": "20261011002200_assignment_deactivation_race.sql",
-      "sha256": "eb868b577819af2f8b0345b17cc2acaf0e51f7a2ff7c56fc2765b3cf89fabbac",
+      "sha256": "caa4f484d4e21a8dd6bbca88c81ab45ac7aa450f26da3a6a19d4d850be71e553",
       "adapted": false
     },
     {
       "file": "20261011002300_case_lifecycle.sql",
-      "sha256": "819ed7fb0eaf6871ccbfb83dd46cdbb3d9e454b573770855809428f2c87c2d2d",
+      "sha256": "2cd0f514402f867dc326e22b037b451661f865aebf9625f62827bc686f1fa898",
       "adapted": false
     },
     {
       "file": "20261011002400_case_close_consistency.sql",
-      "sha256": "d5b92802df30284747f4355894f9d1c9454f0126699ac91f1f40b9e3d608303d",
+      "sha256": "8181ac189c43f2805fd48b2374b342b218d4b5f5730854da128f5f95b752b8b8",
       "adapted": false
     },
     {
       "file": "20261011002500_service_document_versions.sql",
-      "sha256": "56c72c5364234e812e98c2f6e82244a21b3b7251a253694428620ab103ea1cb2",
+      "sha256": "30485f2a59416ccd79387a75a040acce1a175d5bf940f76c6256f676dda4e168",
       "adapted": false
     },
     {
       "file": "20261011002600_current_service_version.sql",
-      "sha256": "d1451f280d45103ff74846977e1d350ebd1d2992c171fe005d0918511d7cfd74",
+      "sha256": "e2f51ca2896de5491b808ac908a6aa9fd63c2a1af2379133e29bd8cc391f466d",
       "adapted": false
     },
     {
       "file": "20261011002700_client_search.sql",
-      "sha256": "c2c46cc6ac31048b8d9b21c9785a5de3bfcc183a1b4727dd4b2b0ab01d734483",
+      "sha256": "8c2cba3314c16b3a61ea5f2cc2eb2690ce3f3e72d7a344c6d485beff19de76be",
       "adapted": false
     },
     {
       "file": "20261011002800_client_search_role_guard.sql",
-      "sha256": "33a21e780d02121c8355bbc94c0abf73d12f6c949398f59b3532575d8b17775c",
+      "sha256": "0f4a1b44b58f69971eb8a54d0a7148fb7ede6a39759f6b2ad52ed69887e806d8",
       "adapted": false
     },
     {
       "file": "20261011002900_contract_files.sql",
-      "sha256": "d45e714f8b1071388e3b6afc098a3611c2944f6487d579753d286a6ee2828e62",
+      "sha256": "2988a943159ccbd9c36b6e9263ec69a0f93137a7f22d5b37106822e1ec212f81",
       "adapted": false
     },
     {
       "file": "20261011003000_receipt_workflow.sql",
-      "sha256": "9c832010c29090485e1c8d461a4a99b26e54f9401475a96d6850088656af6c48",
+      "sha256": "8b849eaba5d8302c730b20aa03e9ee6fe578b80e51949082bb04ec012904ccb7",
       "adapted": false
     },
     {
       "file": "20261011003100_payment_receipt_link.sql",
-      "sha256": "a3366d3acd5bab6773280b3288458a2e8d7b107ac5126aa1c4f080481d946e64",
+      "sha256": "b756e5519655e83f48caf930e571c3a929080e8781589734128453f5b9f06191",
       "adapted": false
     },
     {
       "file": "20261011003200_financial_file_cleanup_guard.sql",
-      "sha256": "df133abcfec767b29d65492a3bd25e098359068da24b75c0298aa5f471b0d148",
+      "sha256": "f14e03b3093aa3b192b093aaaaf48c223e1496fbf2186b565ca96b0976ed287c",
       "adapted": false
     },
     {
       "file": "20261011003300_financial_notifications.sql",
-      "sha256": "38ce69c6f3e49ec2622fbc0bea2a2ee23d8d63b7b4502892210116a32e21a616",
+      "sha256": "384f9f75d264bbff964ea216f4916ac3b91891eed2c029fc7aae1e44b020ee06",
       "adapted": false
     },
     {
       "file": "20261011003400_versioned_task_acknowledgment.sql",
-      "sha256": "83aa38ac07a1322fc19ecc20ac72ce76f7b6d535f09e2d0b5f91686ae8745114",
+      "sha256": "fbcc3663c67cc704378c0615e0c24d7be479e3f5648177a9764a58cc5be36fcd",
       "adapted": false
     },
     {
       "file": "20261011003500_task_deadline_reminders.sql",
-      "sha256": "7709ecd36f52b9a5e97b519fcadda20029ecd013cd7bf83f77181896e8a45d12",
+      "sha256": "e7bc56f92b7d3fe553be1961ddfe3dc2e88a7e8b30c7a7cbfe50993a9f8c7215",
       "adapted": false
     },
     {
       "file": "20261011003600_unread_notifications_index.sql",
-      "sha256": "1335911f7c0b7d3a80b553103eefbf8a32f320aa85daf4b99fc54fcb03daadc5",
+      "sha256": "3f4a5a13c430fbce29b5320a2b3ed9e3f9f32c7644fc52a6ecadecfe863cc2b5",
       "adapted": false
     },
     {
       "file": "20261011003700_authorize_split_document_upload.sql",
-      "sha256": "7293c4379372e291f47d040bb0e97a0fba3e628ef87dbba9b420796ee45346a7",
+      "sha256": "3d45ad760fee2d0ef9c29a242cc736a1152040a993ca86bc63f1b3fad4998bed",
       "adapted": false
     },
     {
       "file": "20261011003800_revoke_assignments_on_role_change.sql",
-      "sha256": "481cff70f45cd5a415c86d50f13392518a8c6b16316a5620a73b17079968ff87",
+      "sha256": "5619ca41412784dab5cada64766cc43f70a45ab91d656dfc2bfbfff6d1d0876f",
       "adapted": false
     },
     {
       "file": "20261011003900_admin_staff_email_read.sql",
-      "sha256": "1e72dd688a99ecf00431706670dee2832861761cb03523a5e877720b847ddd1c",
+      "sha256": "25fd64d362414477d8be777f1efc479603573af6719ae13a14b44bfe865f4124",
       "adapted": false
     },
     {
       "file": "20261011004000_document_upload_retry_idempotency.sql",
-      "sha256": "833d4b442fea0e5b02cf8de156b560edd3659987a84c1ec6b38088a3e076e17a",
+      "sha256": "1a88c330710a0d8dfc7823e48b7bbe4242733571e6fd71c4c23cf74f23c899ab",
       "adapted": false
     },
     {
       "file": "20261011004100_completed_document_upload_replay.sql",
-      "sha256": "face10e60dcbe4b748d22f8870b13a134ba278d1fa2216ccdd22b410c9ca3962",
+      "sha256": "02c18805f50fc175caff49156a3a69ee234dd7e055880bec69245bc2f5e4671e",
       "adapted": false
     },
     {
       "file": "20261011004200_document_review_notifications.sql",
-      "sha256": "94d28c18523c06b97bdbf9c7ec16023f1de19ded25416ce8efc08aada79a942d",
+      "sha256": "8f13879f81b09462ff3296d61de8569e8655b4f06e9cf8eba9bf1f5a6d90be3b",
       "adapted": false
     },
     {
       "file": "20261011004300_unassigned_case_client_notifications.sql",
-      "sha256": "6494057038d7e8eb78e874f1a3d3ce4530ff3c77f0205422a1f0cace7e55824b",
+      "sha256": "7a57be5c208c72f23e088857e0ce124afd8602db0f90f25d4f60294c72daf294",
       "adapted": false
     },
     {
       "file": "20261011004400_receipt_notification_finance_scope.sql",
-      "sha256": "92fa12dbbeed9db057861c08d983648f3b89dbb7365da83a95efb0d0dfadfeb4",
+      "sha256": "180fcd9ed8be10028351334636de40202319fb41493e30a6dccf4e84df478d84",
       "adapted": false
     },
     {
       "file": "20261011004500_payment_schedule_contract_version.sql",
-      "sha256": "42a39e63e479f8016472a132bfd7dad433344eafd998ef91184785f6c6d8df16",
+      "sha256": "9e778e8c77866e85a9d0b81611dcd688d8a087091b33ee9904660b5de78fcfcf",
       "adapted": false
     },
     {
       "file": "20261011004600_message_attachments.sql",
-      "sha256": "b418f46ff4ccd25978b8c333f8f756f0012ccaac10c5e2f15d1d5b658193c0ac",
+      "sha256": "9924db7f084d2830e94535cd73f573279c1eebb1872e26529b524c0e7e68d7c1",
       "adapted": false
     },
     {
       "file": "20261011004700_admin_unassigned_case_queue.sql",
-      "sha256": "13af96d8e3aa5d55bd12bf7668037967a2641f791fd0164fe7c1b48c216147f3",
+      "sha256": "754192b92dab5a66401ac1fc9e5cf23fc7e7146678ec7e0e9c699860ff07a441",
       "adapted": false
     },
     {
       "file": "20261011004800_message_realtime.sql",
-      "sha256": "240135810f218cc4a3dcb018d2c6cd836fe5a1b957b1bf187c270b99c3e7f33d",
+      "sha256": "9074a272c9aff0562449b6a4a3f8e222d14703436bd38abde07f81320ecd17a7",
       "adapted": false
     },
     {
       "file": "20261011004900_staff_case_worklist.sql",
-      "sha256": "127094fd523306546c5a1c6753e20d8d93f6d7be2e0796df24b0b245b4375838",
+      "sha256": "3739490738f3f0f5778152441814ca4becba02556408b5818098a65e66a49bbe",
       "adapted": false
     },
     {
       "file": "20261011005000_case_message_state.sql",
-      "sha256": "0323dc168f51517db0ff2a1a4eb45795d13d95ef07206d7fe3598c5eb50037ff",
+      "sha256": "8e443791d0634bce64b03bc8cdf0a511ccb9f72933a6307c30ca99af63388ab0",
       "adapted": false
     },
     {
       "file": "20261011005100_document_draft_privacy.sql",
-      "sha256": "45cb5921411c71ce33083d5dd8ee79c129eba4fea18022a5dc80bba0c0a7cfb4",
+      "sha256": "cdff7afd301f728f38473b333e00986c52d1bd598e38d2f8b17eb17d644a31f8",
       "adapted": false
     },
     {
       "file": "20261011005200_finance_task_integrity.sql",
-      "sha256": "667b0b4dca66cb067e7de2b516109a8a9a7b39dffeae2887ed674ddc91ecde65",
+      "sha256": "8a843b99aafb360cd69d2bad8ef0aa6087086c1f50b3e245494b8410a32a2046",
       "adapted": false
     },
     {
       "file": "20261011005300_account_link_and_stage_privacy.sql",
-      "sha256": "e4dbd32fdd38f21ff07ec85f35f5bcf100d2d70423c6b2fb4960907906e2c319",
+      "sha256": "db7c21a1f5c4718299bf1a96cec47ed5cf13446134ae6378bdb45cc0f0bb8100",
       "adapted": false
     },
     {
       "file": "20261011005400_staff_direct_messages.sql",
-      "sha256": "79efc3809f97cc15cb3507003e96510a253ceb48c276b193aec9bf5ac4311b3d",
+      "sha256": "d550d4a7d33c3e1159fd71e4cfce1452b2af7d753fa7c60339187a84ebab7188",
       "adapted": false
     },
     {
       "file": "20261011005500_staff_chat_hardening.sql",
-      "sha256": "bf153f13f1d0ac6b21c0ce73741827723bdade12f13eaa7bd8c0124f576cc9fd",
+      "sha256": "e0fd13faecbd10ec7d1ce18b77cc5645e67c6f2c70cf51413af092f040e7edab",
       "adapted": false
     },
     {
       "file": "20261011005600_staff_chat_paging.sql",
-      "sha256": "9a01b7206668944ad1221343cd80c9454c84569dd90682a76d7e7220dd8e6ebd",
+      "sha256": "925a24350c39a3136752aba266f2102fc86bda2690b0df268d811da5e51a7ec3",
       "adapted": false
     },
     {
       "file": "20261011005700_staff_chat_sidebar.sql",
-      "sha256": "52baf33f5129fa778440d48138843df03a659222af117ad25124688036401ccf",
+      "sha256": "3950db9f567f18ba8626fdd48b2842f87b48a972d5332e2fc3561cf4e5aaac1d",
       "adapted": false
     },
     {
       "file": "20261011005800_staff_chat_attachments.sql",
-      "sha256": "13c9da579cb268779c6eb5448b42e538c45557e9fc8803d0e7b91bc4f6f4bc64",
+      "sha256": "38fc062516531429cd13a1592b01b12b485e2793a3d1f118b234a3b5a981101e",
       "adapted": false
     },
     {
       "file": "20261011005900_case_message_authors.sql",
-      "sha256": "100204cb810ccaba1f5bdebd7f06d2fe7b769cd5c42fcde0691a442afc1d1e99",
+      "sha256": "756248f07c708195394267a0a19aa7b83fe3ab4765ef1b783e20a4c62fb0ae53",
       "adapted": false
     },
     {
       "file": "20261011006000_case_message_paging.sql",
-      "sha256": "607d995eb0fe764680ae78e1d08058367e52fbb9b9d8b4f24f4fc6abb70d906d",
+      "sha256": "89faaed78e4aa5478a3c7a8a2c978e5f177cb1971b0c7147f680df6b0bfb3572",
       "adapted": false
     },
     {
       "file": "20261011006100_case_internal_notes.sql",
-      "sha256": "1bc40f001bbf700318f640f6344ee097a8d2ba0e67ebca10c32bc157fa0a29ca",
+      "sha256": "22dfc680358dbf16a6ed369d2078ce0d9deece8b6de7b5bbd8b5fd234cdb9f58",
       "adapted": false
     },
     {
       "file": "20261011006200_staff_mfa_gate.sql",
-      "sha256": "e3c4101d3071f5ac82af3b4eebdfefbd0ffcf8180747f149ae9f2a2ca8e4b4dd",
+      "sha256": "5bd3cda3b3ac9edd0ca5f6a4e4fd265229569faadea82cafad9ecfbbf8c406f9",
       "adapted": false
     },
     {
       "file": "20261011006300_staff_mfa_api_error.sql",
-      "sha256": "b48d7fcb67b514fc3165783a29c8d0f48a185b3d5f81ef99abf894ba142c2fd4",
+      "sha256": "b2f4770ff2eb9ad12eef7c8944c76147de971a5f35ee93f6fa6211beed469ac0",
       "adapted": false
     },
     {
       "file": "20261012006400_open_notification.sql",
-      "sha256": "6203189d0784785c6620e7e6fb4e0259604dd38965fe07a0098fa7a62c15ce53",
+      "sha256": "94bee8e69569fed8beb9008a70d3d7bdd60fceab292c0125c329d152c49fe24d",
       "adapted": false
     },
     {
       "file": "20261012006500_file_access_audit.sql",
-      "sha256": "f1605d9aace8a845268cf31a6113927e136de21918a940d6b8e78754970fa7e1",
+      "sha256": "f3866b907395afdd3cc344bd463f855ca230bd5e7bed0aee4f519998f03d7b47",
       "adapted": false
     },
     {
       "file": "20261012006600_admin_audit_history.sql",
-      "sha256": "f4991f782c0e92294d3a324cceff64675e060b52c88c1a8f5473de8719dda46f",
+      "sha256": "6eb319d1c723a5a626e066d5e6f06320cd5dfb0b633732cd67bf05b2f99aae33",
       "adapted": false
     },
     {
       "file": "20261012006700_admin_audit_limit_guard.sql",
-      "sha256": "e5e89ad905b0e0e553afac4d495ab317ea592fc9d09f8c6bc229f853e6fa9931",
+      "sha256": "6e8414acac486a46ec2197ea27fc60299a9bb50d1847d3bb66853f0e33fff5a8",
       "adapted": false
     },
     {
       "file": "20261012006800_admin_auth_audit.sql",
-      "sha256": "253158bc1c66b87a7dd9b9fbe68807e82d6f6db6cfd1880236ceee043013d4fe",
+      "sha256": "25d0ace76d265466fc8b2a685e3991902bae08ab4c3777543891174b083e14ca",
       "adapted": false
     },
     {
       "file": "20261012006900_staff_mfa_entry_audit.sql",
-      "sha256": "ef60cd74264aa5635fff78bc6c2b2a4fd305006fcd10dff846b3dfcad25d8ebe",
+      "sha256": "9deb44c63932f65e96433879ef035356fe70fe000d17f83c0f37f3856061c8ed",
       "adapted": false
     },
     {
       "file": "20261012007000_staff_unread_case_count.sql",
-      "sha256": "0df2bb504f42914e0b09933d001f8a8c49e578f5e5babe867f891fdfa89cd8a7",
+      "sha256": "36dff2c42131ee16fd5c20687d6d59a51b3d3a1fa25bc387907fe8079c804dcb",
       "adapted": false
     },
     {
       "file": "20261012007100_staff_case_message_links.sql",
-      "sha256": "d42d97fd2c156f7853ae85f8308f3ee509e703580a3b6501eeb1e61f51e458e1",
+      "sha256": "06f5306861eacbef5b45c828ed759239ccf26810eb74923fa02ac73e0585d710",
       "adapted": false
     },
     {
       "file": "20261012007200_document_request_version_state.sql",
-      "sha256": "312d3b4df285398f7d0fd3433b7550ca266a3f087c831bfb65935d577ef92aee",
+      "sha256": "8b001f2efaff7bcc4243691666a3df263258804600501a92d5678e6e096282de",
       "adapted": false
     },
     {
       "file": "20261012007300_document_partial_retraction.sql",
-      "sha256": "ce7cc55debaa69c0f8d676bb68d8abd9584f9e6f700636c6cd57da2aab780dc6",
+      "sha256": "b6ac0d12998e267cc8efcb36f6d8da78a4c75deed936b5e5564c2d10ea0b857e",
       "adapted": false
     },
     {
       "file": "20261012007400_case_unread_message_count.sql",
-      "sha256": "3e68c77feeeefed8db64a98920c44473d65783d00963d26e658b564618b21ca6",
+      "sha256": "faefaa28d1f9698f5118f384e62ba8b726d11b8ef0d4f9a7d3ffe74fea1d1112",
       "adapted": false
     },
     {
       "file": "20261012007500_staff_read_cursor.sql",
-      "sha256": "c032d8f7f6eff9f829366ae806f7601fafb8252b62fc58f045643db349987d7a",
+      "sha256": "854ef9857a09ce4ffd28c64d6aad0938348f01053a58e66dbd7913a4f90d9eed",
       "adapted": false
     },
     {
       "file": "20261012007600_case_message_seen_cursor.sql",
-      "sha256": "195c2bc7b4d27f8a9a3233347ab562f2763e1eeb2355c1f74a558ad611b89267",
+      "sha256": "8c2714a456a7c6e2e6586336ead30531153e142a0f527ca0efd3984567abec56",
       "adapted": false
     },
     {
       "file": "20261012007700_stale_case_queue.sql",
-      "sha256": "9063f02e5d9cf9844129e9c13405614473bfa41101c67e894e8551258c9a7687",
+      "sha256": "84d04103b71585706b77b973e29c2503d565177bd0add35772de21a7a03573b4",
       "adapted": false
     },
     {
       "file": "20261016007800_audit_workflow_fixes.sql",
-      "sha256": "5faeac84f993321929d396c6b5b2cf9a490c5f603e0a03fbc0c1874e5d5c0739",
+      "sha256": "1436a8f37ff256dba14fb51aaa692a8b4e28a588b88383317dd322bcec8648c8",
       "adapted": false
     },
     {
       "file": "20261016007900_versioned_client_consents.sql",
-      "sha256": "712e5f295bf771f0f7b2fbf1ee339ca332b15a8f9c9f04bce003d06b2dcc4f41",
+      "sha256": "aaf39c5f974e39d66d00f830fa523f2902de30a33ff1cd8f49b6e630a918ff12",
       "adapted": false
     },
     {
       "file": "20261016008000_document_tasks.sql",
-      "sha256": "f3eb7b1d391ba9952df509c5b451828b7a0f06032b22fb689a4f67914bdb391f",
+      "sha256": "22ae383f51db216b0fb7a83405e538f5855da6866a2ab4083edc61a1b4c6c1d1",
       "adapted": false
     },
     {
       "file": "20261016008100_require_existing_staff_mfa.sql",
-      "sha256": "b4a2a9048e6b1973460fd7ba0894f20e5156a1b5ec67098ab2cd42963e8dfb29",
+      "sha256": "3920711b33835ccd618d5b8641a67d1e5e8e1cbb5f2ed7facc2cbfa0037f3768",
       "adapted": false
     },
     {
       "file": "20261016008200_mfa_missing_claim_guard.sql",
-      "sha256": "0d4df95c2939b7a616131479c363b7114c029a7308a085be597427fd1990f940",
+      "sha256": "199b42530f2851047cb78da09633597c3567657e07b9e22a53d2c5bc4f387c17",
       "adapted": false
     },
     {
       "file": "20261016008300_optional_staff_mfa.sql",
-      "sha256": "df77198d7ba60a74c5c1a7f1ae37dc2f3c00343969628b5eb1049b9ab97284fe",
+      "sha256": "f288776fbab1f4687613d641d158b0997521ed9b2bc136eed96b73e72da584fb",
       "adapted": false
     },
     {
       "file": "20261017008400_primary_administrator.sql",
-      "sha256": "288b954254e9349fac27078e9165cc8e5a73c3d0389ddafa61238ba0b90235a2",
+      "sha256": "c4946c2fced1b5db9b431698663190341458b9bdb897c7cb8853b8c7108e648f",
+      "adapted": false
+    },
+    {
+      "file": "20261018008500_client_registration_approval.sql",
+      "sha256": "3a33201806846ab46c658343bd3c00fe9b081f33ee91af92cf4ad493b3dc7521",
+      "adapted": false
+    },
+    {
+      "file": "20261018008600_profile_and_document_corrections.sql",
+      "sha256": "8130b432f0f687529c910a9864d32d04da2df5ba399ea38e7ed21baee4eac2c2",
+      "adapted": false
+    },
+    {
+      "file": "20261018008700_payment_allocations_and_schedule_corrections.sql",
+      "sha256": "556d87bb793f9cb7a71a29967fe6a70ae2997d0ad0833c1acf8b37b196cb8249",
+      "adapted": false
+    },
+    {
+      "file": "20261018008800_temporary_direct_uploads.sql",
+      "sha256": "432a58aaffe507b9fea3a550fd21b7ed444183245cd2fcfcc8608e0e8477e9cd",
+      "adapted": false
+    },
+    {
+      "file": "20261027008900_primary_account_activation.sql",
+      "sha256": "1e22036d4f922853041d5b31e4adb7db778fdcddd976618330ba3226dd9be795",
+      "adapted": false
+    },
+    {
+      "file": "20261027009000_mobile_push.sql",
+      "sha256": "1441c1f7a69b8722f9f74464891dd3b9b0015736eb18fb6761d5c227c89e816e",
+      "adapted": false
+    },
+    {
+      "file": "20261028009100_admin_account_activation.sql",
+      "sha256": "c67956391edc9c4fd169fe09fac8199d2af796e93e50dd30bc2a464ddab00cee",
+      "adapted": false
+    },
+    {
+      "file": "20261028009200_case_recovery_and_cancellation.sql",
+      "sha256": "52b6911bb5758031c07bcc15551702940178768ded7c2084fdcf11b6cd78248e",
+      "adapted": false
+    },
+    {
+      "file": "20261028009300_active_financial_case_guard.sql",
+      "sha256": "46375bbdd2581c50220a734339a33d80e76c591520d40a39c9896045316c3a10",
+      "adapted": false
+    },
+    {
+      "file": "20261028009400_staff_message_append_order.sql",
+      "sha256": "d94f6dbb19df581fe52244be4a858b6b7fadc5d062469260acfece2fa7705123",
+      "adapted": false
+    },
+    {
+      "file": "20261028009500_resolve_payments_before_case_end.sql",
+      "sha256": "a046519a7f0a413a11e02c0d0107c0d06fa85c2eda32cfda75d527455b4cf6b4",
+      "adapted": false
+    },
+    {
+      "file": "20261028009600_client_account_email_lookup.sql",
+      "sha256": "15ae0b1edc7dcf8934095634755b93c4ed4c8004b8ac730e35094ca9adb8c667",
       "adapted": false
     }
   ]

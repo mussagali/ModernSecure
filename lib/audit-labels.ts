@@ -1,8 +1,15 @@
 const actions: Record<string, string> = {
   accepted: "Принято",
+  approved: "Аккаунт активирован",
+  registration_approved: "Регистрация одобрена",
+  installment_cancelled: "Платёж графика отменён",
+  installment_updated: "Платёж графика изменён",
+  voided: "Оплата аннулирована",
   account_linked: "Аккаунт привязан",
   acknowledged: "Ознакомление подтверждено",
   cancelled: "Отменено",
+  cancelled_on_case_cancel: "Отменено при отмене дела",
+  reopened: "Запрос восстановлен",
   closed: "Дело завершено",
   completed: "Завершено",
   confirmed: "Подтверждено",
@@ -13,8 +20,10 @@ const actions: Record<string, string> = {
   download_issued: "Скачивание файла выдано",
   installment_created: "Платёж графика добавлен",
   invited: "Приглашение отправлено",
+  identity_completed: "Данные клиента заполнены",
   payment_permission_changed: "Право на оплаты изменено",
   preview_issued: "Предпросмотр файла выдан",
+  profile_updated: "Профиль обновлён",
   published: "Опубликовано",
   receipt_linked: "Чек привязан к оплате",
   responded: "Ответ отправлен",
@@ -30,6 +39,7 @@ const actions: Record<string, string> = {
 };
 
 const entities: Record<string, string> = {
+  account: "Аккаунт",
   case: "Дело",
   case_assignment: "Назначение на дело",
   case_internal_note: "Внутренняя заметка",
@@ -42,6 +52,7 @@ const entities: Record<string, string> = {
   payment: "Платёж",
   payment_receipt: "Квитанция об оплате",
   payment_schedule: "График платежей",
+  profile: "Профиль",
   qa_setup: "Настройка тестовых аккаунтов",
   service_template: "Шаблон услуги",
   service_template_version: "Версия услуги",

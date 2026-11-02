@@ -1,3 +1,4 @@
+import { deliverFile } from "../../../../lib/file-delivery";
 import { checkDocumentFile, storageAdmin } from "../../../../lib/document-files";
 import { canPreviewFile, fileContentDisposition } from "../../../../lib/file-preview";
 import { recordFileAccess } from "../../../../lib/file-access-audit";
@@ -39,8 +40,7 @@ export async function GET(request: Request, context: RouteContext<"/api/payment-
   if (!await recordFileAccess(admin, auth.claims.sub, "payment_receipt", id, preview)) {
     return new Response("File access audit unavailable", { status: 503 });
   }
-  return new Response(served.bytes, {
-    headers: {
+  return deliverFile(admin, receipt.storage_path, served.bytes, {
       "Content-Type": served.mime,
       "Content-Disposition": fileContentDisposition(receipt.original_name, receipt.detected_mime_type, preview, "receipt"),
       "Content-Length": String(served.bytes.length),
@@ -48,6 +48,5 @@ export async function GET(request: Request, context: RouteContext<"/api/payment-
       "X-Content-Type-Options": "nosniff",
       "Content-Security-Policy": "sandbox",
       "Cross-Origin-Resource-Policy": "same-origin",
-    },
-  });
+    }, { preview, name: receipt.original_name, transformed: served.mime !== receipt.detected_mime_type });
 }

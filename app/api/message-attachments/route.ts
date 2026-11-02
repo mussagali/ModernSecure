@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   const storage = admin;
 
   let form: FormData;
-  try { form = await readBoundedFormData(request, maxTotalBytes + 2 * 1024 * 1024); }
+  try { form = await readBoundedFormData(request, maxTotalBytes + 2 * 1024 * 1024, { admin, userId: auth.claims.sub }); }
   catch (error) { return failure("Не удалось прочитать файлы. Проверьте их размер и повторите попытку.", error instanceof UploadInputError ? error.status : 400); }
   const rawCaseId = form.get("caseId");
   const rawKey = form.get("key");

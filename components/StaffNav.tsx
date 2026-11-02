@@ -2,27 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UnreadNotificationsLink, useUnreadNotificationsCount } from "./UnreadNotificationsLink";
 import { useStaffUnreadCaseCount } from "./StaffUnreadCaseProvider";
-import { NavIcon, type NavIconName } from "./NavIcon";
+import { NavIcon } from "./NavIcon";
 
-type StaffRole = "lawyer" | "manager" | "admin";
-type StaffNavItem = { href: string; label: string; icon: NavIconName; managerOnly?: boolean; reviewerOnly?: boolean; adminOnly?: boolean };
-const items: StaffNavItem[] = [
-  { href: "/staff/cases", label: "Дела", icon: "cases" },
-  { href: "/staff/overview", label: "Обзор", icon: "home" },
-  { href: "/staff/clients", label: "Клиенты", icon: "clients", managerOnly: true },
-  { href: "/staff/inbox", label: "Сообщения клиентов", icon: "messages" },
-  { href: "/staff/chat", label: "Чат команды", icon: "team" },
-  { href: "/staff/review", label: "Документы на проверке", icon: "review", reviewerOnly: true },
-  { href: "/staff/services", label: "Услуги", icon: "services", adminOnly: true },
-  { href: "/staff/team", label: "Команда", icon: "team", adminOnly: true },
-  { href: "/staff/audit", label: "Журнал", icon: "audit", adminOnly: true },
-  { href: "/staff/notifications", label: "Уведомления", icon: "notifications" },
-  { href: "/staff/settings", label: "Настройки", icon: "settings", adminOnly: true },
-];
-
+import { staffNavigation, type StaffRole } from "../lib/workspace-navigation";
 const mobilePrimary = new Map([
   ["/staff/cases", "Дела"],
   ["/staff/clients", "Клиенты"],
@@ -35,33 +20,19 @@ function unreadCaseLabel(count: number) {
   return `${count} ${form === "one" ? "диалог" : form === "few" ? "диалога" : "диалогов"} с непрочитанными сообщениями`;
 }
 
-function visibleItems(role: StaffRole): StaffNavItem[] {
-  if (role === "lawyer") return [
-    { href: "/staff", label: "Главная", icon: "home" },
-    { href: "/staff/cases", label: "Мои дела", icon: "cases" },
-    { href: "/staff/clients", label: "Клиенты", icon: "clients" },
-    { href: "/staff/review", label: "Документы", icon: "documents" },
-    { href: "/staff/tasks", label: "Задачи", icon: "tasks" },
-    { href: "/staff/inbox", label: "Сообщения", icon: "messages" },
-    { href: "/staff/calendar", label: "Календарь", icon: "calendar" },
-    { href: "/staff/payments", label: "Оплаты", icon: "payments" },
-    { href: "/staff/chat", label: "Чат команды", icon: "team" },
-    { href: "/staff/notifications", label: "Уведомления", icon: "notifications" },
-  ];
-  return items.filter((item) => (!item.adminOnly || role === "admin")
-    && (!item.reviewerOnly || role !== "manager"));
-}
 
 function isActive(path: string, href: string, role: StaffRole) {
   return (role !== "lawyer" && path === "/staff" && href === "/staff/overview") || (role === "lawyer" && path === "/staff/overview" && href === "/staff") || path === href || (href !== "/staff" && path.startsWith(`${href}/`));
 }
 
-export function StaffNav({ role, unreadCount }: { role: StaffRole; unreadCount: number }) {
+export function StaffNav({ role, unreadCount, pendingCount = 0 }: { role: StaffRole; unreadCount: number; pendingCount?: number }) {
   const path = usePathname();
   const unreadCases = useStaffUnreadCaseCount();
-  return <nav className="staff-nav" aria-label="Разделы панели">{visibleItems(role).map((item) => {
+  const [filter, setFilter] = useState("");
+  const available = staffNavigation(role).filter(item => item.label.toLocaleLowerCase("ru").includes(filter.toLocaleLowerCase("ru")));
+  return <><label className="nav-filter"><NavIcon name="search" size={16} /><span className="sr-only">Найти раздел</span><input type="search" value={filter} onChange={event => setFilter(event.target.value)} placeholder="Найти раздел" /></label><nav className="staff-nav" aria-label="Разделы панели">{available.map((item) => {
     const active = isActive(path, item.href, role);
-    const className = active ? "staff-nav-link is-active" : "staff-nav-link";
+    const className = `staff-nav-link${active ? " is-active" : ""}${item.href === "/staff/services" ? " is-separated" : ""}`;
     if (item.href === "/staff/notifications") {
       return <UnreadNotificationsLink key={item.href} href={item.href} className={className} label={item.label} icon={<span className="staff-nav-icon"><NavIcon name={item.icon} /></span>} initialCount={unreadCount} active={active} />;
     }
@@ -71,20 +42,20 @@ export function StaffNav({ role, unreadCount }: { role: StaffRole; unreadCount: 
         className={className}><span className="staff-nav-icon"><NavIcon name={item.icon} /></span>{item.label}
         {unreadCases !== null && unreadCases > 0 && <b className="staff-nav-count" aria-hidden="true">{unreadCases > 99 ? "99+" : unreadCases}</b>}</Link>;
     }
-    return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={className}><span className="staff-nav-icon"><NavIcon name={item.icon} /></span>{item.label}</Link>;
-  })}</nav>;
+    return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} aria-label={item.href === "/staff/team" && pendingCount > 0 ? `${item.label}, заявок на активацию: ${pendingCount}` : undefined} className={className}><span className="staff-nav-icon"><NavIcon name={item.icon} /></span>{item.label}{item.href === "/staff/team" && pendingCount > 0 && <b className="staff-nav-count" aria-hidden="true">{pendingCount > 99 ? "99+" : pendingCount}</b>}</Link>;
+  })}{available.length === 0 && <p className="nav-no-results">Раздел не найден</p>}</nav></>;
 }
 
-export function StaffMobileNav({ role, unreadCount }: { role: StaffRole; unreadCount: number }) {
+export function StaffMobileNav({ role, unreadCount, pendingCount = 0 }: { role: StaffRole; unreadCount: number; pendingCount?: number }) {
   const path = usePathname();
   const liveUnreadCount = useUnreadNotificationsCount(unreadCount);
   const unreadCases = useStaffUnreadCaseCount();
   const detailsRef = useRef<HTMLDetailsElement>(null);
-  const available = visibleItems(role);
+  const available = staffNavigation(role);
   const primary = available.filter((item) => role === "lawyer" ? ["/staff", "/staff/cases", "/staff/inbox"].includes(item.href) : mobilePrimary.has(item.href));
   if (role === "lawyer") {
     const review = available.find((item) => item.href === "/staff/review");
-    if (review) primary.splice(1, 0, review);
+    if (review) primary.push(review);
   }
   const secondary = available.filter((item) => !primary.includes(item));
   const moreActive = secondary.some((item) => isActive(path, item.href, role));
@@ -122,10 +93,10 @@ export function StaffMobileNav({ role, unreadCount }: { role: StaffRole; unreadC
       }
     }}>
       <summary className={`staff-mobile-primary-link${moreActive ? " is-active" : ""}`}
-        aria-label={liveUnreadCount > 0 ? `Ещё разделы, ${liveUnreadCount} непрочитанных уведомлений` : "Ещё разделы"}>
+        aria-label={`Ещё разделы${liveUnreadCount > 0 ? `, непрочитанных уведомлений: ${liveUnreadCount}` : ""}${pendingCount > 0 ? `, заявок на активацию: ${pendingCount}` : ""}`}>
         <span className="staff-nav-icon"><NavIcon name="more" /></span>
         <span>Ещё</span>
-        {liveUnreadCount > 0 && <b className="staff-mobile-more-badge" aria-hidden="true">{liveUnreadCount > 99 ? "99+" : liveUnreadCount}</b>}
+        {liveUnreadCount + pendingCount > 0 && <b className="staff-mobile-more-badge" aria-hidden="true">{liveUnreadCount + pendingCount > 99 ? "99+" : liveUnreadCount + pendingCount}</b>}
       </summary>
       <div className="staff-mobile-more-panel">
         <p>Остальные разделы</p>
@@ -136,9 +107,11 @@ export function StaffMobileNav({ role, unreadCount }: { role: StaffRole; unreadC
             onClick={() => detailsRef.current?.removeAttribute("open")}>
             <span className="staff-nav-icon"><NavIcon name={item.icon} /></span>
             <span>{item.label}</span>
+            {item.href === "/staff/team" && pendingCount > 0 && <b aria-label={`Заявок на активацию: ${pendingCount}`}>{pendingCount > 99 ? "99+" : pendingCount}</b>}
             {item.href === "/staff/notifications" && liveUnreadCount > 0 && <b aria-hidden="true">{liveUnreadCount > 99 ? "99+" : liveUnreadCount}</b>}
           </Link>;
         })}
+        <Link href="/staff-security" className="staff-mobile-more-link staff-mobile-security" onClick={() => detailsRef.current?.removeAttribute("open")}><span className="staff-nav-icon"><NavIcon name="settings" /></span><span>Безопасность аккаунта</span></Link>
       </div>
     </details>
   </nav>;

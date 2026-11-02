@@ -6,16 +6,22 @@ const singleId = (prefix: string) => new RegExp(`^${prefix}:(${uuid})$`, "i");
 const taskReviewKey = new RegExp(`^task-review:(${uuid}):${uuid}$`, "i");
 const taskDeadlineKey = new RegExp(`^task-deadline:(${uuid}):\\d{4}-\\d{2}-\\d{2}:(?:today|tomorrow)$`, "i");
 const uuidOnly = new RegExp(`^${uuid}$`, "i");
+const anchoredCasePath = new RegExp(`^/(account|staff)/cases/${uuid}/(?:tasks#task-${uuid}|documents#(?:request|file)-${uuid})$`, "i");
 
 export function notificationHref(raw: string | null, audience: "client" | "staff") {
   const fallback = audience === "client" ? "/account" : "/staff/cases";
   if (!raw) return fallback;
+  if (audience === "staff" && (raw === "/staff/team?tab=pending" || raw === "/staff")) return raw;
+  if (audience === "client" && raw === "/account") return raw;
+  if (raw.startsWith(audience === "client" ? "/account/" : "/staff/") && anchoredCasePath.test(raw)) return raw;
   if (audience === "staff" && staffChatPath.test(raw)) return raw;
   return (audience === "client" ? clientCasePath : staffCasePath).test(raw) ? raw : fallback;
 }
 
 export function notificationActionLabel(raw: string | null, audience: "client" | "staff") {
-  const target = notificationHref(raw, audience);
+  const target = notificationHref(raw, audience).split("#", 1)[0];
+  if (target === "/staff/team?tab=pending") return "Открыть заявки →";
+  if (target === "/staff" || target === "/account") return "Открыть кабинет →";
   if (audience === "staff" && staffChatPath.test(target)) return "Открыть диалог →";
   if (target.endsWith("/documents")) return "Открыть документы →";
   if (target.endsWith("/tasks")) return "Открыть задачи →";

@@ -23,7 +23,7 @@ export default async function ProfilePage({ searchParams }: {
   const query = await searchParams;
   return <main className="account-page">
     <AccountHeader />
-    <div className="account-content"><Link href="/account" className="account-back">Мои дела</Link><h1>Профиль</h1><p className="account-email">Контактные данные, которые видите вы. Email меняется отдельно через поддержку.</p>
+    <div className="account-content client-settings"><Link href="/account" className="account-back">Мои дела</Link><h1>Профиль</h1><p className="account-email">Контактные данные, которые видите вы. Email меняется отдельно через поддержку.</p>
       {query.saved && <p className="auth-feedback is-success" role="status">Профиль сохранён.</p>}
       {query.error && <p className="auth-feedback is-error" role="alert">{query.error === "invalid" ? "Проверьте телефон и длину полей." : "Не удалось сохранить профиль. Попробуйте ещё раз."}</p>}
       <section className="account-card account-identity-card"><h2>Карточка клиента</h2>

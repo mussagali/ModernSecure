@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   const admin = storageAdmin();
   if (!admin) return new Response("Receipt storage is not configured", { status: 503 });
   let form: FormData;
-  try { form = await readBoundedFormData(request, MAX_DOCUMENT_BYTES + 1024 * 1024); }
+  try { form = await readBoundedFormData(request, MAX_DOCUMENT_BYTES + 1024 * 1024, { admin, userId: auth.claims.sub }); }
   catch (error) { return new Response("Invalid upload", { status: error instanceof UploadInputError ? error.status : 400 }); }
   const submittedCaseId = form.get("caseId");
   const submittedKey = form.get("key");

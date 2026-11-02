@@ -1,3 +1,4 @@
+import { notificationReturn } from "../../lib/workspace-destination";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { staffWorkspaceEnabled } from "../../lib/application-scope";
@@ -11,7 +12,8 @@ import "./security.css";
 
 export const metadata: Metadata = { title: "Защита входа сотрудника | Современная защита" };
 
-export default async function StaffSecurityPage() {
+export default async function StaffSecurityPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const next = notificationReturn((await searchParams).next) ?? "/staff";
   if (!staffWorkspaceEnabled) notFound();
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
@@ -23,7 +25,7 @@ export default async function StaffSecurityPage() {
   return <main className="staff-security-page">
     <header className="staff-security-top"><Brand href={staff.mfa_passed ? "/staff" : "/staff-security"} /><form action={signOutAction}><button type="submit">Выйти</button></form></header>
     <section className="staff-security-content"><h1>Безопасность аккаунта</h1><p className="staff-security-intro">Код из приложения-аутентификатора защищает клиентские дела, документы и переписку даже если пароль стал известен другому человеку.</p>
-      <StaffMfaPanel required={staff.mfa_required} passed={staff.mfa_passed} />
+      <StaffMfaPanel required={staff.mfa_required} passed={staff.mfa_passed} next={next} />
       <p className="staff-security-help">Потеряли устройство с кодами? Обратитесь к главному администратору или владельцу проекта. Пароль и доступ к почте сами по себе не отключают второй фактор.</p>
     </section>
   </main>;

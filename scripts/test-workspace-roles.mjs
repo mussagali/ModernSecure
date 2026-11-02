@@ -35,6 +35,8 @@ const db = {
   rpc: async name => name === "claim_staff_invite" ? { error: inviteError } : { data: staff, error },
 };
 const staffModule = load("../lib/staff.ts", {
+  // Each call below represents a separate server request.
+  react: { cache: fn => fn },
   "next/navigation": { redirect, notFound: () => { throw new Error("404"); } },
   "./application-scope": { staffWorkspaceEnabled: true },
   "./supabase/server": { createClient: async () => db },

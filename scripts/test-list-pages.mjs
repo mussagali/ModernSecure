@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import { loadListPage } from '../lib/list-page.ts';
+const calls=[];
+const recovered=await loadListPage(async page=>{
+  calls.push(page);
+  if(page===9999)return {data:null,count:null,error:{code:'PGRST103'}};
+  return {data:Array.from({length:page===1?25:1},(_,i)=>({id:(page-1)*25+i+1})),count:51,error:null};
+},9999);
+assert.deepEqual(calls,[9999,1,3]);
+assert.equal(recovered.page,3);
+assert.equal(recovered.count,51);
+assert.equal(recovered.data[0].id,51);
+const empty=await loadListPage(async()=>({data:[],count:0,error:null}),8);
+assert.equal(empty.page,1);
+assert.deepEqual(empty.data,[]);
+const denied={code:'42501',message:'Not authorized'};
+const failure=await loadListPage(async()=>({data:null,count:null,error:denied}),8);
+assert.equal(failure.error,denied,'Authorization errors must never become an empty success');
+let requests=0;
+const normal=await loadListPage(async()=>{requests++;return {data:[{id:1}],count:1,error:null}},1);
+assert.equal(requests,1,'Ordinary pages make one request');
+assert.equal(normal.page,1);
+console.log('OK list paging: stale offsets recover, empty lists reset, authorization failures remain errors');

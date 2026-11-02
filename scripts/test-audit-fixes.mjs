@@ -119,6 +119,10 @@ try {
   await db.query("insert into public.contracts(id,case_id,version_no,contract_number,price_kzt,storage_path) values($1,$2,1,'QA',1000,'qa/contract.pdf')",[id(5),id(4)]);
   await db.query("insert into public.payment_schedule(id,case_id,contract_id,due_on,amount_kzt) values($1,$3,$4,'2030-01-02',100),($2,$3,$4,'2030-01-02',100)",[id(6),id(7),id(4),id(5)]);
   await db.query("insert into public.payments(case_id,schedule_id,amount_kzt,paid_on,confirmed_by) values($1,$2,40,'2030-01-01',$4),($1,$3,100,'2030-01-01',$4)",[id(4),id(6),id(7),admin]);
+  // Payments are allocated to installments after migration 087. Mirror a real
+  // confirmed payment, rather than creating unallocated fixture money.
+  await db.query(`insert into public.payment_allocations(payment_id,schedule_id,case_id,amount_kzt)
+    select id,schedule_id,case_id,amount_kzt from public.payments where case_id=$1`, [id(4)]);
   assert.equal((await db.query("select private.enqueue_payment_deadline_reminders('2030-01-01') as n")).rows[0].n,1);
   assert.equal((await db.query("select private.enqueue_payment_deadline_reminders('2030-01-01') as n")).rows[0].n,0);
   assert.equal((await db.query("select private.enqueue_payment_deadline_reminders('2030-01-02') as n")).rows[0].n,1);

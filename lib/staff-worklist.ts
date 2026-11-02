@@ -18,11 +18,11 @@ export type StaffWorkItem = {
   total_count: number;
 };
 
-export type WorklistStatus = "all" | "open" | "closed" | "suspended";
+export type WorklistStatus = "all" | "open" | "closed" | "suspended" | "cancelled";
 export type WorklistAttention = "all" | "unread" | "overdue" | "documents" | "messages";
 
 export function worklistStatus(value: unknown): WorklistStatus {
-  return value === "open" || value === "closed" || value === "suspended" ? value : "all";
+  return value === "open" || value === "closed" || value === "suspended" || value === "cancelled" ? value : "all";
 }
 
 export function worklistAttention(value: unknown): WorklistAttention {

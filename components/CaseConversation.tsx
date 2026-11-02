@@ -1,5 +1,7 @@
 "use client";
 
+import { uploadForm } from "../lib/direct-upload";
+
 import { NavIcon } from "./NavIcon";
 
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type FormEvent, type ReactNode } from "react";
@@ -284,7 +286,7 @@ export default function CaseConversation({ caseId, caseNumber, caseTitle, backHr
     form.set("body", body);
     files.forEach((file) => form.append("files", file));
     try {
-      const response = await fetch("/api/message-attachments", { method: "POST", body: form, headers: { Accept: "application/json" } });
+      const response = await uploadForm("/api/message-attachments", form);
       const result = await response.json().catch(() => null) as { ok?: boolean; error?: string } | null;
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Сообщение не отправлено. Попробуйте ещё раз.");
       setBody("");

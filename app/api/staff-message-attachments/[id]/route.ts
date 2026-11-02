@@ -1,3 +1,4 @@
+import { deliverFile } from "../../../../lib/file-delivery";
 import { checkDocumentFile, storageAdmin } from "../../../../lib/document-files";
 import { canPreviewFile, fileContentDisposition } from "../../../../lib/file-preview";
 import { recordFileAccess } from "../../../../lib/file-access-audit";
@@ -41,7 +42,7 @@ export async function GET(request: Request, context: RouteContext<"/api/staff-me
   if (!await recordFileAccess(admin, auth.claims.sub, "staff_message_attachment", id, preview)) {
     return new Response("File access audit unavailable", { status: 503 });
   }
-  return new Response(served.bytes, { headers: {
+  return deliverFile(admin, attachment.storage_path, served.bytes, {
     "Content-Type": served.mime,
     "Content-Disposition": fileContentDisposition(attachment.original_name, attachment.detected_mime_type, preview, "attachment"),
     "Content-Length": String(served.bytes.length),
@@ -49,5 +50,5 @@ export async function GET(request: Request, context: RouteContext<"/api/staff-me
     "X-Content-Type-Options": "nosniff",
     "Content-Security-Policy": "sandbox",
     "Cross-Origin-Resource-Policy": "same-origin",
-  } });
+  }, { preview, name: attachment.original_name, transformed: served.mime !== attachment.detected_mime_type });
 }

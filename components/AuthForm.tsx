@@ -59,7 +59,7 @@ export function AuthForm({ mode, next = "/account" }: { mode: Mode; next?: strin
         <input type="hidden" name="next" value={next} />
         {hasEmail && <div className="auth-field">
           <label htmlFor="email">Электронная почта</label>
-          <input id="email" name="email" type="email" autoComplete="email" placeholder="Электронная почта" required maxLength={254} />
+          <input id="email" name="email" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} inputMode="email" placeholder="name@example.com" required maxLength={254} />
         </div>}
         {hasPassword && <div className="auth-field">
           <div className="auth-label-row"><label htmlFor="password">{mode === "reset" ? "Новый пароль" : "Пароль"}</label>{mode === "login" && <Link href="/forgot-password">Забыли пароль?</Link>}</div>
@@ -80,7 +80,8 @@ export function AuthForm({ mode, next = "/account" }: { mode: Mode; next?: strin
       </form>
       <div className="auth-switch">
         {mode === "login" && <>Нет аккаунта? <Link href="/register">Зарегистрироваться</Link></>}
-        {mode !== "login" && <>Уже есть аккаунт? <Link href="/login">Войти</Link></>}
+        {mode === "register" && <>Уже есть аккаунт? <Link href="/login">Войти</Link></>}
+        {(mode === "forgot" || mode === "reset") && <Link href="/login">Вернуться ко входу</Link>}
       </div>
     </>
   );

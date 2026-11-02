@@ -1,3 +1,4 @@
+import { deliverFile } from "../../../../lib/file-delivery";
 import { createHash } from "node:crypto";
 import { storageAdmin } from "../../../../lib/document-files";
 import { recordFileAccess } from "../../../../lib/file-access-audit";
@@ -40,8 +41,7 @@ export async function GET(request: Request, context: RouteContext<"/api/document
   if (!await recordFileAccess(admin, auth.claims.sub, "document_file", id, preview)) {
     return new Response("File access audit unavailable", { status: 503 });
   }
-  return new Response(served.bytes, {
-    headers: {
+  return deliverFile(admin, file.storage_path, served.bytes, {
       "Content-Type": served.mime,
       "Content-Disposition": fileContentDisposition(file.original_name, file.detected_mime_type, preview, "document"),
       "Content-Length": String(served.bytes.length),
@@ -49,6 +49,5 @@ export async function GET(request: Request, context: RouteContext<"/api/document
       "X-Content-Type-Options": "nosniff",
       "Content-Security-Policy": "sandbox",
       "Cross-Origin-Resource-Policy": "same-origin",
-    },
-  });
+    }, { preview, name: file.original_name, transformed: served.mime !== file.detected_mime_type });
 }

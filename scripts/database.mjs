@@ -23,7 +23,7 @@ const projectTables = [
   "contact_settings", "staff_invites", "staff_threads", "staff_messages", "staff_thread_reads", "staff_message_attachments", "staff_message_case_refs",
 ];
 const requiredWorkflows = [
-  "staff_cancel_task", "staff_close_document_request", "admin_publish_legal_document", "client_consent_status", "accept_client_consents",
+  "staff_cancel_task", "staff_close_document_request", "staff_reopen_template_document_request", "admin_publish_legal_document", "client_consent_status", "accept_client_consents",
   "link_client_account", "staff_create_client", "admin_create_service", "staff_create_case",
   "staff_change_case_stage", "staff_assign_case", "staff_create_task", "client_respond_task",
   "staff_review_task", "staff_create_document_request", "post_case_message",
@@ -38,7 +38,7 @@ const requiredWorkflows = [
   "mark_own_notifications_read",
   "open_own_notification",
   "resume_or_begin_document_upload",
-  "staff_suspend_case", "staff_resume_case", "staff_close_case",
+  "staff_suspend_case", "staff_resume_case", "staff_close_case", "staff_cancel_case",
   "admin_create_service_with_documents", "admin_publish_service_version",
   "available_service_versions",
   "staff_search_clients",
@@ -248,7 +248,26 @@ async function roleSmoke(url) {
     await client.query("update auth.users set email_confirmed_at = now() where id = $1", [invitedUserId]);
     await client.query("set local role authenticated");
     const verified = await client.query("select public.claim_staff_invite() as claimed");
-    if (verified.rows[0]?.claimed !== true) throw new Error("Подтверждённый email не получил роль.");
+    const verifiedAccess = await client.query("select public.account_access_status() as status");
+    if (verified.rows[0]?.claimed !== false || verifiedAccess.rows[0]?.status !== "pending") {
+      throw new Error("Подтверждение email выдало доступ без явной активации.");
+    }
+    await client.query("reset role");
+    const unapprovedMember = await client.query("select user_id from public.staff_members where user_id = $1", [invitedUserId]);
+    const unapprovedInvite = await client.query("select status from public.staff_invites where id = $1", [invite.rows[0].id]);
+    if (unapprovedMember.rows.length !== 0 || unapprovedInvite.rows[0]?.status !== "pending") {
+      throw new Error("Приглашение изменило роль до активации администратором.");
+    }
+    await client.query("select set_config('request.jwt.claim.sub', $1, true)", [owner.rows[0].user_id]);
+    await client.query("set local role authenticated");
+    await client.query("select public.admin_approve_account($1, 'lawyer', $2)", [invitedUserId, "Проверка выдачи роли"]);
+    const approvedInvite = await client.query("select status, accepted_user_id from public.staff_invites where id = $1", [invite.rows[0].id]);
+    if (approvedInvite.rows[0]?.status !== "cancelled" || approvedInvite.rows[0]?.accepted_user_id !== null) {
+      throw new Error("Явная активация не закрыла ожидающее приглашение.");
+    }
+    await client.query("reset role");
+    await client.query("select set_config('request.jwt.claim.sub', $1, true)", [invitedUserId]);
+    await client.query("set local role authenticated");
     await client.query("select public.update_own_profile('Проверка профиля', '+7 777 123 45 67', 'Алматы')");
     const profileBeforeMfa = await client.query("select user_id from public.profiles where user_id = auth.uid()");
     if (profileBeforeMfa.rows.length !== 1) throw new Error("Новый сотрудник не увидел свой профиль при необязательном MFA.");
@@ -264,13 +283,19 @@ async function roleSmoke(url) {
     await client.query("insert into auth.users (id, email, email_confirmed_at) values ($1, $2, now())", [existingUserId, existingEmail]);
     await client.query("select set_config('request.jwt.claim.sub', $1, true)", [owner.rows[0].user_id]);
     await client.query("set local role authenticated");
-    const immediate = await client.query("select public.admin_invite_staff($1, $2, 'manager') as status", [existingEmail, "Проверка существующего аккаунта"]);
-    if (immediate.rows[0]?.status !== "granted") throw new Error("Подтверждённый аккаунт не получил роль сразу.");
+    const existingInvitation = await client.query("select public.admin_invite_staff($1, $2, 'manager') as status", [existingEmail, "Проверка существующего аккаунта"]);
+    const existingPending = await client.query("select status from public.staff_invites where email = $1", [existingEmail]);
+    const existingUnapproved = await client.query("select user_id from public.staff_members where user_id = $1", [existingUserId]);
+    if (existingInvitation.rows[0]?.status !== "pending" || existingPending.rows[0]?.status !== "pending"
+      || existingUnapproved.rows.length !== 0) {
+      throw new Error("Приглашение подтверждённого аккаунта выдало роль без явной активации.");
+    }
+    await client.query("select public.admin_approve_account($1, 'manager', $2)", [existingUserId, "Проверка существующего аккаунта"]);
     await client.query("reset role");
     const existingGranted = await client.query("select role, active from public.staff_members where user_id = $1", [existingUserId]);
-    const acceptedInvite = await client.query("select status, accepted_user_id from public.staff_invites where email = $1", [existingEmail]);
+    const existingApprovedInvite = await client.query("select status, accepted_user_id from public.staff_invites where email = $1", [existingEmail]);
     if (existingGranted.rows[0]?.role !== "manager" || existingGranted.rows[0]?.active !== true
-      || acceptedInvite.rows[0]?.status !== "accepted" || acceptedInvite.rows[0]?.accepted_user_id !== existingUserId) {
+      || existingApprovedInvite.rows[0]?.status !== "cancelled" || existingApprovedInvite.rows[0]?.accepted_user_id !== null) {
       throw new Error("Выдача роли существующему аккаунту не завершилась корректно.");
     }
     // This transaction simulates the manager after a successful TOTP challenge.
@@ -327,14 +352,19 @@ async function roleSmoke(url) {
     const linkCard = await client.query("insert into public.clients (full_name, email) values ('Проверка привязки', $1) returning id", [linkEmail]);
     await client.query("select set_config('request.jwt.claim.sub', $1, true)", [existingUserId]);
     await client.query("set local role authenticated");
-    await client.query("savepoint mismatched_client_link");
-    let mismatchedLinkDenied = false;
-    try { await client.query("select public.link_client_account($1, $2)", [linkCard.rows[0].id, existingEmail]); }
-    catch (error) {
-      mismatchedLinkDenied = error instanceof Error && error.message.includes("Account email must match client card");
-      await client.query("rollback to savepoint mismatched_client_link");
+    for (const candidateEmail of [existingEmail, linkEmail]) {
+      await client.query("savepoint manager_client_link");
+      let managerLinkDenied = false;
+      try { await client.query("select public.link_client_account($1, $2)", [linkCard.rows[0].id, candidateEmail]); }
+      catch (error) {
+        managerLinkDenied = error instanceof Error && error.message.includes("Not authorized");
+        await client.query("rollback to savepoint manager_client_link");
+      }
+      if (!managerLinkDenied) throw new Error("Менеджер активировал клиентский аккаунт без прав администратора.");
     }
-    if (!mismatchedLinkDenied) throw new Error("Менеджер привязал карточку к другому email.");
+    await client.query("reset role");
+    await client.query("select set_config('request.jwt.claim.sub', $1, true)", [owner.rows[0].user_id]);
+    await client.query("set local role authenticated");
     await client.query("select public.link_client_account($1, $2)", [linkCard.rows[0].id, linkEmail]);
     const linkedAccount = await client.query("select user_id from public.clients where id = $1", [linkCard.rows[0].id]);
     if (linkedAccount.rows[0]?.user_id !== linkUserId) throw new Error("Корректная привязка аккаунта не работает.");
@@ -418,15 +448,16 @@ async function roleSmoke(url) {
     await client.query("reset role");
     await client.query("select set_config('request.jwt.claim.sub', $1, true)", [owner.rows[0].user_id]);
     await client.query("set local role authenticated");
+    const ackResponse = await client.query("select response_event_id from public.tasks where id=$1", [ackTask.rows[0].id]);
     await client.query("savepoint null_task_review");
     let nullReviewDenied = false;
-    try { await client.query("select public.staff_review_task($1, null, null)", [ackTask.rows[0].id]); }
+    try { await client.query("select public.staff_review_task($1, $2, null, null)", [ackTask.rows[0].id, ackResponse.rows[0].response_event_id]); }
     catch (error) {
       nullReviewDenied = error instanceof Error && error.message.includes("Task review decision is required");
       await client.query("rollback to savepoint null_task_review");
     }
     if (!nullReviewDenied) throw new Error("NULL-решение по задаче не отклонено.");
-    await client.query("select public.staff_review_task($1, true, null)", [ackTask.rows[0].id]);
+    await client.query("select public.staff_review_task($1, $2, true, null)", [ackTask.rows[0].id, ackResponse.rows[0].response_event_id]);
     const dueTask = await client.query("select public.staff_create_task($1, 'answer', 'Проверка напоминаний', null, '2100-01-02T05:00:00Z') as id", [syntheticCase.rows[0].id]);
     await client.query("reset role");
     await client.query("select private.enqueue_task_deadline_reminders('2100-01-01')");
@@ -520,7 +551,8 @@ async function documentSmoke(url) {
     await client.query("reset role");
     const handoffNotice = await client.query("select recipient_user_id from public.notifications where dedupe_key = $1",
       [`message:${attachmentMessage.rows[0].result.id}`]);
-    if (handoffNotice.rows.length !== 1 || handoffNotice.rows[0].recipient_user_id !== owner.rows[0].user_id) {
+    const expectedAdmins = await client.query("select user_id from public.staff_members where role = 'admin' and active order by user_id");
+    if (handoffNotice.rows.map(row => row.recipient_user_id).sort().join(",") !== expectedAdmins.rows.map(row => row.user_id).join(",")) {
       throw new Error("Сообщение без назначенного сотрудника не дошло администратору.");
     }
     await client.query("set local role authenticated");

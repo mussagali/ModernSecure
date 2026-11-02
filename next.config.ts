@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
         { key: "X-Frame-Options", value: "DENY" },
         { key: "Referrer-Policy", value: "same-origin" },
       ],
+    }, {
+      source: "/downloads/modernsecure-debug.apk",
+      headers: [
+        { key: "Content-Type", value: "application/vnd.android.package-archive" },
+        { key: "Content-Disposition", value: 'attachment; filename="modernsecure-debug.apk"' },
+      ],
     }];
   },
 };

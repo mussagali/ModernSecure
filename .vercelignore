@@ -1,0 +1,16 @@
+# Local credentials and handoff material are never deployment inputs.
+.env*
+.workspace-accounts.local.json
+.test-accounts.local.json
+handoff/
+
+# Native projects, review artifacts, and generated local output.
+apps/
+.impeccable/
+artifacts/
+supabase-upload/
+RESTART_NOTES.md
+.next/
+node_modules/
+*.log
+*.tsbuildinfo

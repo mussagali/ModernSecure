@@ -1,6 +1,11 @@
 "use client";
 
+import { uploadForm } from "../lib/direct-upload";
+
 import Link from "next/link";
+import { ListPagination } from "./ListControls";
+import { listHref } from "../lib/list-query";
+import { staffChatDirectory } from "../lib/staff-chat-directory";
 import { NavIcon } from "./NavIcon";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, type ChangeEvent, type FormEvent, type KeyboardEvent } from "react";
@@ -25,6 +30,7 @@ type Props = {
   userId: string; selectedId: string | null; selectedThreadId: string | null;
   returnCase: { id: string; caseNumber: string } | null;
   conversations: Conversation[]; messages: Message[];
+  selectedPerson: Conversation | null; directoryQuery: string; directoryPage: number; directoryCount: number; unreadOnly: boolean;
   olderHref: string | null; historical: boolean; historyPageKey: string;
 };
 const roleLabels = { admin: "Администратор", manager: "Менеджер", lawyer: "Юрист" };
@@ -50,15 +56,14 @@ function subscribeToNetwork(callback: () => void) {
   };
 }
 
-export function StaffChat({ userId, selectedId, selectedThreadId, returnCase, conversations, messages, olderHref, historical, historyPageKey }: Props) {
+export function StaffChat({ userId, selectedId, selectedThreadId, returnCase, conversations, messages, olderHref, historical, historyPageKey, selectedPerson, directoryQuery, directoryPage, directoryCount, unreadOnly }: Props) {
   const router = useRouter();
-  const current = conversations.find((person) => person.user_id === selectedId) ?? null;
+  const current = selectedPerson;
   const latestHref = current ? `/staff/chat?${new URLSearchParams({ to: current.user_id, ...(returnCase ? { fromCase: returnCase.id } : {}) })}` : "/staff/chat";
   const [draft, setDraft] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [filter, setFilter] = useState("");
   const [showJump, setShowJump] = useState(false);
   const connected = useSyncExternalStore(subscribeToNetwork, () => navigator.onLine, () => true);
   const key = useRef<string | null>(null);
@@ -68,7 +73,8 @@ export function StaffChat({ userId, selectedId, selectedThreadId, returnCase, co
   const markReadRef = useRef<() => void>(() => {});
   const newestId = messages.at(-1)?.id ?? null;
   const sidebarRef = useRef(sidebarVersion(conversations));
-  const people = conversations.filter((person) => `${person.display_name} ${roleLabels[person.role]}`.toLocaleLowerCase("ru").includes(filter.toLocaleLowerCase("ru")));
+  const people = conversations;
+  const directoryParams = { q: directoryQuery, page: directoryPage, ...(unreadOnly ? { unread: "1" } : {}) };
 
   useEffect(() => {
     followLatest.current = !historical;
@@ -100,7 +106,10 @@ export function StaffChat({ userId, selectedId, selectedThreadId, returnCase, co
       .subscribe();
     const interval = window.setInterval(async () => {
       if (document.visibilityState !== "visible" || !navigator.onLine) return;
-      const { data, error } = await supabase.rpc("staff_chat_sidebar");
+      // A selected conversation can be outside the current filtered directory page.
+      // Refresh it as well when realtime delivery is unavailable.
+      if (selectedId) { router.refresh(); return; }
+      const { data, error } = await staffChatDirectory(supabase, directoryQuery, directoryPage, unreadOnly);
       if (error || !data) return;
       const version = sidebarVersion(data.map((row: {
         user_id: string; display_name: string; active: boolean; thread_id: string | null;
@@ -119,7 +128,7 @@ export function StaffChat({ userId, selectedId, selectedThreadId, returnCase, co
       document.removeEventListener("visibilitychange", reveal);
       void supabase.removeChannel(channel);
     };
-  }, [router, userId]);
+  }, [router, userId, directoryQuery, directoryPage, unreadOnly, selectedId]);
   useEffect(() => {
     if (!selectedThreadId || !newestId || !current?.unread || historical) return;
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -199,9 +208,7 @@ export function StaffChat({ userId, selectedId, selectedThreadId, returnCase, co
         form.set("body", body);
         if (returnCase) form.set("caseId", returnCase.id);
         files.forEach((file) => form.append("files", file));
-        const response = await fetch("/api/staff-message-attachments", {
-          method: "POST", body: form, headers: { Accept: "application/json" },
-        });
+        const response = await uploadForm("/api/staff-message-attachments", form);
         const result = await response.json().catch(() => null) as { ok?: boolean; error?: string } | null;
         if (!response.ok || !result?.ok) throw new Error(result?.error || "Не удалось отправить файл. Повторите попытку.");
       } else {
@@ -248,18 +255,20 @@ export function StaffChat({ userId, selectedId, selectedThreadId, returnCase, co
   return <div className={`${styles.shell} staff-chat-root${current ? " staff-chat-active" : ""}`}>
     <aside className={`${styles.sidebar}${current ? ` ${styles.sidebarWithSelection}` : ""}`}>
       <div className={styles.sidebarHeader}><h1>Чат команды</h1><p>Диалоги между сотрудниками</p><Link href="/staff/inbox">Переписка с клиентами</Link></div>
-      <label className={styles.search}><span className={styles.srOnly}>Поиск сотрудника</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 5 5"/></svg><input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Найти коллегу" type="search" /></label>
+      <form action="/staff/chat" className="chat-directory-search" role="search"><label className={styles.search}><span className={styles.srOnly}>Поиск сотрудника</span><NavIcon name="search" size={18} /><input name="q" defaultValue={directoryQuery} placeholder="Найти коллегу по имени" type="search" maxLength={120} /></label>{unreadOnly && <input type="hidden" name="unread" value="1" />}<button type="submit" aria-label="Найти коллегу"><NavIcon name="arrow" size={18} /></button></form>
+      <nav className="chat-directory-tabs" aria-label="Диалоги команды"><Link href={listHref("/staff/chat", { q: directoryQuery })} aria-current={!unreadOnly ? "page" : undefined}>Все</Link><Link href={listHref("/staff/chat", { q: directoryQuery, unread: "1" })} aria-current={unreadOnly ? "page" : undefined}>Непрочитанные</Link></nav>
+
       <div className={styles.people}>
-        {people.length ? people.map((person) => <Link key={person.user_id} href={`/staff/chat?to=${person.user_id}`} className={`${styles.person}${person.user_id === selectedId ? ` ${styles.personActive}` : ""}`} aria-current={person.user_id === selectedId ? "page" : undefined}>
+        {people.length ? people.map((person) => <Link key={person.user_id} href={listHref("/staff/chat", { ...directoryParams, to: person.user_id })} className={`${styles.person}${person.user_id === selectedId ? ` ${styles.personActive}` : ""}`} aria-current={person.user_id === selectedId ? "page" : undefined}>
           <span className={styles.avatar}>{person.display_name.trim().slice(0, 1).toLocaleUpperCase("ru")}</span>
           <span className={styles.personBody}><span className={styles.personTop}><strong>{person.display_name}</strong>{person.lastMessageAt && <time dateTime={person.lastMessageAt}>{day.format(new Date(person.lastMessageAt))}</time>}</span><span className={styles.personRole}>{roleLabels[person.role]}{!person.active ? " · доступ закрыт" : ""}</span><span className={styles.snippet}>{person.lastMessage ?? (person.active ? "Написать сообщение" : "История переписки")}</span></span>
           {person.unread > 0 && <span className={styles.badge} aria-label={`${person.unread} непрочитанных`}>{person.unread}</span>}
-        </Link>) : <p className={styles.noPeople}>{filter ? "Сотрудник не найден" : "Других сотрудников пока нет"}</p>}
-      </div>
+        </Link>) : <p className={styles.noPeople}>{directoryQuery ? "Сотрудник не найден. Измените имя или сбросьте поиск." : unreadOnly ? "Нет непрочитанных диалогов" : "Других сотрудников пока нет"}</p>}
+      </div><div className="chat-directory-pagination"><ListPagination path="/staff/chat" page={directoryPage} count={directoryCount} params={{ q: directoryQuery, ...(unreadOnly ? { unread: "1" } : {}) }} /></div>
     </aside>
     <section className={`${styles.conversation}${current ? ` ${styles.conversationSelected}` : ""}`} aria-label={current ? `Диалог с ${current.display_name}` : "Выберите сотрудника"}>
       {current ? <>
-        <header className={styles.header}><Link href="/staff/chat" className={styles.back} aria-label="К списку сотрудников"><NavIcon name="back" /></Link><span className={styles.avatar}>{current.display_name.trim().slice(0, 1).toLocaleUpperCase("ru")}</span><span className={styles.headerTitle}><strong>{current.display_name}</strong><small>{roleLabels[current.role]} · приватный диалог</small></span>{!connected && <span className={`${styles.connection} ${styles.offline}`} role="status"><i />Нет сети</span>}</header>
+        <header className={styles.header}><Link href={listHref("/staff/chat", directoryParams)} className={styles.back} aria-label="К списку сотрудников"><NavIcon name="back" /></Link><span className={styles.avatar}>{current.display_name.trim().slice(0, 1).toLocaleUpperCase("ru")}</span><span className={styles.headerTitle}><strong>{current.display_name}</strong><small>{roleLabels[current.role]} · приватный диалог</small></span>{!connected && <span className={`${styles.connection} ${styles.offline}`} role="status"><i />Нет сети</span>}</header>
         {returnCase && <div className={styles.caseReturn}><span>Новые сообщения будут связаны с делом № {returnCase.caseNumber}. Клиент их не увидит.</span><Link href={`/staff/cases/${returnCase.id}`}>К делу</Link><Link href={`/staff/chat?to=${current.user_id}`}>Убрать связь</Link></div>}
         {(olderHref || historical) && <nav className={styles.historyBar} aria-label="История диалога">{olderHref && <Link href={olderHref}>Ранние сообщения</Link>}{historical && <Link href={latestHref}>К последним</Link>}</nav>}
         <div className={styles.timelineWrap}><div ref={timeline} onScroll={onTimelineScroll} className={`${styles.timeline}${historical ? ` ${styles.historical}` : ""}`}>

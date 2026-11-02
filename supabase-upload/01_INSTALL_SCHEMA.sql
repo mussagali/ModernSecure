@@ -6824,6 +6824,1842 @@ $function$
 notify pgrst, 'reload schema';
 -- END 20261017008400_primary_administrator.sql
 
+-- BEGIN 20261018008500_client_registration_approval.sql
+-- Registration already creates a private profile. Use those profiles as the
+-- review queue, including existing accounts, without making signup depend on
+-- another trigger or granting administrators direct access to auth.users.
+alter table public.profiles
+  add column full_name text,
+  add column iin text,
+  add constraint profiles_full_name_format check (
+    full_name is null or (length(trim(full_name)) between 1 and 160 and full_name !~ '[[:cntrl:]]')
+  ),
+  add constraint profiles_iin_format check (iin is null or iin ~ '^[0-9]{12}$');
+
+create function public.admin_client_registrations(p_query text default '', p_page integer default 1)
+returns jsonb language plpgsql stable security definer set search_path = '' as $$
+declare
+  clean_query text := lower(trim(coalesce(p_query, '')));
+  result jsonb;
+begin
+  if auth.uid() is null or private.staff_role_for_current_user() is distinct from 'admin' then
+    raise exception 'Not authorized';
+  end if;
+  if length(clean_query) > 120 or p_page is null or p_page not between 1 and 10000 then
+    raise exception 'Invalid registration search';
+  end if;
+  with pending as (
+    select p.user_id, u.email, coalesce(p.full_name, p.display_name) as full_name,
+      p.phone, p.city, p.created_at, u.email_confirmed_at is not null as email_confirmed,
+      p.iin is not null as has_iin
+    from public.profiles p join auth.users u on u.id = p.user_id
+    where nullif(trim(u.email), '') is not null
+      and not exists (select 1 from public.clients cl where cl.user_id = p.user_id)
+      and not exists (select 1 from public.staff_members sm where sm.user_id = p.user_id)
+      and not exists (select 1 from public.staff_invites si where si.email = lower(u.email)
+        and si.status = 'pending' and si.expires_at > now())
+      and (clean_query = '' or position(clean_query in lower(u.email)) > 0
+        or position(clean_query in lower(coalesce(p.full_name, p.display_name, ''))) > 0
+        or position(clean_query in lower(coalesce(p.phone, ''))) > 0)
+  ), totals as (
+    select count(*) as total_count,
+      least(p_page, greatest(1, ceil(count(*) / 25.0)::integer)) as page from pending
+  ), items as (
+    select p.*, matches.matching_client_count, matches.matching_client_id
+    from pending p
+    cross join lateral (
+      select count(*) as matching_client_count,
+        case when count(*) = 1 and bool_and(cl.user_id is null) then (array_agg(cl.id))[1] end as matching_client_id
+      from public.clients cl where lower(trim(cl.email)) = lower(p.email)
+    ) matches
+    order by p.created_at desc, p.user_id desc
+    limit 25 offset ((select page from totals) - 1) * 25
+  )
+  select jsonb_build_object('total_count', t.total_count, 'page', t.page,
+    'items', coalesce((select jsonb_agg(to_jsonb(i) order by i.created_at desc, i.user_id desc) from items i), '[]'::jsonb))
+    into result from totals t;
+  return result;
+end;
+$$;
+
+-- Only a fresh card can be approved before email confirmation. Linking an
+-- existing card (and its cases) still requires the existing verified-email RPC.
+create function public.admin_approve_client_registration(p_user_id uuid)
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare
+  actor_id uuid := auth.uid();
+  target_email text;
+  profile public.profiles%rowtype;
+  client_id uuid;
+begin
+  if actor_id is null or private.staff_role_for_current_user() is distinct from 'admin' then
+    raise exception 'Not authorized';
+  end if;
+  select u.email into target_email from auth.users u where u.id = p_user_id for update;
+  if not found or nullif(trim(target_email), '') is null then raise exception 'Account not found'; end if;
+  if exists (select 1 from public.staff_members sm where sm.user_id = p_user_id) then
+    raise exception 'Account is already staff';
+  end if;
+  if exists (select 1 from public.staff_invites si where si.email = lower(target_email)
+    and si.status = 'pending' and si.expires_at > now()) then
+    raise exception 'Account has a staff invitation';
+  end if;
+  select cl.id into client_id from public.clients cl where cl.user_id = p_user_id;
+  if found then return client_id; end if;
+  if exists (select 1 from public.clients cl where lower(trim(cl.email)) = lower(target_email)) then
+    raise exception 'Existing client card';
+  end if;
+  select * into profile from public.profiles where user_id = p_user_id for update;
+  if not found then raise exception 'Profile not found'; end if;
+  insert into public.clients (user_id, full_name, email, phone, city, iin, linked_by, linked_at)
+  values (p_user_id, coalesce(profile.full_name, profile.display_name, target_email),
+    lower(target_email), profile.phone, profile.city, profile.iin, actor_id, now())
+  returning id into client_id;
+  insert into public.audit_events (actor_user_id, entity_type, entity_id, action, after_data)
+  values (actor_id, 'client', client_id, 'registration_approved', jsonb_build_object('user_id', p_user_id));
+  return client_id;
+end;
+$$;
+
+-- A client can complete identity before review or fill the missing IIN later.
+-- Once an approved card has an IIN, corrections remain a staff workflow.
+create function public.complete_own_client_identity(p_full_name text, p_iin text default null)
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+  actor_id uuid := auth.uid();
+  clean_name text := nullif(trim(p_full_name), '');
+  clean_iin text := nullif(trim(p_iin), '');
+  profile public.profiles%rowtype;
+  card public.clients%rowtype;
+begin
+  if actor_id is null then raise exception 'Not authenticated'; end if;
+  if clean_name is null or length(clean_name) > 160 or clean_name ~ '[[:cntrl:]]'
+    or (clean_iin is not null and clean_iin !~ '^[0-9]{12}$') then
+    raise exception 'Invalid identity';
+  end if;
+  -- The same account lock serializes profile completion, approval and role changes.
+  perform 1 from auth.users where id = actor_id for update;
+  if exists (select 1 from public.staff_members where user_id = actor_id) then
+    raise exception 'Account is already staff';
+  end if;
+  select * into profile from public.profiles where user_id = actor_id for update;
+  if not found then raise exception 'Profile not found'; end if;
+  select * into card from public.clients where user_id = actor_id for update;
+  if card.iin is not null then raise exception 'Identity is already completed'; end if;
+  if profile.full_name is not distinct from clean_name and profile.iin is not distinct from clean_iin
+    and (card.id is null or (card.full_name = clean_name and card.iin is not distinct from clean_iin)) then
+    return;
+  end if;
+  update public.profiles set full_name = clean_name, iin = clean_iin, updated_at = now()
+    where user_id = actor_id;
+  if card.id is not null then
+    update public.clients set full_name = clean_name, iin = clean_iin, updated_at = now() where id = card.id;
+  end if;
+  -- Do not duplicate government identifiers in audit payloads.
+  insert into public.audit_events (actor_user_id, entity_type, entity_id, action, after_data)
+  values (actor_id, case when card.id is null then 'profile' else 'client' end,
+    coalesce(card.id, actor_id), 'identity_completed', jsonb_build_object('iin_provided', clean_iin is not null));
+end;
+$$;
+
+revoke all on function public.admin_client_registrations(text, integer) from public, anon;
+
+revoke all on function public.admin_approve_client_registration(uuid) from public, anon;
+
+revoke all on function public.complete_own_client_identity(text, text) from public, anon;
+
+grant execute on function public.admin_client_registrations(text, integer) to authenticated;
+
+grant execute on function public.admin_approve_client_registration(uuid) to authenticated;
+
+grant execute on function public.complete_own_client_identity(text, text) to authenticated;
+
+-- Contacts entered after approval must also reach the card staff work with.
+create function private.sync_client_profile_contacts()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  update public.clients set phone = new.phone, city = new.city, updated_at = now()
+    where user_id = new.user_id;
+  return new;
+end;
+$$;
+
+revoke all on function private.sync_client_profile_contacts() from public, anon, authenticated;
+
+create trigger modernsecure_client_profile_contacts
+after update of phone, city on public.profiles
+for each row when (old.phone is distinct from new.phone or old.city is distinct from new.city)
+execute function private.sync_client_profile_contacts();
+
+notify pgrst, 'reload schema';
+-- END 20261018008500_client_registration_approval.sql
+
+-- BEGIN 20261018008600_profile_and_document_corrections.sql
+-- Contact synchronization changes only the fields actually edited.
+create or replace function private.sync_client_profile_contacts()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  update public.clients set
+    phone = case when old.phone is distinct from new.phone then new.phone else phone end,
+    city = case when old.city is distinct from new.city then new.city else city end,
+    updated_at = clock_timestamp()
+  where user_id = new.user_id;
+  return new;
+end;
+$$;
+
+-- Populate the form from existing card contacts, including cards linked later.
+create function private.seed_linked_profile_contacts()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.user_id is not null then
+    update public.profiles set phone = coalesce(phone, new.phone), city = coalesce(city, new.city),
+      updated_at = clock_timestamp()
+      where user_id = new.user_id and ((phone is null and new.phone is not null) or (city is null and new.city is not null));
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function private.seed_linked_profile_contacts() from public, anon, authenticated;
+
+create trigger modernsecure_seed_linked_profile_contacts
+after insert or update of user_id on public.clients
+for each row execute function private.seed_linked_profile_contacts();
+
+update public.profiles p set phone = coalesce(p.phone, cl.phone), city = coalesce(p.city, cl.city),
+  updated_at = clock_timestamp()
+from public.clients cl where cl.user_id = p.user_id
+  and ((p.phone is null and cl.phone is not null) or (p.city is null and cl.city is not null));
+
+create function public.save_own_profile(p_display_name text, p_phone text, p_city text, p_expected_updated_at timestamptz)
+returns void language plpgsql security definer set search_path = '' as $$
+declare previous public.profiles%rowtype;
+begin
+  select * into previous from public.profiles where user_id = auth.uid() for update;
+  if not found then raise exception 'Not authenticated'; end if;
+  if previous.updated_at is distinct from p_expected_updated_at then raise exception 'Profile changed'; end if;
+  perform public.update_own_profile(p_display_name, p_phone, p_city);
+end;
+$$;
+
+revoke all on function public.save_own_profile(text, text, text, timestamptz) from public, anon;
+
+grant execute on function public.save_own_profile(text, text, text, timestamptz) to authenticated;
+
+-- Identity corrections are explicit, version checked, and never copy IINs into audit history.
+create function public.staff_correct_client_identity(p_client_id uuid, p_expected_updated_at timestamptz,
+  p_full_name text, p_iin text, p_reason text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare card public.clients%rowtype; linked_user uuid; clean_name text := nullif(trim(p_full_name), '');
+  clean_iin text := nullif(trim(p_iin), ''); clean_reason text := nullif(trim(p_reason), '');
+begin
+  if not private.staff_mfa_passed() or coalesce(private.staff_role_for_current_user() not in ('admin', 'manager'), true)
+    or auth.uid() is null then raise exception 'Not authorized'; end if;
+  if clean_name is null or length(clean_name) > 160 or clean_name ~ '[[:cntrl:]]'
+    or (clean_iin is not null and clean_iin !~ '^[0-9]{12}$')
+    or clean_reason is null or length(clean_reason) > 500 then raise exception 'Invalid identity correction'; end if;
+  select user_id into linked_user from public.clients where id = p_client_id;
+  if linked_user is not null then
+    perform 1 from auth.users where id = linked_user for update;
+    perform 1 from public.profiles where user_id = linked_user for update;
+  end if;
+  select * into card from public.clients where id = p_client_id for update;
+  if not found then raise exception 'Client not found'; end if;
+  if card.user_id is distinct from linked_user or card.updated_at is distinct from p_expected_updated_at then
+    raise exception 'Client changed';
+  end if;
+  if card.full_name = clean_name and card.iin is not distinct from clean_iin then return; end if;
+  update public.clients set full_name = clean_name, iin = clean_iin, updated_at = clock_timestamp() where id = p_client_id;
+  update public.profiles set full_name = clean_name, iin = clean_iin, updated_at = clock_timestamp() where user_id = linked_user;
+  insert into public.audit_events(actor_user_id, entity_type, entity_id, action, after_data, reason)
+  values(auth.uid(), 'client', p_client_id, 'identity_corrected',
+    jsonb_build_object('name_changed', card.full_name is distinct from clean_name,
+      'iin_changed', card.iin is distinct from clean_iin, 'iin_provided', clean_iin is not null), clean_reason);
+end;
+$$;
+
+revoke all on function public.staff_correct_client_identity(uuid, timestamptz, text, text, text) from public, anon;
+
+grant execute on function public.staff_correct_client_identity(uuid, timestamptz, text, text, text) to authenticated;
+
+-- A reasoned waiver satisfies a template. Cancelling a mistaken request does not.
+create function private.case_required_documents_complete(p_case_id uuid, p_version_id uuid)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select not exists (
+    select 1 from public.document_requests dr where dr.case_id = p_case_id and dr.required and dr.status = 'active'
+      and private.document_request_current_state(dr.id) <> 'accepted'
+  ) and not exists (
+    select 1 from public.document_templates dt where dt.version_id = p_version_id and dt.required
+    and not exists (
+      select 1 from public.document_requests dr where dr.case_id = p_case_id and dr.template_id = dt.id
+        and ((dr.status = 'active' and private.document_request_current_state(dr.id) = 'accepted')
+          or (dr.status = 'not_required' and nullif(trim(dr.closure_reason), '') is not null))
+    )
+  );
+$$;
+
+revoke all on function private.case_required_documents_complete(uuid, uuid) from public, anon, authenticated;
+
+create or replace function private.guard_case_close_document_versions()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.status = 'closed' and old.status is distinct from 'closed'
+    and not private.case_required_documents_complete(new.id, new.service_version_id) then
+    raise exception 'Latest required document versions are not accepted';
+  end if;
+  return new;
+end;
+$$;
+
+create or replace function public.staff_close_case(p_case_id uuid, p_result_summary text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare actor_id uuid := auth.uid(); item public.cases%rowtype; pending_task record;
+  clean_result text := nullif(trim(p_result_summary), ''); client_user_id uuid;
+begin
+  if not private.lock_legal_case_editor(p_case_id) then raise exception 'Not authorized'; end if;
+  select * into item from public.cases where id = p_case_id for update;
+  if not found or item.status <> 'open' or item.is_suspended then raise exception 'Case cannot be closed'; end if;
+  if clean_result is null or length(clean_result) > 4000 then raise exception 'Result summary is required'; end if;
+  if not private.case_required_documents_complete(p_case_id, item.service_version_id) then
+    raise exception 'Required documents are not accepted';
+  end if;
+  update public.cases set status = 'closed', result_summary = clean_result,
+    closed_at = clock_timestamp(), next_review_at = null, updated_at = clock_timestamp()
+    where id = p_case_id;
+  for pending_task in select id, status from public.tasks
+    where case_id = p_case_id and status in ('new', 'response_sent') for update loop
+    update public.tasks set status = 'cancelled', updated_at = clock_timestamp()
+      where id = pending_task.id;
+    insert into public.task_events (task_id, actor_user_id, action, response_text)
+      values (pending_task.id, actor_id, 'cancelled', 'Дело завершено');
+    insert into public.audit_events (actor_user_id, case_id, entity_type, entity_id, action, before_data, after_data)
+      values (actor_id, p_case_id, 'task', pending_task.id, 'cancelled_on_case_close',
+        jsonb_build_object('status', pending_task.status), jsonb_build_object('status', 'cancelled'));
+  end loop;
+  insert into public.audit_events (actor_user_id, case_id, entity_type, entity_id, action, after_data)
+    values (actor_id, p_case_id, 'case', p_case_id, 'closed',
+      jsonb_build_object('result_summary', clean_result));
+  select cl.user_id into client_user_id from public.clients cl where cl.id = item.client_id;
+  if client_user_id is not null then
+    insert into public.notifications (recipient_user_id, case_id, kind, title, body, target_path, dedupe_key)
+      values (client_user_id, p_case_id, 'case_status', 'Дело завершено', clean_result,
+        '/account/cases/' || p_case_id::text, 'case-closed:' || p_case_id::text)
+      on conflict (recipient_user_id, dedupe_key) do nothing;
+  end if;
+end;
+$$;
+
+notify pgrst, 'reload schema';
+-- END 20261018008600_profile_and_document_corrections.sql
+
+-- BEGIN 20261018008700_payment_allocations_and_schedule_corrections.sql
+-- A bank transaction stays unique; its amount may cover several installments.
+alter table public.payment_schedule add column cancelled_at timestamptz,
+  add column cancellation_reason text,
+  add constraint payment_schedule_cancellation_check check (
+    (cancelled_at is null and cancellation_reason is null) or
+    (cancelled_at is not null and length(trim(cancellation_reason)) between 1 and 500));
+
+alter table public.payment_schedule add constraint payment_schedule_id_case_key unique(id, case_id);
+
+alter table public.payments add constraint payments_id_case_key unique(id, case_id);
+
+create table public.payment_allocations (
+  payment_id uuid not null,
+  schedule_id uuid not null,
+  case_id uuid not null,
+  amount_kzt numeric(14,2) not null check(amount_kzt > 0),
+  primary key(payment_id, schedule_id),
+  foreign key(payment_id, case_id) references public.payments(id, case_id) on delete restrict,
+  foreign key(schedule_id, case_id) references public.payment_schedule(id, case_id) on delete restrict
+);
+
+create index payment_allocations_schedule_idx on public.payment_allocations(schedule_id);
+
+create index payment_allocations_case_idx on public.payment_allocations(case_id);
+
+insert into public.payment_allocations(payment_id, schedule_id, case_id, amount_kzt)
+  select id, schedule_id, case_id, amount_kzt from public.payments where schedule_id is not null;
+
+alter table public.payment_allocations enable row level security;
+
+revoke all on public.payment_allocations from anon, authenticated;
+
+grant select on public.payment_allocations to authenticated;
+
+create policy payment_allocations_case_read on public.payment_allocations for select to authenticated
+  using(private.can_read_case(case_id));
+
+create policy staff_mfa_guard on public.payment_allocations as restrictive for all to authenticated
+  using((select private.staff_mfa_passed())) with check((select private.staff_mfa_passed()));
+
+create function private.lock_financial_case(p_case_id uuid)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  perform 1 from public.staff_members where user_id = auth.uid() for share;
+  perform 1 from public.case_assignments where case_id = p_case_id and staff_user_id = auth.uid() and revoked_at is null for share;
+  if auth.uid() is null or not private.staff_mfa_passed() or not private.can_manage_payments(p_case_id) then
+    raise exception 'Not authorized';
+  end if;
+  perform 1 from public.cases where id = p_case_id for update;
+  if not found then raise exception 'Case not found'; end if;
+end;
+$$;
+
+revoke all on function private.lock_financial_case(uuid) from public, anon, authenticated;
+
+create function private.installment_paid(p_schedule_id uuid)
+returns numeric language sql stable security definer set search_path = '' as $$
+  select coalesce(sum(a.amount_kzt), 0) from public.payment_allocations a
+  join public.payments p on p.id = a.payment_id where a.schedule_id = p_schedule_id and p.status = 'confirmed';
+$$;
+
+revoke all on function private.installment_paid(uuid) from public, anon, authenticated;
+
+-- Prices are total prices of contract versions. Paid money plus active future
+-- obligations must not silently exceed the latest agreed price.
+create function private.assert_schedule_within_contract(p_case_id uuid)
+returns void language plpgsql security definer set search_path = '' as $$
+declare price numeric; paid numeric; outstanding numeric;
+begin
+  select price_kzt into price from public.contracts where case_id = p_case_id order by version_no desc limit 1;
+  select coalesce(sum(amount_kzt), 0) into paid from public.payments where case_id = p_case_id and status = 'confirmed';
+  select coalesce(sum(greatest(0, s.amount_kzt - private.installment_paid(s.id))), 0) into outstanding
+    from public.payment_schedule s where s.case_id = p_case_id and s.cancelled_at is null;
+  if price is null or outstanding > greatest(0, price - paid) then raise exception 'Schedule exceeds remaining contract price'; end if;
+end;
+$$;
+
+revoke all on function private.assert_schedule_within_contract(uuid) from public, anon, authenticated;
+
+create function public.staff_record_payment(p_case_id uuid, p_amount_kzt numeric, p_paid_on date,
+  p_reference text, p_client_note text, p_idempotency_key uuid, p_receipt_id uuid default null,
+  p_schedule_id uuid default null)
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare existing public.payments%rowtype; receipt public.payment_receipts%rowtype;
+  result_payment_id uuid; recipient uuid; installment record; remaining numeric := p_amount_kzt; allocated numeric;
+begin
+  perform private.lock_financial_case(p_case_id);
+  if p_idempotency_key is null or p_amount_kzt is null or p_amount_kzt <= 0
+    or p_amount_kzt > 999999999999.99 or p_amount_kzt <> round(p_amount_kzt, 2)
+    or p_paid_on is null or p_paid_on > (now() at time zone 'Asia/Almaty')::date
+    or nullif(trim(p_reference), '') is null or length(trim(p_reference)) not between 4 and 120
+    or length(coalesce(p_client_note, '')) > 500 then raise exception 'Invalid payment'; end if;
+  select * into existing from public.payments where case_id = p_case_id and idempotency_key = p_idempotency_key;
+  if found then
+    if existing.status = 'confirmed' and existing.schedule_id is not distinct from p_schedule_id
+      and existing.amount_kzt = p_amount_kzt and existing.paid_on = p_paid_on
+      and existing.payment_reference = trim(p_reference)
+      and existing.client_note is not distinct from nullif(trim(p_client_note), '')
+      and existing.receipt_id is not distinct from p_receipt_id then return existing.id; end if;
+    raise exception 'Payment key cannot be reused';
+  end if;
+  if p_receipt_id is not null then
+    select * into receipt from public.payment_receipts where id = p_receipt_id for update;
+    if not found or receipt.case_id <> p_case_id or receipt.status <> 'accepted' then
+      raise exception 'Accepted receipt not found for case';
+    end if;
+    if exists(select 1 from public.payments where receipt_id = p_receipt_id and status = 'confirmed') then
+      raise exception 'Receipt already linked to payment';
+    end if;
+  end if;
+  -- The case lock serializes allocation, voiding and schedule edits.
+  insert into public.payments(case_id, schedule_id, receipt_id, amount_kzt, paid_on, status,
+    confirmed_by, client_note, idempotency_key, payment_reference)
+  values(p_case_id, p_schedule_id, p_receipt_id, p_amount_kzt, p_paid_on, 'confirmed', auth.uid(),
+    nullif(trim(p_client_note), ''), p_idempotency_key, trim(p_reference)) returning id into result_payment_id;
+  for installment in select s.*, private.installment_paid(s.id) as paid from public.payment_schedule s
+    where s.case_id = p_case_id and s.cancelled_at is null
+      and (p_schedule_id is null or s.id = p_schedule_id)
+    order by s.due_on, s.created_at, s.id for update of s loop
+    allocated := least(remaining, greatest(0, installment.amount_kzt - installment.paid));
+    if allocated > 0 then
+      insert into public.payment_allocations(payment_id, schedule_id, case_id, amount_kzt)
+        values(result_payment_id, installment.id, p_case_id, allocated);
+      remaining := remaining - allocated;
+    end if;
+    exit when remaining = 0;
+  end loop;
+  if remaining > 0 then raise exception 'Payment exceeds active schedule'; end if;
+  insert into public.audit_events(actor_user_id, case_id, entity_type, entity_id, action, after_data)
+  values(auth.uid(), p_case_id, 'payment', result_payment_id, 'confirmed', jsonb_build_object(
+    'amount_kzt', p_amount_kzt, 'paid_on', p_paid_on, 'reference', trim(p_reference), 'receipt_id', p_receipt_id,
+    'allocations', (select jsonb_agg(jsonb_build_object('schedule_id', a.schedule_id, 'amount_kzt', a.amount_kzt))
+      from public.payment_allocations a where a.payment_id = result_payment_id)));
+  select cl.user_id into recipient from public.clients cl join public.cases c on c.client_id = cl.id where c.id = p_case_id;
+  if recipient is not null then
+    insert into public.notifications(recipient_user_id, case_id, kind, title, body, target_path, dedupe_key)
+    values(recipient, p_case_id, 'payment', 'Оплата подтверждена', p_amount_kzt::text || ' ₸',
+      '/account/cases/' || p_case_id || '/payments', 'payment-confirmed:' || result_payment_id);
+  end if;
+  return result_payment_id;
+end;
+$$;
+
+revoke all on function public.staff_record_payment(uuid, numeric, date, text, text, uuid, uuid, uuid) from public, anon;
+
+grant execute on function public.staff_record_payment(uuid, numeric, date, text, text, uuid, uuid, uuid) to authenticated;
+
+-- Keep old API callers on the same accounting path.
+create or replace function public.staff_confirm_payment(p_schedule_id uuid, p_amount_kzt numeric, p_paid_on date,
+  p_reference text, p_client_note text, p_idempotency_key uuid)
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare target_case uuid;
+begin
+  select case_id into target_case from public.payment_schedule where id = p_schedule_id;
+  return public.staff_record_payment(target_case, p_amount_kzt, p_paid_on, p_reference, p_client_note, p_idempotency_key, null, p_schedule_id);
+end;
+$$;
+
+create or replace function public.staff_confirm_payment_with_receipt(p_schedule_id uuid, p_amount_kzt numeric, p_paid_on date,
+  p_reference text, p_client_note text, p_idempotency_key uuid, p_receipt_id uuid)
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare target_case uuid;
+begin
+  select case_id into target_case from public.payment_schedule where id = p_schedule_id;
+  return public.staff_record_payment(target_case, p_amount_kzt, p_paid_on, p_reference, p_client_note, p_idempotency_key, p_receipt_id, p_schedule_id);
+end;
+$$;
+
+create function public.staff_cancel_payment_installment(p_schedule_id uuid, p_expected_updated_at timestamptz, p_reason text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare item public.payment_schedule%rowtype; target_case uuid; recipient uuid; clean_reason text := nullif(trim(p_reason), '');
+begin
+  select case_id into target_case from public.payment_schedule where id = p_schedule_id;
+  perform private.lock_financial_case(target_case);
+  select * into item from public.payment_schedule where id = p_schedule_id for update;
+  if item.updated_at is distinct from p_expected_updated_at or item.cancelled_at is not null then raise exception 'Installment changed by another user'; end if;
+  if clean_reason is null or length(clean_reason) > 500 then raise exception 'Reason is required'; end if;
+  update public.payment_schedule set cancelled_at = clock_timestamp(), cancellation_reason = clean_reason,
+    updated_at = clock_timestamp() where id = p_schedule_id;
+  insert into public.audit_events(actor_user_id, case_id, entity_type, entity_id, action, after_data, reason)
+    values(auth.uid(), target_case, 'payment_schedule', p_schedule_id, 'installment_cancelled',
+      jsonb_build_object('cancelled_outstanding_kzt', greatest(0, item.amount_kzt - private.installment_paid(item.id))), clean_reason);
+  select cl.user_id into recipient from public.clients cl join public.cases c on c.client_id = cl.id where c.id = target_case;
+  if recipient is not null then
+    insert into public.notifications(recipient_user_id, case_id, kind, title, body, target_path, dedupe_key)
+    values(recipient, target_case, 'payment', 'Срок оплаты отменён', clean_reason,
+      '/account/cases/' || target_case || '/payments', 'installment-cancelled:' || p_schedule_id);
+  end if;
+end;
+$$;
+
+revoke all on function public.staff_cancel_payment_installment(uuid, timestamptz, text) from public, anon;
+
+grant execute on function public.staff_cancel_payment_installment(uuid, timestamptz, text) to authenticated;
+
+create or replace function public.staff_add_payment_installment(p_case_id uuid, p_due_on date,
+  p_amount_kzt numeric, p_description text default null)
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare
+  actor_id uuid := auth.uid();
+  item public.cases%rowtype;
+  contract_version public.contracts%rowtype;
+  installment_id uuid;
+begin
+  perform private.lock_financial_case(p_case_id);
+  if p_due_on is null or p_amount_kzt is null or p_amount_kzt <= 0
+    or p_amount_kzt > 999999999999.99 or p_amount_kzt <> round(p_amount_kzt, 2)
+    or length(coalesce(p_description, '')) > 500 then raise exception 'Invalid installment'; end if;
+
+  select * into contract_version from public.contracts
+    where case_id = p_case_id order by version_no desc limit 1;
+  if not found then raise exception 'Contract version is required for a new installment'; end if;
+
+  insert into public.payment_schedule (case_id, contract_id, due_on, amount_kzt, description)
+  values (p_case_id, contract_version.id, p_due_on, p_amount_kzt, nullif(trim(p_description), ''))
+  returning id into installment_id;
+  insert into public.audit_events (actor_user_id, case_id, entity_type, entity_id, action, after_data)
+  values (actor_id, p_case_id, 'payment_schedule', installment_id, 'installment_created',
+    jsonb_build_object('due_on', p_due_on, 'amount_kzt', p_amount_kzt,
+      'contract_id', contract_version.id, 'contract_version_no', contract_version.version_no));
+  perform private.assert_schedule_within_contract(p_case_id);
+  return installment_id;
+end;
+$$;
+
+create or replace function public.staff_update_payment_installment(p_schedule_id uuid, p_expected_updated_at timestamptz,
+  p_due_on date, p_amount_kzt numeric, p_description text, p_reason text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare actor_id uuid := auth.uid(); item public.payment_schedule%rowtype; paid_amount numeric; target_case uuid;
+begin
+  select case_id into target_case from public.payment_schedule where id = p_schedule_id;
+  perform private.lock_financial_case(target_case);
+  select * into item from public.payment_schedule where id = p_schedule_id for update;
+  if item.cancelled_at is not null then raise exception 'Installment is cancelled'; end if;
+  if item.updated_at is distinct from p_expected_updated_at then raise exception 'Installment changed by another user'; end if;
+  if p_due_on is null or p_amount_kzt is null or p_amount_kzt <= 0
+    or p_amount_kzt > 999999999999.99 or p_amount_kzt <> round(p_amount_kzt, 2)
+    or length(coalesce(p_description, '')) > 500 or nullif(trim(p_reason), '') is null
+    or length(p_reason) > 500 then raise exception 'Invalid installment update'; end if;
+  paid_amount := private.installment_paid(p_schedule_id);
+  if p_amount_kzt < paid_amount then raise exception 'Amount is below confirmed payments'; end if;
+  update public.payment_schedule set due_on = p_due_on, amount_kzt = p_amount_kzt,
+    description = nullif(trim(p_description), ''), updated_at = clock_timestamp() where id = p_schedule_id;
+  perform private.assert_schedule_within_contract(item.case_id);
+  insert into public.audit_events (actor_user_id, case_id, entity_type, entity_id, action, before_data, after_data, reason)
+  values (actor_id, item.case_id, 'payment_schedule', p_schedule_id, 'installment_updated',
+    jsonb_build_object('due_on', item.due_on, 'amount_kzt', item.amount_kzt, 'description', item.description),
+    jsonb_build_object('due_on', p_due_on, 'amount_kzt', p_amount_kzt, 'description', nullif(trim(p_description), '')),
+    trim(p_reason));
+end;
+$$;
+
+create or replace function public.staff_void_payment(p_payment_id uuid, p_reason text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare actor_id uuid := auth.uid(); item public.payments%rowtype; client_user_id uuid; target_case uuid;
+begin
+  select case_id into target_case from public.payments where id = p_payment_id;
+  perform private.lock_financial_case(target_case);
+  select * into item from public.payments where id = p_payment_id for update;
+  if not found or actor_id is null or not private.can_manage_payments(item.case_id) then raise exception 'Not authorized'; end if;
+  if item.status <> 'confirmed' or nullif(trim(p_reason), '') is null or length(p_reason) > 500 then
+    raise exception 'Invalid void request';
+  end if;
+  update public.payments set status = 'void' where id = p_payment_id;
+  insert into public.audit_events (actor_user_id, case_id, entity_type, entity_id, action, before_data, after_data, reason)
+  values (actor_id, item.case_id, 'payment', p_payment_id, 'voided',
+    jsonb_build_object('status', 'confirmed', 'amount_kzt', item.amount_kzt),
+    jsonb_build_object('status', 'void', 'amount_kzt', item.amount_kzt), trim(p_reason));
+  select cl.user_id into client_user_id from public.cases c join public.clients cl on cl.id = c.client_id
+    where c.id = item.case_id;
+  if client_user_id is not null then
+    insert into public.notifications (recipient_user_id, case_id, kind, title, body, target_path, dedupe_key)
+    values (client_user_id, item.case_id, 'payment', 'Оплата исправлена',
+      'Запись об оплате отменена. Уточните информацию у сотрудника.',
+      '/account/cases/' || item.case_id::text || '/payments', 'payment-voided:' || p_payment_id::text)
+    on conflict (recipient_user_id, dedupe_key) do nothing;
+  end if;
+end;
+$$;
+
+create or replace function public.staff_register_contract(
+  p_case_id uuid, p_contract_number text, p_signed_on date, p_price_kzt numeric,
+  p_storage_path text, p_content_sha256 text, p_size_bytes bigint
+) returns uuid language plpgsql security definer set search_path = '' as $$
+declare
+  actor_id uuid := auth.uid();
+  case_row public.cases%rowtype;
+  existing public.contracts%rowtype;
+  next_version integer;
+  new_id uuid;
+  clean_number text := nullif(trim(p_contract_number), '');
+begin
+  perform private.lock_financial_case(p_case_id);
+  if clean_number is null or length(clean_number) > 120
+    or p_price_kzt is null or p_price_kzt < 0 or p_price_kzt > 999999999999.99
+    or p_price_kzt <> round(p_price_kzt, 2)
+    or (p_signed_on is not null and p_signed_on > (now() at time zone 'Asia/Almaty')::date)
+    or p_storage_path is null or p_storage_path !~ ('^contracts/' || p_case_id::text || '/[0-9a-f-]{36}\.pdf$')
+    or p_content_sha256 is null or p_content_sha256 !~ '^[0-9a-f]{64}$'
+    or p_size_bytes is null or p_size_bytes not between 1 and 20971520 then
+    raise exception 'Invalid contract';
+  end if;
+  select * into existing from public.contracts where storage_path = p_storage_path for update;
+  if found then
+    if existing.case_id = p_case_id and existing.contract_number = clean_number
+      and existing.signed_on is not distinct from p_signed_on and existing.price_kzt = p_price_kzt
+      and existing.content_sha256 = p_content_sha256 and existing.size_bytes = p_size_bytes then
+      return existing.id;
+    end if;
+    raise exception 'Contract upload key reused';
+  end if;
+  if not exists (
+    select 1 from storage.objects obj
+    where obj.bucket_id = 'modernsecure-files' and obj.name = p_storage_path
+      and (obj.metadata->>'size')::bigint = p_size_bytes
+      and obj.metadata->>'mimetype' = 'application/pdf'
+  ) then raise exception 'Contract file not found'; end if;
+  select coalesce(max(version_no), 0) + 1 into next_version
+    from public.contracts where case_id = p_case_id;
+  insert into public.contracts (
+    case_id, version_no, contract_number, signed_on, price_kzt,
+    storage_path, created_by, content_sha256, size_bytes, detected_mime_type
+  ) values (
+    p_case_id, next_version, clean_number, p_signed_on, p_price_kzt,
+    p_storage_path, actor_id, p_content_sha256, p_size_bytes, 'application/pdf'
+  ) returning id into new_id;
+  insert into public.audit_events (actor_user_id, case_id, entity_type, entity_id, action, after_data)
+    values (actor_id, p_case_id, 'contract', new_id, 'uploaded',
+      jsonb_build_object('version_no', next_version, 'contract_number', clean_number,
+        'signed_on', p_signed_on, 'price_kzt', p_price_kzt, 'size_bytes', p_size_bytes,
+        'content_sha256', p_content_sha256));
+  return new_id;
+end;
+$$;
+
+create or replace function public.client_register_payment_receipt(
+  p_case_id uuid, p_storage_path text, p_original_name text,
+  p_mime_type text, p_size_bytes bigint, p_content_sha256 text,
+  p_idempotency_key uuid
+) returns uuid language plpgsql security definer set search_path = '' as $$
+declare
+  actor_id uuid := auth.uid();
+  case_row public.cases%rowtype;
+  existing public.payment_receipts%rowtype;
+  receipt_id uuid;
+  suffix text;
+begin
+  if actor_id is null then raise exception 'Not authorized'; end if;
+  select * into case_row from public.cases where id = p_case_id for share;
+  if not found then
+    raise exception 'Case not found';
+  end if;
+  perform 1 from public.clients cl
+    where cl.id = case_row.client_id and cl.user_id = actor_id for share;
+  if not found then raise exception 'Not authorized'; end if;
+
+  if p_idempotency_key is null or p_storage_path is null
+    or p_storage_path !~ ('^receipts/' || p_case_id::text || '/' || actor_id::text ||
+      '/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](pdf|jpg|png|heic|heif)$')
+    or p_original_name is null or length(p_original_name) not between 1 and 180
+    or p_original_name ~ '[[:cntrl:]/]' or position(chr(92) in p_original_name) > 0
+    or p_original_name <> btrim(p_original_name)
+    or p_mime_type not in ('application/pdf', 'image/jpeg', 'image/png', 'image/heic', 'image/heif')
+    or p_size_bytes is null or p_size_bytes not between 1 and 20971520
+    or p_content_sha256 is null or p_content_sha256 !~ '^[0-9a-f]{64}$' then
+    raise exception 'Invalid receipt metadata';
+  end if;
+  suffix := lower(substring(p_storage_path from '[.][^.]+$'));
+  if not ((p_mime_type = 'application/pdf' and suffix = '.pdf')
+    or (p_mime_type = 'image/jpeg' and suffix = '.jpg')
+    or (p_mime_type = 'image/png' and suffix = '.png')
+    or (p_mime_type = 'image/heic' and suffix = '.heic')
+    or (p_mime_type = 'image/heif' and suffix = '.heif')) then
+    raise exception 'Receipt type does not match path';
+  end if;
+
+  select * into existing from public.payment_receipts
+    where case_id = p_case_id and uploaded_by = actor_id and idempotency_key = p_idempotency_key
+    for update;
+  if found then
+    if existing.storage_path = p_storage_path and existing.original_name = p_original_name
+      and existing.detected_mime_type = p_mime_type and existing.size_bytes = p_size_bytes
+      and existing.content_sha256 = p_content_sha256 then
+      return existing.id;
+    end if;
+    raise exception 'Receipt upload key cannot be reused';
+  end if;
+  if not exists (
+    select 1 from storage.objects obj
+    where obj.bucket_id = 'modernsecure-files' and obj.name = p_storage_path
+      and obj.metadata->>'size' ~ '^[0-9]+$'
+      and (obj.metadata->>'size')::bigint = p_size_bytes
+      and obj.metadata->>'mimetype' = p_mime_type
+  ) then raise exception 'Receipt object not found or metadata mismatch'; end if;
+
+  insert into public.payment_receipts (case_id, uploaded_by, storage_path,
+    original_name, detected_mime_type, size_bytes, content_sha256, idempotency_key)
+  values (p_case_id, actor_id, p_storage_path, p_original_name,
+    p_mime_type, p_size_bytes, p_content_sha256, p_idempotency_key)
+  returning id into receipt_id;
+  insert into public.audit_events (actor_user_id, case_id, entity_type, entity_id, action, after_data)
+  values (actor_id, p_case_id, 'payment_receipt', receipt_id, 'submitted',
+    jsonb_build_object('storage_path', p_storage_path, 'size_bytes', p_size_bytes,
+      'mime_type', p_mime_type, 'content_sha256', p_content_sha256));
+  return receipt_id;
+end;
+$$;
+
+create or replace function public.staff_review_payment_receipt(
+  p_receipt_id uuid, p_accept boolean, p_note text
+) returns void language plpgsql security definer set search_path = '' as $$
+declare
+  actor_id uuid := auth.uid();
+  item public.payment_receipts%rowtype;
+  case_row public.cases%rowtype;
+  member public.staff_members%rowtype;
+  clean_note text := nullif(btrim(p_note), '');
+  decision public.receipt_status; target_case uuid;
+begin
+  select case_id into target_case from public.payment_receipts where id = p_receipt_id;
+  perform private.lock_financial_case(target_case);
+  select * into item from public.payment_receipts where id = p_receipt_id for update;
+  if not found then raise exception 'Receipt not found'; end if;
+  if p_accept is null or clean_note is null or length(clean_note) > 1000 then
+    raise exception 'Review note and decision are required';
+  end if;
+  decision := case when p_accept then 'accepted'::public.receipt_status
+    else 'rejected'::public.receipt_status end;
+  if item.status <> 'under_review' then
+    if item.status = decision and item.reviewed_by = actor_id and item.review_note = clean_note then
+      return;
+    end if;
+    raise exception 'Receipt already reviewed';
+  end if;
+  update public.payment_receipts set status = decision, review_note = clean_note,
+    reviewed_by = actor_id, reviewed_at = clock_timestamp() where id = p_receipt_id;
+  insert into public.audit_events (actor_user_id, case_id, entity_type, entity_id, action,
+    before_data, after_data, reason)
+  values (actor_id, item.case_id, 'payment_receipt', p_receipt_id,
+    case when p_accept then 'accepted' else 'rejected' end,
+    jsonb_build_object('status', 'under_review'),
+    jsonb_build_object('status', decision, 'reviewed_by', actor_id), clean_note);
+end;
+$$;
+
+create or replace function private.enqueue_payment_deadline_reminders(p_reference_day date default null)
+returns integer language plpgsql security definer set search_path = '' as $$
+declare local_day date := coalesce(p_reference_day, (now() at time zone 'Asia/Almaty')::date); inserted_count integer;
+begin
+  insert into public.notifications(recipient_user_id, case_id, kind, title, body, target_path, dedupe_key)
+  select cl.user_id, c.id, 'payment_deadline',
+    case when s.due_on = local_day then 'Срок оплаты сегодня' else 'Срок оплаты завтра' end,
+    'Остаток: ' || (s.amount_kzt - coalesce(p.paid, 0))::text || ' ₸. Откройте график платежей.',
+    '/account/cases/' || c.id || '/payments',
+    'payment-deadline:' || s.id || ':' || s.due_on || ':' || case when s.due_on = local_day then 'today' else 'tomorrow' end
+  from public.payment_schedule s join public.cases c on c.id = s.case_id
+  join public.clients cl on cl.id = c.client_id
+  left join lateral (select private.installment_paid(s.id) as paid) p on true
+  where s.due_on between local_day and local_day + 1 and s.cancelled_at is null
+    and not exists (select 1 from public.payment_receipts r where r.case_id = c.id
+      and (r.status = 'under_review' or (r.status = 'accepted' and not exists (
+        select 1 from public.payments p2 where p2.receipt_id = r.id and p2.status = 'confirmed'))))
+    and cl.user_id is not null and s.amount_kzt > coalesce(p.paid, 0)
+  on conflict (recipient_user_id, dedupe_key) do nothing;
+  get diagnostics inserted_count = row_count;
+  return inserted_count;
+end;
+$$;
+
+notify pgrst, 'reload schema';
+-- END 20261018008700_payment_allocations_and_schedule_corrections.sql
+
+-- BEGIN 20261018008800_temporary_direct_uploads.sql
+-- Untrusted bytes land in a separate private bucket. Only checked server routes
+-- copy validated files to permanent storage; signed upload URLs never target it.
+insert into storage.buckets(id, name, public, file_size_limit)
+values('modernsecure-staging', 'modernsecure-staging', false, 20971520);
+
+create table public.temporary_uploads (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  target_path text not null,
+  context jsonb not null,
+  original_name text not null check(length(original_name) between 1 and 180),
+  size_bytes bigint not null check(size_bytes between 1 and 20971520),
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null default now() + interval '2 hours'
+);
+
+create index temporary_uploads_owner_created_idx on public.temporary_uploads(user_id, created_at);
+
+alter table public.temporary_uploads enable row level security;
+
+revoke all on public.temporary_uploads from public, anon, authenticated;
+
+grant select, insert, delete on public.temporary_uploads to service_role;
+
+create policy staff_mfa_guard on public.temporary_uploads as restrictive for all to authenticated
+  using((select private.staff_mfa_passed())) with check((select private.staff_mfa_passed()));
+
+create function public.server_prepare_temporary_upload(p_user_id uuid, p_target_path text,
+  p_context jsonb, p_name text, p_size bigint)
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare ticket_id uuid;
+begin
+  perform 1 from auth.users where id = p_user_id for update;
+  if not found then raise exception 'User not found'; end if;
+  if p_target_path not in ('/api/contracts', '/api/payment-receipts', '/api/document-uploads/file',
+    '/api/message-attachments', '/api/staff-message-attachments') or p_target_path is null
+    or p_context is null or jsonb_typeof(p_context) <> 'object' then raise exception 'Invalid upload target'; end if;
+  if (select count(*) from public.temporary_uploads where user_id = p_user_id and created_at > now() - interval '1 day') >= 100
+    then raise exception 'Upload rate limit exceeded'; end if;
+  insert into public.temporary_uploads(user_id, target_path, context, original_name, size_bytes)
+    values(p_user_id, p_target_path, p_context, p_name, p_size) returning id into ticket_id;
+  return ticket_id;
+end;
+$$;
+
+revoke all on function public.server_prepare_temporary_upload(uuid, text, jsonb, text, bigint) from public, anon, authenticated;
+
+grant execute on function public.server_prepare_temporary_upload(uuid, text, jsonb, text, bigint) to service_role;
+
+notify pgrst, 'reload schema';
+-- END 20261018008800_temporary_direct_uploads.sql
+
+-- BEGIN 20261027008900_primary_account_activation.sql
+-- Registration creates an Auth user/profile only. A linked client card or a
+-- staff membership is the approval record; existing accounts retain access.
+-- Keep the audited legacy implementations private and guard every public path.
+alter function public.admin_add_staff(text, text, public.staff_role) set schema private;
+alter function public.admin_invite_staff(text, text, public.staff_role) set schema private;
+alter function public.admin_set_staff_access(uuid, public.staff_role, boolean, text) set schema private;
+alter function public.link_client_account(uuid, text) set schema private;
+alter function public.admin_client_registrations(text, integer) set schema private;
+alter function public.admin_approve_client_registration(uuid) set schema private;
+revoke all on function private.admin_client_registrations(text, integer),
+  private.admin_approve_client_registration(uuid) from public, anon, authenticated;
+revoke all on function private.admin_add_staff(text, text, public.staff_role),
+  private.admin_invite_staff(text, text, public.staff_role),
+  private.admin_set_staff_access(uuid, public.staff_role, boolean, text),
+  private.link_client_account(uuid, text) from public, anon, authenticated;
+
+create function private.require_primary_account_admin()
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if not private.is_primary_admin() or not private.staff_mfa_passed() then
+    raise exception 'Not authorized';
+  end if;
+end;
+$$;
+revoke all on function private.require_primary_account_admin() from public, anon, authenticated;
+
+create function public.admin_add_staff(p_email text, p_display_name text, p_role public.staff_role)
+returns uuid language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.require_primary_account_admin();
+  return private.admin_add_staff(p_email, p_display_name, p_role);
+end;
+$$;
+create function public.admin_invite_staff(p_email text, p_display_name text, p_role public.staff_role)
+returns text language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.require_primary_account_admin();
+  return private.admin_invite_staff(p_email, p_display_name, p_role);
+end;
+$$;
+create function public.admin_set_staff_access(p_staff_user_id uuid, p_role public.staff_role, p_active boolean, p_reason text)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.require_primary_account_admin();
+  perform private.admin_set_staff_access(p_staff_user_id, p_role, p_active, p_reason);
+end;
+$$;
+create function public.link_client_account(p_client_id uuid, p_email text)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.require_primary_account_admin();
+  perform private.link_client_account(p_client_id, p_email);
+end;
+$$;
+
+create function public.admin_client_registrations(p_query text default '', p_page integer default 1)
+returns jsonb language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform private.require_primary_account_admin();
+  return private.admin_client_registrations(p_query, p_page);
+end;
+$$;
+create function public.admin_approve_client_registration(p_user_id uuid)
+returns uuid language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.require_primary_account_admin();
+  if not exists(select 1 from auth.users where id = p_user_id and email_confirmed_at is not null) then
+    raise exception 'Verified account not found';
+  end if;
+  return private.admin_approve_client_registration(p_user_id);
+end;
+$$;
+revoke all on function public.admin_client_registrations(text, integer),
+  public.admin_approve_client_registration(uuid) from public, anon;
+grant execute on function public.admin_client_registrations(text, integer),
+  public.admin_approve_client_registration(uuid) to authenticated;
+
+-- An invitation is an invitation, never automatic account approval at login.
+-- Preserve the RPC for old clients, but activation must be an explicit action.
+create or replace function private.claim_staff_invite_for_user(p_user_id uuid)
+returns boolean language sql security definer set search_path = '' as $$ select false $$;
+
+create function public.account_access_status()
+returns text language sql stable security definer set search_path = '' as $$
+  select case
+    when auth.uid() is null then 'anonymous'
+    when exists (select 1 from public.staff_members where user_id = auth.uid()) then
+      case when exists (select 1 from public.staff_members where user_id = auth.uid() and active)
+        then 'approved' else 'disabled' end
+    when exists (select 1 from public.clients where user_id = auth.uid()) then 'approved'
+    else 'pending' end
+$$;
+
+create function public.admin_pending_accounts(p_offset integer default 0)
+returns table(user_id uuid, email text, display_name text, registered_at timestamptz,
+  email_verified boolean, total_count bigint)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform private.require_primary_account_admin();
+  return query select u.id, u.email::text, p.display_name, p.created_at,
+    u.email_confirmed_at is not null, count(*) over ()
+  from auth.users u left join public.profiles p on p.user_id = u.id
+  where not exists (select 1 from public.staff_members s where s.user_id = u.id)
+    and not exists (select 1 from public.clients c where c.user_id = u.id)
+  order by p.created_at desc nulls last, u.id
+  limit 25 offset greatest(0, least(coalesce(p_offset, 0), 100000));
+end;
+$$;
+
+create function public.admin_approve_account(p_user_id uuid, p_role text, p_display_name text, p_client_id uuid default null)
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+  target_email text;
+  client_id uuid := p_client_id;
+  clean_name text := nullif(trim(p_display_name), '');
+begin
+  perform private.require_primary_account_admin();
+  if p_user_id is null or p_role is null or p_role not in ('client', 'lawyer', 'manager', 'admin')
+    or clean_name is null or length(clean_name) > 160 or (p_role <> 'client' and p_client_id is not null) then
+    raise exception 'Invalid account approval';
+  end if;
+  -- Serializes approvals and the existing exclusivity triggers on this user.
+  select u.email into target_email from auth.users u
+    where u.id = p_user_id and u.email_confirmed_at is not null for update;
+  if target_email is null then raise exception 'Verified account not found'; end if;
+  if exists (select 1 from public.staff_members where user_id = p_user_id)
+    or exists (select 1 from public.clients where user_id = p_user_id) then
+    raise exception 'Account already assigned';
+  end if;
+  if p_role = 'client' then
+    if client_id is null then
+      client_id := public.staff_create_client(clean_name, target_email, null, null);
+    end if;
+    perform public.link_client_account(client_id, target_email);
+  else
+    perform public.admin_add_staff(target_email, clean_name, p_role::public.staff_role);
+  end if;
+  update public.staff_invites set status = 'cancelled', updated_at = now()
+    where email = lower(target_email) and status = 'pending';
+  insert into public.audit_events(actor_user_id, entity_type, entity_id, action, after_data)
+    values(auth.uid(), 'account', p_user_id, 'approved', jsonb_build_object('role', p_role, 'client_id', client_id));
+end;
+$$;
+
+revoke all on function public.admin_add_staff(text, text, public.staff_role),
+  public.admin_invite_staff(text, text, public.staff_role),
+  public.admin_set_staff_access(uuid, public.staff_role, boolean, text),
+  public.link_client_account(uuid, text), public.account_access_status(),
+  public.admin_pending_accounts(integer), public.admin_approve_account(uuid, text, text, uuid)
+  from public, anon;
+grant execute on function public.admin_add_staff(text, text, public.staff_role),
+  public.admin_invite_staff(text, text, public.staff_role),
+  public.admin_set_staff_access(uuid, public.staff_role, boolean, text),
+  public.link_client_account(uuid, text), public.account_access_status(),
+  public.admin_pending_accounts(integer), public.admin_approve_account(uuid, text, text, uuid)
+  to authenticated;
+
+-- PostgREST also covers security-definer RPCs, which bypass table RLS.
+create or replace function public.enforce_staff_mfa_request()
+returns void language plpgsql stable security definer set search_path = '' as $$
+declare request_path text := trim(both '/' from coalesce(current_setting('request.path', true), ''));
+begin
+  if auth.jwt()->>'role' = 'service_role' then return; end if;
+  if request_path in ('rpc/staff_mfa_status', 'rpc/claim_staff_invite', 'rpc/account_access_status') then return; end if;
+  if auth.uid() is not null and public.account_access_status() = 'pending'
+    and request_path not in ('contact_settings', 'faq_entries', 'legal_documents') then
+    raise sqlstate 'PGRST' using
+      message = '{"code":"ACCOUNT_PENDING","message":"Account approval is required"}',
+      detail = '{"status":403,"headers":{}}';
+  end if;
+  if private.staff_mfa_passed() then return; end if;
+  raise sqlstate 'PGRST' using
+    message = '{"code":"MFA_REQUIRED","message":"Complete staff two-factor authentication"}',
+    detail = '{"status":403,"headers":{}}';
+end;
+$$;
+
+notify pgrst, 'reload schema';
+-- END 20261027008900_primary_account_activation.sql
+
+-- BEGIN 20261027009000_mobile_push.sql
+-- Tokens are server-only. Every device belongs to an authenticated session;
+-- deliveries are checked again against current account/case access at dispatch.
+create table public.push_devices (
+  id uuid primary key,
+  secret_hash bytea not null,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  session_id uuid not null,
+  token text not null unique check(length(token) between 20 and 4096),
+  platform text not null check(platform in ('android','ios')),
+  enabled boolean not null default true,
+  updated_at timestamptz not null default now()
+);
+create table public.push_outbox (
+  id uuid primary key default gen_random_uuid(),
+  notification_id uuid not null references public.notifications(id) on delete cascade,
+  device_id uuid not null references public.push_devices(id) on delete cascade,
+  attempts integer not null default 0,
+  next_attempt_at timestamptz not null default now(),
+  lease_id uuid,
+  completed_at timestamptz,
+  last_error text,
+  unique(notification_id, device_id)
+);
+create index push_outbox_due on public.push_outbox(next_attempt_at) where completed_at is null;
+alter table public.push_devices enable row level security;
+alter table public.push_outbox enable row level security;
+revoke all on public.push_devices, public.push_outbox from public, anon, authenticated;
+grant select, insert, update, delete on public.push_devices, public.push_outbox to service_role;
+
+create function public.register_push_device(p_id uuid, p_secret uuid, p_token text, p_platform text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare session uuid := nullif(auth.jwt()->>'session_id','')::uuid;
+begin
+  if auth.uid() is null or public.account_access_status() <> 'approved' or not private.staff_mfa_passed()
+    or session is null or not exists(select 1 from auth.sessions where id=session and user_id=auth.uid() and (not_after is null or not_after>now())) then
+    raise exception 'Not authorized';
+  end if;
+  if p_id is null or p_secret is null or p_platform is null or p_platform not in ('android','ios')
+    or p_token is null or length(p_token) not between 20 and 4096 then raise exception 'Invalid device'; end if;
+  perform 1 from auth.users where id=auth.uid() for update;
+  if (select count(*) from public.push_devices where user_id=auth.uid() and id<>p_id) >= 20 then raise exception 'Too many devices'; end if;
+  insert into public.push_devices(id,secret_hash,user_id,session_id,token,platform)
+    values(p_id,extensions.digest(p_secret::text,'sha256'),auth.uid(),session,p_token,p_platform)
+  on conflict(id) do update set user_id=excluded.user_id,session_id=excluded.session_id,token=excluded.token,
+    platform=excluded.platform,enabled=true,updated_at=now()
+    where public.push_devices.secret_hash=excluded.secret_hash;
+  if not found then raise exception 'Invalid installation secret'; end if;
+end;
+$$;
+create function public.unregister_push_session()
+returns void language sql security definer set search_path = '' as $$
+  update public.push_devices set enabled=false,updated_at=now()
+    where user_id=auth.uid() and session_id=nullif(auth.jwt()->>'session_id','')::uuid
+$$;
+revoke all on function public.register_push_device(uuid,uuid,text,text),public.unregister_push_session() from public,anon;
+grant execute on function public.register_push_device(uuid,uuid,text,text),public.unregister_push_session() to authenticated;
+
+create function private.enqueue_mobile_push()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  insert into public.push_outbox(notification_id,device_id)
+    select new.id,d.id from public.push_devices d where d.user_id=new.recipient_user_id and d.enabled
+    on conflict do nothing;
+  return new;
+end;
+$$;
+revoke all on function private.enqueue_mobile_push() from public,anon,authenticated;
+create trigger modernsecure_push_notification after insert on public.notifications
+  for each row execute function private.enqueue_mobile_push();
+
+create function private.push_recipient_allowed(p_user uuid,p_case uuid)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select exists(select 1 from public.staff_members s where s.user_id=p_user and s.active
+    and (p_case is null or s.role='admin' or exists(select 1 from public.case_assignments a
+      where a.case_id=p_case and a.staff_user_id=p_user and a.revoked_at is null)))
+    or exists(select 1 from public.clients c where c.user_id=p_user
+      and (p_case is null or exists(select 1 from public.cases k where k.id=p_case and k.client_id=c.id)))
+$$;
+revoke all on function private.push_recipient_allowed(uuid,uuid) from public,anon,authenticated;
+
+create function public.claim_push_batch(p_limit integer default 50)
+returns table(id uuid,lease_id uuid,notification_id uuid,token text,platform text)
+language plpgsql security definer set search_path = '' as $$
+begin
+  delete from public.push_outbox where completed_at < now()-interval '7 days';
+  update public.push_outbox set completed_at=now(),last_error='exhausted'
+    where completed_at is null and next_attempt_at<=now() and attempts>=6;
+  -- Discard work whose recipient changed, signed out, read it, or lost access.
+  update public.push_outbox q set completed_at=now(),last_error='ineligible'
+  where q.completed_at is null and q.next_attempt_at<=now() and not exists(
+    select 1 from public.push_devices d join public.notifications n on n.id=q.notification_id
+    join auth.sessions s on s.id=d.session_id and s.user_id=d.user_id
+    where d.id=q.device_id and d.enabled and d.user_id=n.recipient_user_id and n.read_at is null
+      and (s.not_after is null or s.not_after>now())
+      and private.push_recipient_allowed(d.user_id,n.case_id));
+  return query with picked as (
+    select q.id from public.push_outbox q where q.completed_at is null and q.next_attempt_at<=now() and q.attempts<6
+    order by q.next_attempt_at,q.id limit greatest(1,least(coalesce(p_limit,50),100)) for update skip locked
+  ), claimed as (
+    update public.push_outbox q set attempts=q.attempts+1,lease_id=gen_random_uuid(),next_attempt_at=now()+interval '2 minutes'
+    from picked p where q.id=p.id returning q.*
+  ) select q.id,q.lease_id,q.notification_id,d.token,d.platform from claimed q join public.push_devices d on d.id=q.device_id;
+end;
+$$;
+create function public.finish_push_delivery(p_id uuid,p_lease uuid,p_result text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare item public.push_outbox%rowtype;
+begin
+  if p_result is null or p_result not in ('sent','retry','invalid_token','failed') then raise exception 'Invalid result'; end if;
+  select * into item from public.push_outbox where id=p_id and lease_id=p_lease and completed_at is null for update;
+  if not found then return; end if;
+  update public.push_outbox set completed_at=case when p_result<>'retry' or attempts>=6 then now() else null end,
+    last_error=case when p_result='sent' then null else p_result end,
+    next_attempt_at=now()+make_interval(secs=>least(3600,30*(2^attempts)::integer)),lease_id=null where id=p_id;
+  if p_result='invalid_token' then
+    -- Do not disable a token refreshed while a delivery was in flight.
+    update public.push_devices set enabled=false where id=item.device_id and updated_at < item.next_attempt_at-interval '2 minutes';
+  end if;
+end;
+$$;
+revoke all on function public.claim_push_batch(integer),public.finish_push_delivery(uuid,uuid,text) from public,anon,authenticated;
+grant execute on function public.claim_push_batch(integer),public.finish_push_delivery(uuid,uuid,text) to service_role;
+notify pgrst,'reload schema';
+-- END 20261027009000_mobile_push.sql
+
+-- BEGIN 20261028009100_admin_account_activation.sql
+-- Administrators activate clients, lawyers and managers. Only the primary
+-- administrator can appoint or manage administrators. Invitations never grant
+-- access automatically, and all entry points retain the MFA requirement.
+create function private.require_account_admin(p_role text default null)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if private.staff_role_for_current_user() is distinct from 'admin'
+    or not private.staff_mfa_passed()
+    or (p_role = 'admin' and not private.is_primary_admin()) then
+    raise exception 'Not authorized';
+  end if;
+end;
+$$;
+revoke all on function private.require_account_admin(text) from public, anon, authenticated;
+
+create function private.require_account_assignment(p_email text, p_role text)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.require_account_admin(p_role);
+  perform pg_advisory_xact_lock(hashtextextended(lower(trim(p_email)), 0));
+  if not private.is_primary_admin() and exists (
+    select 1 from public.staff_invites where email = lower(trim(p_email))
+      and status = 'pending' and role = 'admin'
+  ) then raise exception 'Protected administrator'; end if;
+end;
+$$;
+revoke all on function private.require_account_assignment(text, text) from public, anon, authenticated;
+
+create or replace function public.admin_add_staff(p_email text, p_display_name text, p_role public.staff_role)
+returns uuid language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.require_account_assignment(p_email, p_role::text);
+  return private.admin_add_staff(p_email, p_display_name, p_role);
+end;
+$$;
+create or replace function public.admin_invite_staff(p_email text, p_display_name text, p_role public.staff_role)
+returns text language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.require_account_assignment(p_email, p_role::text);
+  return private.admin_invite_staff(p_email, p_display_name, p_role);
+end;
+$$;
+create or replace function public.admin_set_staff_access(p_staff_user_id uuid, p_role public.staff_role, p_active boolean, p_reason text)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.require_account_admin(p_role::text);
+  -- The audited implementation locks the target and rejects primary, self,
+  -- and ordinary-admin attempts to modify an administrator.
+  perform private.admin_set_staff_access(p_staff_user_id, p_role, p_active, p_reason);
+end;
+$$;
+create or replace function public.link_client_account(p_client_id uuid, p_email text)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.require_account_assignment(p_email, 'client');
+  perform private.link_client_account(p_client_id, p_email);
+end;
+$$;
+create or replace function public.admin_client_registrations(p_query text default '', p_page integer default 1)
+returns jsonb language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform private.require_account_admin();
+  return private.admin_client_registrations(p_query, p_page);
+end;
+$$;
+create or replace function public.admin_approve_client_registration(p_user_id uuid)
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare target_email text;
+begin
+  perform private.require_account_admin('client');
+  select email into target_email from auth.users where id=p_user_id and email_confirmed_at is not null;
+  if target_email is null then raise exception 'Verified account not found'; end if;
+  perform private.require_account_assignment(target_email,'client');
+  return private.admin_approve_client_registration(p_user_id);
+end;
+$$;
+
+create or replace function public.admin_pending_accounts(p_offset integer default 0)
+returns table(user_id uuid, email text, display_name text, registered_at timestamptz,
+  email_verified boolean, total_count bigint)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform private.require_account_admin();
+  return query select u.id, u.email::text, p.display_name, p.created_at,
+    u.email_confirmed_at is not null, count(*) over ()
+  from auth.users u left join public.profiles p on p.user_id = u.id
+  where not exists (select 1 from public.staff_members s where s.user_id = u.id)
+    and not exists (select 1 from public.clients c where c.user_id = u.id)
+  order by p.created_at desc nulls last, u.id
+  limit 25 offset greatest(0, least(coalesce(p_offset, 0), 100000));
+end;
+$$;
+
+create function public.admin_pending_account_summary()
+returns jsonb language plpgsql stable security definer set search_path = '' as $$
+declare result jsonb;
+begin
+  perform private.require_account_admin();
+  select jsonb_build_object('total_count', count(*), 'ready_count', count(*) filter (where u.email_confirmed_at is not null))
+    into result from auth.users u
+    where not exists(select 1 from public.staff_members s where s.user_id=u.id)
+      and not exists(select 1 from public.clients c where c.user_id=u.id);
+  return result;
+end;
+$$;
+
+-- Return counts and the clamped page together, even when the requested page
+-- disappeared after an approval. Preserve the invitation's intended role/name.
+create function public.admin_pending_account_page(p_page integer default 1)
+returns jsonb language plpgsql stable security definer set search_path = '' as $$
+declare result jsonb;
+begin
+  perform private.require_account_admin();
+  with pending as (
+    select u.id as user_id, u.email::text, coalesce(p.full_name, p.display_name, i.display_name) as display_name,
+      p.created_at as registered_at, u.email_confirmed_at is not null as email_verified,
+      i.role::text as suggested_role, i.display_name as invited_name,
+      (i.role is distinct from 'admin' or private.is_primary_admin()) as can_approve
+    from auth.users u left join public.profiles p on p.user_id=u.id
+      left join public.staff_invites i on i.email=lower(u.email) and i.status='pending'
+    where not exists(select 1 from public.staff_members s where s.user_id=u.id)
+      and not exists(select 1 from public.clients c where c.user_id=u.id)
+  ), totals as (
+    select count(*) as total_count, count(*) filter(where email_verified) as ready_count,
+      least(greatest(coalesce(p_page,1),1), greatest(1,ceil(count(*)/25.0)::integer)) as page from pending
+  ), items as (
+    select * from pending order by registered_at desc nulls last,user_id
+    limit 25 offset ((select page from totals)-1)*25
+  )
+  select jsonb_build_object('total_count',t.total_count,'ready_count',t.ready_count,'page',t.page,
+    'items',coalesce((select jsonb_agg(to_jsonb(i) order by i.registered_at desc nulls last,i.user_id) from items i),'[]'::jsonb))
+    into result from totals t;
+  return result;
+end;
+$$;
+revoke all on function public.admin_pending_account_summary(),public.admin_pending_account_page(integer) from public,anon;
+grant execute on function public.admin_pending_account_summary(),public.admin_pending_account_page(integer) to authenticated;
+
+create or replace function public.admin_approve_account(p_user_id uuid, p_role text, p_display_name text, p_client_id uuid default null)
+returns void language plpgsql security definer set search_path = '' as $$
+declare target_email text; client_id uuid := p_client_id; clean_name text := nullif(trim(p_display_name), '');
+begin
+  perform private.require_account_admin(p_role);
+  if p_user_id is null or p_role is null or p_role not in ('client','lawyer','manager','admin')
+    or clean_name is null or length(clean_name)>160 or (p_role<>'client' and p_client_id is not null) then
+    raise exception 'Invalid account approval';
+  end if;
+  select u.email into target_email from auth.users u where u.id=p_user_id and u.email_confirmed_at is not null;
+  if target_email is null then raise exception 'Verified account not found'; end if;
+  perform private.require_account_assignment(target_email,p_role);
+  -- Match the email/invitation lock order of the other account entry points.
+  perform 1 from auth.users where id=p_user_id and email=target_email and email_confirmed_at is not null for update;
+  if not found then raise exception 'Verified account not found'; end if;
+  if exists(select 1 from public.staff_members where user_id=p_user_id)
+    or exists(select 1 from public.clients where user_id=p_user_id) then
+    raise exception 'Account already assigned';
+  end if;
+  if p_role='client' then
+    if client_id is null then client_id:=public.staff_create_client(clean_name,target_email,null,null); end if;
+    perform public.link_client_account(client_id,target_email);
+  else
+    perform public.admin_add_staff(target_email,clean_name,p_role::public.staff_role);
+  end if;
+  update public.staff_invites set status='cancelled',updated_at=now() where email=lower(target_email) and status='pending';
+  insert into public.audit_events(actor_user_id,entity_type,entity_id,action,after_data)
+    values(auth.uid(),'account',p_user_id,'approved',jsonb_build_object('role',p_role,'client_id',client_id));
+end;
+$$;
+
+-- In-app notifications only. Existing registrations are discovered by the
+-- live queue/count; do not backfill notifications or change existing access.
+create function private.notify_account_registration()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.email_confirmed_at is null or exists(select 1 from public.staff_members where user_id=new.id)
+    or exists(select 1 from public.clients where user_id=new.id) then return new; end if;
+  insert into public.notifications(recipient_user_id,kind,title,body,target_path,dedupe_key)
+    select s.user_id,'account_registration','Новая заявка на доступ','Пользователь подтвердил email. Проверьте заявку и назначьте роль.',
+      '/staff/team?tab=pending','account-registration:'||new.id::text
+    from public.staff_members s where s.active and s.role='admin'
+    on conflict(recipient_user_id,dedupe_key) do nothing;
+  return new;
+end;
+$$;
+revoke all on function private.notify_account_registration() from public,anon,authenticated;
+create trigger modernsecure_account_registration_notify after insert or update of email_confirmed_at on auth.users
+  for each row execute function private.notify_account_registration();
+
+-- Cover explicit legacy staff/client activation entry points as well as the
+-- unified approval RPC. No notification is sent for an unlinked client card.
+create function private.notify_account_activation()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.user_id is null then return new; end if;
+  if tg_table_name='staff_members' then
+    if not new.active then return new; end if;
+  end if;
+  insert into public.notifications(recipient_user_id,kind,title,body,target_path,dedupe_key)
+    values(new.user_id,'account_approved','Доступ к кабинету открыт','Аккаунт активирован. Можно приступать к работе.',
+      case when tg_table_name='staff_members' then '/staff' else '/account' end,'account-approved:'||new.user_id::text)
+    on conflict(recipient_user_id,dedupe_key) do nothing;
+  update public.notifications set read_at=coalesce(read_at,now()) where kind='account_registration' and dedupe_key='account-registration:'||new.user_id::text;
+  return new;
+end;
+$$;
+revoke all on function private.notify_account_activation() from public,anon,authenticated;
+create trigger modernsecure_client_activation_notify after insert or update of user_id on public.clients
+  for each row execute function private.notify_account_activation();
+create trigger modernsecure_staff_activation_notify after insert on public.staff_members
+  for each row execute function private.notify_account_activation();
+
+notify pgrst,'reload schema';
+-- END 20261028009100_admin_account_activation.sql
+
+-- BEGIN 20261028009200_case_recovery_and_cancellation.sql
+-- Each closure has its own event key, including closure after restoration.
+create or replace function public.staff_close_document_request(p_request_id uuid, p_status public.document_request_status, p_reason text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare item public.document_requests%rowtype; target_case uuid; recipient uuid; clean_reason text := nullif(trim(p_reason), ''); event_id bigint;
+begin
+  select case_id into target_case from public.document_requests where id = p_request_id;
+  if not private.staff_mfa_passed() or not private.lock_legal_case_editor(target_case) then raise exception 'Not authorized'; end if;
+  perform 1 from public.cases where id = target_case and status = 'open' for update;
+  if not found then raise exception 'Case is not active'; end if;
+  select * into item from public.document_requests where id = p_request_id for update;
+  if not found or item.status <> 'active' then raise exception 'Request changed'; end if;
+  if p_status is null or p_status not in ('cancelled', 'not_required') or clean_reason is null or length(clean_reason) > 1000 then raise exception 'Reason is required'; end if;
+  update public.document_requests set status = p_status, closure_reason = clean_reason, updated_at = clock_timestamp() where id = p_request_id;
+  insert into public.audit_events(actor_user_id, case_id, entity_type, entity_id, action, reason, after_data)
+    values(auth.uid(), target_case, 'document_request', p_request_id, 'closed', clean_reason, jsonb_build_object('status', p_status)) returning id into event_id;
+  select cl.user_id into recipient from public.clients cl join public.cases c on c.client_id = cl.id where c.id = target_case;
+  if recipient is not null then
+    insert into public.notifications(recipient_user_id, case_id, kind, title, body, target_path, dedupe_key)
+      values(recipient, target_case, 'document_request_closed', case when p_status = 'not_required' then 'Документ больше не требуется: ' else 'Запрос документа отменён: ' end || item.title, clean_reason,
+        '/account/cases/' || target_case || '/documents#request-' || p_request_id, 'document-request-closed:' || p_request_id || ':' || event_id);
+  end if;
+end; $$;
+revoke all on function public.staff_close_document_request(uuid, public.document_request_status, text) from public, anon;
+grant execute on function public.staff_close_document_request(uuid, public.document_request_status, text) to authenticated;
+
+-- A cancelled required checklist item must not strand its case permanently.
+-- Restore the original template link; the existing reasoned waiver remains available.
+create function public.staff_reopen_template_document_request(p_request_id uuid, p_reason text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare item public.document_requests%rowtype; target_case uuid; recipient uuid;
+  clean_reason text := nullif(trim(p_reason), ''); event_id bigint;
+begin
+  select case_id into target_case from public.document_requests where id = p_request_id;
+  if not private.staff_mfa_passed() or not private.lock_legal_case_editor(target_case) then
+    raise exception 'Not authorized';
+  end if;
+  perform 1 from public.cases where id = target_case and status = 'open' and not is_suspended for update;
+  if not found then raise exception 'Case is not active'; end if;
+  select * into item from public.document_requests where id = p_request_id for update;
+  if not found or item.status <> 'cancelled' or not exists (
+    select 1 from public.document_templates dt where dt.id = item.template_id and dt.required
+  ) then raise exception 'Request cannot be restored'; end if;
+  if clean_reason is null or length(clean_reason) > 1000 then raise exception 'Reason is required'; end if;
+  update public.document_requests set status = 'active', closure_reason = null,
+    updated_at = clock_timestamp() where id = p_request_id;
+  insert into public.audit_events(actor_user_id, case_id, entity_type, entity_id, action, reason, before_data, after_data)
+    values(auth.uid(), target_case, 'document_request', p_request_id, 'reopened', clean_reason,
+      jsonb_build_object('status', item.status, 'closure_reason', item.closure_reason),
+      jsonb_build_object('status', 'active')) returning id into event_id;
+  select cl.user_id into recipient from public.clients cl join public.cases c on c.client_id = cl.id where c.id = target_case;
+  if recipient is not null then
+    insert into public.notifications(recipient_user_id, case_id, kind, title, body, target_path, dedupe_key)
+      values(recipient, target_case, 'document_request', 'Запрос документа восстановлен: ' || item.title,
+        clean_reason, '/account/cases/' || target_case || '/documents#request-' || p_request_id,
+        'document-request-reopened:' || event_id);
+  end if;
+end; $$;
+revoke all on function public.staff_reopen_template_document_request(uuid, text) from public, anon;
+grant execute on function public.staff_reopen_template_document_request(uuid, text) to authenticated;
+
+-- Cancellation records why work stopped without asserting a successful outcome.
+-- Completed work and financial records remain in the case history.
+create function public.staff_cancel_case(p_case_id uuid, p_reason text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare item public.cases%rowtype; request record; task record; suspension record;
+  actor_id uuid := auth.uid(); recipient uuid; clean_reason text := nullif(trim(p_reason), '');
+begin
+  if not private.staff_mfa_passed() or not private.lock_legal_case_editor(p_case_id) then
+    raise exception 'Not authorized';
+  end if;
+  select * into item from public.cases where id = p_case_id for update;
+  if not found or item.status <> 'open' then raise exception 'Case cannot be cancelled'; end if;
+  if clean_reason is null or length(clean_reason) > 2000 then raise exception 'Reason is required'; end if;
+  for request in select dr.id from public.document_requests dr
+    where dr.case_id = p_case_id and dr.status = 'active'
+      and private.document_request_current_state(dr.id) <> 'accepted' for update loop
+    update public.document_requests set status = 'cancelled', closure_reason = clean_reason,
+      updated_at = clock_timestamp() where id = request.id;
+    insert into public.audit_events(actor_user_id, case_id, entity_type, entity_id, action, reason)
+      values(actor_id, p_case_id, 'document_request', request.id, 'cancelled_on_case_cancel', clean_reason);
+  end loop;
+  -- Linked document tasks have already followed their requests through the trigger.
+  for task in select id, status from public.tasks
+    where case_id = p_case_id and status in ('new', 'response_sent') for update loop
+    update public.tasks set status = 'cancelled', updated_at = clock_timestamp() where id = task.id;
+    insert into public.task_events(task_id, actor_user_id, action, response_text)
+      values(task.id, actor_id, 'cancelled', 'Дело отменено: ' || clean_reason);
+    insert into public.audit_events(actor_user_id, case_id, entity_type, entity_id, action, before_data, after_data, reason)
+      values(actor_id, p_case_id, 'task', task.id, 'cancelled_on_case_cancel',
+        jsonb_build_object('status', task.status), jsonb_build_object('status', 'cancelled'), clean_reason);
+  end loop;
+  for suspension in select id, started_at from public.case_suspensions
+    where case_id = p_case_id and ended_at is null for update loop
+    update public.case_suspensions set ended_by = actor_id,
+      ended_at = greatest(clock_timestamp(), suspension.started_at) where id = suspension.id;
+    insert into public.audit_events(actor_user_id, case_id, entity_type, entity_id, action, reason)
+      values(actor_id, p_case_id, 'case_suspension', suspension.id, 'ended', 'Дело отменено: ' || clean_reason);
+  end loop;
+  update public.cases set status = 'cancelled', is_suspended = false, next_review_at = null,
+    result_summary = clean_reason, closed_at = clock_timestamp(), updated_at = clock_timestamp()
+    where id = p_case_id;
+  insert into public.audit_events(actor_user_id, case_id, entity_type, entity_id, action, reason, before_data, after_data)
+    values(actor_id, p_case_id, 'case', p_case_id, 'cancelled', clean_reason,
+      jsonb_build_object('status', item.status, 'is_suspended', item.is_suspended),
+      jsonb_build_object('status', 'cancelled'));
+  select user_id into recipient from public.clients where id = item.client_id;
+  if recipient is not null then
+    insert into public.notifications(recipient_user_id, case_id, kind, title, body, target_path, dedupe_key)
+      values(recipient, p_case_id, 'case_status', 'Дело отменено', clean_reason,
+        '/account/cases/' || p_case_id, 'case-cancelled:' || p_case_id);
+  end if;
+end; $$;
+revoke all on function public.staff_cancel_case(uuid, text) from public, anon;
+grant execute on function public.staff_cancel_case(uuid, text) to authenticated;
+
+-- Work queues count only decisions staff can actually perform.
+create or replace function public.staff_case_worklist(
+  p_query text default '',
+  p_status text default 'all',
+  p_attention text default 'all',
+  p_staff uuid default null,
+  p_service uuid default null,
+  p_stage uuid default null,
+  p_client uuid default null,
+  p_page integer default 1,
+  p_sort text default 'activity'
+)
+returns table (
+  case_id uuid, case_number text, title text, client_name text,
+  status public.case_status, is_suspended boolean, stage_name text,
+  service_name text, updated_at timestamptz, last_message_at timestamptz,
+  last_message_body text, unread_count bigint, overdue_count bigint,
+  review_count bigint, total_count bigint
+)
+language plpgsql stable security definer set search_path = '' as $$
+declare
+  viewer_id uuid := auth.uid();
+  viewer_role public.staff_role := private.staff_role_for_current_user();
+  clean_query text := lower(trim(coalesce(p_query, '')));
+begin
+  if viewer_role is null or viewer_id is null then
+    raise exception 'Not authorized';
+  end if;
+  if length(clean_query) > 120 or p_page is null or p_page not between 1 and 10000
+    or p_status is null or p_status not in ('all', 'open', 'closed', 'suspended', 'cancelled')
+    or p_attention is null or p_attention not in ('all', 'unread', 'overdue', 'documents', 'messages')
+    or p_sort is null or p_sort not in ('activity', 'message') then
+    raise exception 'Invalid worklist filter';
+  end if;
+
+  return query
+    with visible as (
+      select c.id, c.case_number, c.title, cl.full_name,
+        c.status, c.is_suspended, st.title as stage_title,
+        sv.name as service_title, c.updated_at
+      from public.cases c
+      join public.clients cl on cl.id = c.client_id
+      join public.service_template_versions v on v.id = c.service_version_id
+      join public.service_templates sv on sv.id = v.service_id
+      left join public.stage_templates st on st.id = c.current_stage_id
+      where (viewer_role = 'admin' or exists (
+        select 1 from public.case_assignments ca
+        where ca.case_id = c.id and ca.staff_user_id = viewer_id and ca.revoked_at is null
+      ))
+        and (p_staff is null or exists (
+          select 1 from public.case_assignments ca
+          join public.staff_members sm on sm.user_id = ca.staff_user_id
+          where ca.case_id = c.id and ca.staff_user_id = p_staff
+            and ca.revoked_at is null and sm.active
+        ))
+        and (p_service is null or sv.id = p_service)
+        and (p_stage is null or c.current_stage_id = p_stage)
+        and (p_client is null or c.client_id = p_client)
+        and (p_status = 'all'
+          or (p_status = 'open' and c.status = 'open' and not c.is_suspended)
+          or (p_status = 'closed' and c.status = 'closed')
+          or (p_status = 'cancelled' and c.status = 'cancelled')
+          or (p_status = 'suspended' and c.status = 'open' and c.is_suspended))
+        and (clean_query = ''
+          or position(clean_query in lower(c.case_number)) > 0
+          or position(clean_query in lower(c.title)) > 0
+          or position(clean_query in lower(cl.full_name)) > 0
+          or exists (
+            select 1 from public.contracts ct
+            where ct.case_id = c.id and position(clean_query in lower(ct.contract_number)) > 0
+          ))
+    ), enriched as (
+      select v.*, latest.created_at as latest_at,
+        latest.preview as latest_body,
+        coalesce(unread.items, 0)::bigint as unread_items,
+        coalesce(overdue.items, 0)::bigint as overdue_items,
+        coalesce(reviews.items, 0)::bigint as review_items
+      from visible v
+      left join lateral (
+        select m.created_at,
+          coalesce(nullif(left(trim(m.body), 160), ''), 'Вложение') as preview
+        from public.messages m where m.case_id = v.id
+        order by m.created_at desc, m.id desc limit 1
+      ) latest on true
+      left join lateral (
+        select count(*) as items from public.messages m
+        where m.case_id = v.id and m.sender_user_id <> viewer_id
+          and not exists (
+            select 1 from public.message_reads mr
+            where mr.message_id = m.id and mr.reader_user_id = viewer_id
+          )
+      ) unread on true
+      left join lateral (
+        select count(*) as items from public.tasks t
+        where t.case_id = v.id and t.status = 'new' and t.due_at < now()
+          and v.status = 'open' and not v.is_suspended
+      ) overdue on true
+      left join lateral (
+        select count(*) as items from public.document_requests dr
+        join public.document_files df on df.request_id = dr.id
+        where dr.case_id = v.id and df.status = 'under_review'
+          and dr.status = 'active' and v.status = 'open' and not v.is_suspended
+      ) reviews on true
+    )
+    select e.id, e.case_number, e.title, e.full_name, e.status, e.is_suspended,
+      e.stage_title, e.service_title, e.updated_at, e.latest_at, e.latest_body,
+      e.unread_items, e.overdue_items, e.review_items, count(*) over ()
+    from enriched e
+    where p_attention = 'all'
+      or (p_attention = 'unread' and e.unread_items > 0)
+      or (p_attention = 'overdue' and e.overdue_items > 0)
+      or (p_attention = 'documents' and e.review_items > 0)
+      or (p_attention = 'messages' and e.latest_at is not null)
+    order by
+      case when p_sort = 'message' then e.latest_at else e.updated_at end desc nulls last,
+      e.id desc
+    limit 25 offset (p_page - 1) * 25;
+end;
+$$;
+
+revoke all on function public.staff_case_worklist(text, text, text, uuid, uuid, uuid, uuid, integer, text) from public, anon;
+grant execute on function public.staff_case_worklist(text, text, text, uuid, uuid, uuid, uuid, integer, text) to authenticated;
+
+-- A decision must refer to the exact response the reviewer saw. Status alone
+-- cannot distinguish response A from response B after a return/resubmission.
+alter table public.tasks add column response_event_id uuid references public.task_events(id) on delete restrict;
+update public.tasks t set response_event_id = (
+  select e.id from public.task_events e where e.task_id = t.id and e.action in ('responded', 'acknowledged')
+  order by e.occurred_at desc, e.id desc limit 1
+);
+create function private.capture_task_response_revision()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  update public.tasks set response_event_id = new.id where id = new.task_id;
+  return new;
+end; $$;
+revoke all on function private.capture_task_response_revision() from public, anon, authenticated;
+create trigger modernsecure_task_response_revision after insert on public.task_events
+for each row when (new.action in ('responded', 'acknowledged'))
+execute function private.capture_task_response_revision();
+
+revoke all on function public.staff_review_task(uuid, boolean, text) from public, anon, authenticated;
+create function public.staff_review_task(p_task_id uuid, p_expected_response_id uuid, p_accept boolean, p_note text default null)
+returns void language plpgsql security definer set search_path = '' as $$
+declare target_case uuid; item public.tasks%rowtype;
+begin
+  if p_accept is null then raise exception 'Task review decision is required'; end if;
+  select case_id into target_case from public.tasks where id = p_task_id;
+  if not private.staff_mfa_passed() or not private.lock_legal_case_editor(target_case) then
+    raise exception 'Not authorized';
+  end if;
+  perform 1 from public.cases where id = target_case and status = 'open' and not is_suspended for update;
+  if not found then raise exception 'Case is not active'; end if;
+  select * into item from public.tasks where id = p_task_id for update;
+  if not found or item.status <> 'response_sent' or p_expected_response_id is null
+    or item.response_event_id is distinct from p_expected_response_id then
+    raise exception 'Task response changed';
+  end if;
+  perform private.staff_review_task(p_task_id, p_accept, p_note);
+end; $$;
+revoke all on function public.staff_review_task(uuid, uuid, boolean, text) from public, anon;
+grant execute on function public.staff_review_task(uuid, uuid, boolean, text) to authenticated;
+
+notify pgrst, 'reload schema';
+-- END 20261028009200_case_recovery_and_cancellation.sql
+
+-- BEGIN 20261028009300_active_financial_case_guard.sql
+-- Keep the active-case rule inside the common lock, including direct RPC calls.
+-- The row lock serializes these checks with suspension, closure and cancellation.
+create or replace function private.lock_financial_case(p_case_id uuid)
+returns void language plpgsql security definer set search_path = '' as $$
+declare item public.cases%rowtype;
+begin
+  perform 1 from public.staff_members where user_id = auth.uid() for share;
+  perform 1 from public.case_assignments
+    where case_id = p_case_id and staff_user_id = auth.uid() and revoked_at is null for share;
+  if auth.uid() is null or not private.staff_mfa_passed() or not private.can_manage_payments(p_case_id) then
+    raise exception 'Not authorized';
+  end if;
+  select * into item from public.cases where id = p_case_id for update;
+  if not found then raise exception 'Case not found'; end if;
+  if item.status <> 'open' or item.is_suspended then raise exception 'Case is not active'; end if;
+end;
+$$;
+
+revoke all on function private.lock_financial_case(uuid) from public, anon, authenticated;
+
+notify pgrst, 'reload schema';
+-- END 20261028009300_active_financial_case_guard.sql
+
+-- BEGIN 20261028009400_staff_message_append_order.sql
+-- Timestamp/UUID cursors require append order to be monotonic. Transaction
+-- start now() plus random UUIDs can hide a later arrival behind a read cursor.
+-- All staff text, attachment and case-reference sends use this central RPC.
+create or replace function public.staff_send_message(p_thread_id uuid, p_body text, p_idempotency_key uuid)
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare actor_id uuid := auth.uid(); thread_row public.staff_threads%rowtype;
+  recipient_id uuid; result_id uuid; prior_body text; clean_body text := btrim(p_body);
+  latest_time timestamptz; message_time timestamptz;
+begin
+  if actor_id is null or p_thread_id is null or p_idempotency_key is null
+    or clean_body is null or length(clean_body) not between 1 and 4000 then
+    raise exception 'Invalid message';
+  end if;
+  select * into thread_row from public.staff_threads where id = p_thread_id;
+  if not found or not private.can_read_staff_thread(p_thread_id) then raise exception 'Not authorized'; end if;
+  recipient_id := case when thread_row.user_low = actor_id then thread_row.user_high else thread_row.user_low end;
+  perform pg_advisory_xact_lock(hashtextextended(actor_id::text, 0));
+  select id, body into result_id, prior_body from public.staff_messages
+    where thread_id = p_thread_id and sender_user_id = actor_id and idempotency_key = p_idempotency_key;
+  if result_id is not null then
+    if prior_body <> clean_body then raise exception 'Message retry conflict'; end if;
+    return result_id;
+  end if;
+  if not exists (select 1 from public.staff_members s where s.user_id = recipient_id and s.active) then
+    raise exception 'Recipient inactive';
+  end if;
+  -- Wrappers acquire this same actor lock before calling us. Acquire the
+  -- thread row only afterwards; no read-cursor or access workflow locks an
+  -- actor while holding this row. Hold it through commit so a later committed
+  -- message always sorts after every previously committed thread message.
+  perform 1 from public.staff_threads where id = p_thread_id for update;
+  select created_at into latest_time from public.staff_messages
+    where thread_id = p_thread_id order by created_at desc, id desc limit 1;
+  message_time := greatest(clock_timestamp(), latest_time + interval '1 microsecond');
+  if (select count(*) from public.staff_messages where sender_user_id = actor_id
+    and created_at >= now() - interval '1 minute') >= 20
+    or (select count(*) from public.staff_messages where sender_user_id = actor_id
+      and created_at >= now() - interval '1 day') >= 300 then
+    raise exception 'Message rate limit exceeded';
+  end if;
+  insert into public.staff_messages (thread_id, sender_user_id, body, idempotency_key, created_at)
+    values (p_thread_id, actor_id, clean_body, p_idempotency_key, message_time) returning id into result_id;
+  update public.staff_threads set last_message_at = message_time where id = p_thread_id;
+  insert into public.notifications (recipient_user_id, kind, title, body, target_path, dedupe_key)
+    select recipient_id, 'staff_message', 'Сообщение от коллеги', s.display_name,
+      '/staff/chat?to=' || actor_id::text, 'staff-message:' || result_id::text
+      from public.staff_members s where s.user_id = actor_id;
+  insert into public.audit_events (actor_user_id, entity_type, entity_id, action, after_data)
+    values (actor_id, 'staff_message', result_id, 'sent',
+      jsonb_build_object('thread_id', p_thread_id, 'recipient_user_id', recipient_id));
+  return result_id;
+end;
+$$;
+
+notify pgrst, 'reload schema';
+-- END 20261028009400_staff_message_append_order.sql
+
+-- BEGIN 20261028009500_resolve_payments_before_case_end.sql
+-- A terminal case cannot accept later finance corrections. Require staff to
+-- settle or explicitly cancel scheduled obligations before ending the case.
+create function private.guard_case_end_payment_schedule()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.status in ('closed', 'cancelled') and new.status is distinct from old.status
+    and exists (
+      select 1 from public.payment_schedule s
+      where s.case_id = new.id and s.cancelled_at is null
+        and s.amount_kzt > private.installment_paid(s.id)
+    ) then
+    raise exception 'Outstanding payment schedule must be resolved before ending case';
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function private.guard_case_end_payment_schedule() from public, anon, authenticated;
+
+-- UPDATE already holds the case row lock used by every financial mutation.
+-- A failure also rolls back task/request changes made earlier in staff_cancel_case.
+create trigger modernsecure_case_end_payment_schedule
+before update of status on public.cases
+for each row execute function private.guard_case_end_payment_schedule();
+
+notify pgrst, 'reload schema';
+-- END 20261028009500_resolve_payments_before_case_end.sql
+
+-- BEGIN 20261028009600_client_account_email_lookup.sql
+-- Exact account lookup for the administrator's Add client flow. Auth records
+-- remain private; the RPC is bounded and checks current role and MFA itself.
+create index clients_normalized_email_idx on public.clients(lower(trim(email))) where email is not null;
+
+create function public.admin_find_client_account(p_email text)
+returns jsonb language plpgsql stable security definer set search_path = '' as $$
+declare clean_email text := lower(trim(coalesce(p_email, ''))); account_id uuid;
+  verified boolean; account_name text; member_role text; linked_id uuid;
+  invite_role text; cards jsonb;
+begin
+  perform private.require_account_admin();
+  if length(clean_email) > 254 or clean_email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$' then
+    raise exception 'Invalid email';
+  end if;
+  select u.id, u.email_confirmed_at is not null, coalesce(p.full_name, p.display_name)
+    into account_id, verified, account_name
+    from auth.users u left join public.profiles p on p.user_id = u.id
+    where lower(u.email) = clean_email limit 1;
+  select sm.role::text into member_role from public.staff_members sm where sm.user_id = account_id;
+  select cl.id into linked_id from public.clients cl where cl.user_id = account_id;
+  select i.role::text into invite_role from public.staff_invites i
+    where i.email = clean_email and i.status = 'pending'
+      and (i.expires_at > now() or i.role = 'admin') limit 1;
+  select coalesce(jsonb_agg(to_jsonb(c)), '[]'::jsonb) into cards from (
+    select cl.id, cl.full_name, cl.user_id is null as available
+    from public.clients cl where lower(trim(cl.email)) = clean_email
+    order by cl.created_at, cl.id limit 10
+  ) c;
+  return jsonb_build_object('email', clean_email, 'user_id', account_id,
+    'display_name', account_name, 'email_verified', coalesce(verified, false),
+    'status', case when member_role is not null then 'staff' when linked_id is not null then 'linked'
+      when account_id is not null then 'pending' else 'missing' end,
+    'client_id', linked_id, 'invited_role', invite_role, 'cards', cards);
+end;
+$$;
+revoke all on function public.admin_find_client_account(text) from public, anon;
+grant execute on function public.admin_find_client_account(text) to authenticated;
+
+-- Resolve the email and approve under the same locks as the common activation
+-- flow. The client-only action cannot turn a staff invitation into a client.
+create function public.admin_add_client_account(p_email text, p_display_name text, p_client_id uuid default null)
+returns void language plpgsql security definer set search_path = '' as $$
+declare clean_email text := lower(trim(coalesce(p_email, ''))); account_id uuid;
+begin
+  perform private.require_account_assignment(clean_email, 'client');
+  if length(clean_email) > 254 or clean_email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$' then
+    raise exception 'Invalid email';
+  end if;
+  select u.id into account_id from auth.users u where lower(u.email) = clean_email
+    and u.email_confirmed_at is not null for update;
+  if account_id is null then raise exception 'Verified account not found'; end if;
+  if exists(select 1 from public.staff_invites i where i.email = clean_email and i.status = 'pending'
+    and (i.expires_at > now() or i.role = 'admin')) then raise exception 'Account has a staff invitation'; end if;
+  if p_client_id is null and exists(select 1 from public.clients c where lower(trim(c.email)) = clean_email) then
+    raise exception 'Existing client card';
+  end if;
+  perform public.admin_approve_account(account_id, 'client', p_display_name, p_client_id);
+end;
+$$;
+revoke all on function public.admin_add_client_account(text, text, uuid) from public, anon;
+grant execute on function public.admin_add_client_account(text, text, uuid) to authenticated;
+
+notify pgrst, 'reload schema';
+-- END 20261028009600_client_account_email_lookup.sql
+
 -- Users created through Auth before schema installation still need profiles.
 insert into public.profiles(user_id,email)
 select id,coalesce(email,'') from auth.users

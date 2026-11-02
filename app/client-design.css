@@ -1,114 +1,201 @@
-/* Client cabinet layout; shared web visual tokens live in role-design.css. */
-.client-app, .auth-page { --canvas:#fbfcff; --surface:#fbfcff; --surface-soft:#fbfcff; --ink:#16345f; --muted:#526b96; --line:#fbfcff; --accent:#526b96; --accent-ink:#16345f; --radius:0; --control-radius:0; color:var(--ink); }
-.client-app { min-height:100dvh; background:var(--surface); }
-.client-app .account-page { background:transparent; padding-bottom:96px; }
-.client-app .account-content { width:min(760px,calc(100% - 36px)); margin:24px auto 0; }
-.client-app h1 { font-size:26px; letter-spacing:-.035em; line-height:1.2; }
-.client-app h2 { font-size:19px; letter-spacing:-.02em; }
-.client-app .client-header { background:transparent; border:0; }
-.client-header .account-header-top { max-width:760px; margin:auto; padding:20px 0 0; }
-.client-header .brand { transform:scale(.85); transform-origin:left center; }
-.client-header-tools { display:flex; align-items:center; gap:12px; }
-.client-header-tools > a { display:flex; align-items:center; justify-content:center; width:44px; height:44px; min-height:44px; border-radius:0; background: #fbfcff; font-size:0; padding:10px; box-shadow:none; }
+/* Client surfaces inherit the application's shared palette and controls. */
+.client-app { min-height:100dvh; background:var(--canvas); color:var(--ink); }
+.client-app .account-page { min-height:100dvh; padding-bottom:40px; }
+.client-app .account-content { width:min(1120px,calc(100% - 48px)); margin:32px auto 0; }
+.client-app h1 { font-size:30px; line-height:1.2; letter-spacing:-.025em; }
+.client-app h2 { font-size:20px; line-height:1.35; letter-spacing:-.015em; }
+.client-app .client-header { position:sticky; top:0; z-index:25; display:block; min-height:76px; padding:0 24px; border-bottom:1px solid var(--line); background:var(--surface); }
+.client-header .account-header-top { display:flex; align-items:center; justify-content:space-between; gap:28px; width:min(1280px,100%); min-height:76px; margin:auto; }
+.client-header .brand { flex:none; }
+.client-header .brand-name { font-size:14px; }
+.client-header-tools { display:flex; align-items:center; gap:8px; flex:none; }
+.client-header-tools > a { position:relative; display:flex; align-items:center; justify-content:center; width:44px; height:44px; min-height:44px; padding:10px; border:0; border-radius:var(--control-radius); color:var(--muted); background:transparent; font-size:0; text-decoration:none; }
+.client-header-tools > a:hover, .client-header-tools > a[aria-current=page] { color:var(--accent); background:var(--accent-soft); }
 .client-header-tools > a span { font-size:11px; }
-.client-header-tools > .client-avatar, .client-avatar { color:#fbfcff; background:var(--surface); }
-.client-bottom-nav { position:fixed; z-index:30; bottom:0; left:50%; transform:translateX(-50%); display:flex; justify-content:space-around; width:min(800px,100%); padding:10px 12px max(12px,env(safe-area-inset-bottom)); background:#fbfcff; backdrop-filter:none; border:1px solid #fbfcff; border-bottom:0; border-radius:0; box-shadow:none; }
-.client-bottom-nav a { display:flex; flex:1; align-items:center; justify-content:center; flex-direction:column; gap:5px; min-height:54px; color:#526b96; font-size:12px; text-decoration:none; }
-.client-bottom-nav a[aria-current=page] { color:#526b96; font-weight:600; }
-.client-bottom-nav a[aria-current=page] svg { filter:none; }
-.client-greeting { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
-.client-greeting p { color:#526b96; margin:0 0 2px; font-size:18px; font-weight:500; }
+.client-header-tools > a > b { position:absolute; top:0; right:-2px; min-width:20px; height:20px; padding:0 4px; border:2px solid var(--surface); font-size:11px; }
+.client-header-tools > .client-avatar { color:var(--ink); background:var(--surface-soft); }
+.client-desktop-nav { display:flex; align-items:center; gap:4px; margin-left:auto; }
+.client-desktop-nav a { display:flex; align-items:center; gap:8px; min-height:44px; padding:10px 12px; border-radius:var(--control-radius); color:var(--muted); font-size:14px; font-weight:500; text-decoration:none; white-space:nowrap; }
+.client-desktop-nav a:hover { background:var(--surface-soft); color:var(--ink); }
+.client-desktop-nav a[aria-current=page] { background:var(--accent-soft); color:var(--accent); }
+.client-bottom-nav { display:none; }
+.client-greeting { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:28px; }
+.client-greeting p { margin:8px 0 0; color:var(--muted); font-size:16px; }
 .client-greeting h1 { margin:0; }
-.client-message-link { display:grid; place-items:center; width:44px; height:44px; border-radius:0; background:#fbfcff; box-shadow:none; }
-.client-app .account-card,.client-app .account-detail-card,.client-app .account-case-link { background:#fbfcff; border:0; border-radius:0; box-shadow:none; }
-.client-app .account-case-list { display:grid; grid-template-columns:1fr; gap:12px; background:none; border:0; }
-.client-app .account-case-link { position:relative; display:flex; flex-direction:column; gap:4px; padding:18px 48px 18px 64px; }
-.client-app .account-case-link::before { content:""; position:absolute; width:32px; height:38px; left:18px; top:22px; background:#fbfcff; border-radius:0; }
-.client-app .account-case-link::after { content:"›"; position:absolute; right:20px; top:26px; color:#526b96; font-size:26px; }
-.client-app .account-case-link strong { order:-1; font-size:16px; font-weight:600; }
+.client-message-link { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:44px; padding:10px 14px; border:1px solid var(--line); border-radius:var(--control-radius); background:var(--surface); color:var(--ink); font-size:14px; font-weight:500; text-decoration:none; }
+.client-message-link:hover { background:var(--surface-soft); }
+.client-home-grid { display:grid; grid-template-columns:minmax(240px,320px) minmax(0,1fr); align-items:start; gap:28px; }
+.client-home-grid > * { min-width:0; }
+.client-home-grid > .account-cases:only-child { grid-column:1/-1; max-width:680px; width:100%; }
+.client-app .account-section-heading { gap:12px; margin-bottom:16px; }
+.client-app .account-section-heading h2 { margin:0; }
+.client-app .account-count { min-width:28px; padding:3px 8px; border-radius:8px; background:var(--surface-soft); color:var(--muted); font-size:14px; text-align:center; }
+.client-app .account-card, .client-app .account-detail-card { padding:24px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:none; }
+.client-app .account-card h2 { margin:0 0 10px; }
+.client-app .account-card p:last-child { margin-bottom:0; }
+.client-app .account-case-list { display:flex; flex-direction:column; gap:0; margin:0; padding:0; overflow:hidden; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
+.client-app .account-case-list li + li { border-top:1px solid var(--line); }
+.client-app .account-case-link { display:grid; grid-template-columns:40px minmax(0,1fr) 18px; align-items:center; gap:12px; min-height:104px; padding:18px; border:0; border-radius:0; background:transparent; color:var(--ink); text-decoration:none; }
+.client-app .account-case-link:hover { background:var(--surface-soft); }
+.client-case-icon { display:grid; place-items:center; width:40px; height:44px; border-radius:10px; background:var(--surface-soft); color:var(--muted); }
+.client-case-copy { display:grid; gap:5px; min-width:0; }
+.client-app .account-case-link strong { font-size:16px; line-height:1.4; font-weight:600; overflow-wrap:anywhere; }
 .client-app .account-case-number { color:var(--muted); font-size:13px; }
-.client-app .account-case-footer { font-size:12px; margin-top:2px; }
-.client-app .account-case-footer > span:last-child { display:none; }
-.client-home .account-section-heading { margin-bottom:10px; }
-.client-home .account-section-heading h2 { font-size:14px; color:var(--muted); font-weight:500; }
-.client-home .account-count { font-size:12px; }
-.client-home .case-overview { display:flex; flex-direction:column; gap:14px; margin-top:16px; }
-.client-home .client-current-stage { margin:0; padding:22px 22px 22px 66px; position:relative; }
-.client-current-stage::before { content:""; position:absolute; left:22px; top:26px; width:24px; height:30px; border:1.5px solid #b53235; border-radius:0; box-shadow:none; }
-.client-app .client-stage-label { margin:0 0 4px; font-size:13px; }
-.client-app .client-current-stage h2 { margin:0 0 10px; }
-.client-app .client-current-stage > p { font-size:14px; line-height:1.6; }
-.client-home .account-case-facts,.client-home .case-overview-grid,.client-home .client-timeline,.client-home .case-contact-card { display:none; }
-.client-home .case-next-actions { margin:0; padding:20px; border:0; border-radius:0; background:#fbfcff; }
-.client-home .case-next-actions h2 { font-size:17px; }
-.client-home .case-next-actions ul { display:grid; grid-template-columns:1fr; }
-.client-home .case-next-actions li { border:0; }
-.client-home .case-next-actions li a { background:transparent; border:0; padding:14px 0; }
-.client-home .case-next-action-kind { color:#b53235; }
-.client-app .client-home-primary { display:none; }
-.client-home .client-home-primary { display:flex; justify-content:space-between; align-items:center; min-height:52px; padding:12px 22px; margin-top:10px; text-decoration:none; }
-.client-home .client-history { margin:0; padding:20px; border-radius:0; background: #fbfcff; }
-.client-home .client-history h2 { font-size:16px; }
-.client-home .client-history .account-events li:not(:first-child) { display:none; }
-.client-app .primary-action,.client-app button[type=submit],.auth-page .auth-submit { border-radius:0; color: #fbfcff; background:var(--surface); box-shadow:none; }
-.client-app .account-detail > .case-nav { display:flex; gap:6px; border:0; overflow:auto; margin:18px 0; padding:4px; background:#fbfcff; border-radius:0; }
-.client-app .case-nav a { flex:1; min-height:44px; justify-content:center; border:0; padding:8px; font-size:12px; border-radius:0; white-space:nowrap; }
-.client-app .case-nav a[aria-current=page] { background:#fbfcff; color:var(--accent); box-shadow:none; }
+.client-app .account-case-footer { display:block; margin:0; color:var(--muted); font-size:13px; }
+.client-app .account-case-link > svg { color:var(--muted); }
+.client-summary-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; }
+.client-summary-heading h2 { margin:0; }
+.client-summary-heading a { display:inline-flex; align-items:center; gap:4px; min-height:44px; margin-block:-8px; font-size:14px; white-space:nowrap; text-decoration:none; }
+.client-summary .case-overview { display:grid; gap:20px; }
+.client-app .client-current-stage { margin:0; }
+.client-app .client-current-stage h2 { margin:0; font-size:20px; }
+.client-app .client-stage-label { display:flex; align-items:center; gap:8px; margin:0 0 12px; color:var(--accent); font-size:14px; font-weight:600; }
+.client-app .client-current-stage > p:not(.client-stage-label) { margin:12px 0 0; line-height:1.65; color:var(--muted); }
+.client-app .account-case-facts { gap:20px; margin-top:20px; padding-top:20px; }
+.client-app .account-case-facts span { font-size:14px; text-transform:none; }
+.client-app .account-case-facts strong { font-size:15px; font-weight:500; }
+.client-app .case-next-actions { margin:0; padding:24px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
+.client-app .case-next-actions-heading h2 { margin:0; }
+.client-app .case-next-actions-heading > span { display:grid; place-items:center; min-width:26px; height:26px; padding:2px 6px; border-radius:8px; color:var(--accent); background:var(--accent-soft); }
+.client-app .case-next-actions li a { grid-template-columns:minmax(0,1fr) 24px; gap:4px 12px; padding:16px 0; }
+.client-app .case-next-actions li a:hover strong { color:var(--accent); }
+.client-app .case-next-action-kind { grid-column:1; grid-row:auto; color:var(--muted); font-size:13px; }
+.client-app .case-next-actions li strong, .client-app .case-next-actions li small { grid-column:1; }
+.client-app .case-next-actions li strong { font-size:16px; line-height:1.45; }
+.client-app .case-next-actions li small { font-size:14px; line-height:1.5; }
+.client-app .case-next-action-arrow { grid-column:2; grid-row:1/4; }
+.client-home-primary { display:flex; width:fit-content; margin-top:12px; }
+.client-app .account-detail > .case-overview { display:grid; gap:24px; margin-top:24px; }
+.client-app .case-overview-grid { margin:0; padding:0; overflow:hidden; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
+.client-app .case-overview-grid a { gap:5px; padding:20px; }
+.client-app .case-overview-grid strong { font-size:22px; line-height:1.4; overflow-wrap:anywhere; }
+.client-app .case-overview-grid small { font-size:13px; line-height:1.45; }
+.client-app .case-overview > .account-detail-section { margin:0; }
+.client-app .client-history { padding:24px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
+.client-app .client-history h2 { margin:0 0 6px; }
+.client-app .account-events li:last-child { border-bottom:0; padding-bottom:0; }
+.client-app .account-events time, .client-app .account-events small { font-size:14px; }
+.client-app .account-events strong { margin-top:6px; font-size:16px; }
+.client-app .account-events p { margin-top:6px; font-size:15px; }
 .client-app .account-case-topline { margin-bottom:16px; }
-.client-app .account-back { font-size:14px; }
-.client-app .account-case-status { display:inline-block; font-size:12px; color:#526b96; background:#fbfcff; border-radius:0; padding:4px 10px; margin-top:8px; }
-.client-app .case-number-label { font-size:13px; color:var(--muted); margin-top:6px; }
-.client-app .account-detail > .case-overview { display:flex; flex-direction:column; }
-.client-app .account-detail .client-timeline { order:-1; margin-top:8px; }
-.client-app .account-stages li { position:relative; gap:24px; min-height:80px; border:0; padding:14px 8px; }
-.client-app .account-stages li:not(:last-child)::before { content:""; position:absolute; left:22px; top:40px; bottom:-15px; width:2px; background:#fbfcff; }
-.client-app .account-stage-index { z-index:1; width:30px; height:30px; border:7px solid #fbfcff; background: #fbfcff; font-size:0; }
-.client-app .account-stages .is-current .account-stage-index { border:8px solid #526b96; background: #fbfcff; box-shadow:none; }
-.client-app .account-stages .is-complete .account-stage-index { border:0; background:#526b96; color: #fbfcff; font-size:14px; }
-.client-app .account-stages strong { font-size:16px; }
-.client-app .account-stages p { margin:4px 0 0; font-size:14px; }
-.client-app .client-current-stage { position:relative; }
-.client-app .case-work-card { border:0; border-bottom:1px solid #fbfcff; background:#fbfcff; border-radius:0; padding:20px; }
-.client-app .case-work-head h3 { font-size:16px; }
-.client-document-filters { display:flex; gap:8px; overflow-x:auto; margin:16px 0; padding-bottom:8px; }
-.client-document-filters a { flex-shrink:0; display:grid; place-items:center; min-height:44px; padding:8px 14px; border-radius:0; background:#fbfcff; color:#16345f; font-size:12px; text-decoration:none; }
-.client-document-filters a[aria-current=page] { background:var(--surface); color: #fbfcff; }
-.client-document-detail summary { cursor:pointer; display:flex; align-items:center; list-style:none; min-height:48px; gap:12px; }
+.client-app .account-back { min-height:44px; font-size:14px; }
+.client-case-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin:4px 0 24px; }
+.client-case-heading > div { min-width:0; }
+.client-case-heading h1 { margin:0; overflow-wrap:anywhere; }
+.client-app .case-number-label { margin:8px 0 0; color:var(--muted); font-size:14px; }
+.client-app .account-case-status { flex:none; margin:0; padding:6px 10px; border-radius:8px; color:var(--accent); background:var(--accent-soft); font-size:14px; }
+.client-app .account-case-switcher summary { min-height:44px; border-radius:var(--control-radius); cursor:pointer; }
+.client-app .account-case-switcher nav { padding:8px; border:1px solid var(--line); border-radius:var(--radius); }
+.client-app .account-case-switcher nav a { min-height:44px; border-radius:8px; }
+.client-app .account-detail > .case-nav { display:flex; gap:6px; margin:0; padding:6px; overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); scrollbar-width:thin; }
+.client-app .case-nav a { flex:1; display:flex; justify-content:center; align-items:center; gap:8px; min-height:44px; padding:10px 16px; border:0; border-radius:8px; color:var(--muted); font-size:14px; font-weight:500; white-space:nowrap; }
+.client-app .case-nav a:hover { color:var(--ink); background:var(--surface-soft); }
+.client-app .case-nav a[aria-current=page] { color:var(--accent); background:var(--accent-soft); }
+.client-app .client-timeline { padding:24px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
+.client-app .account-stages li { position:relative; gap:16px; border:0; padding:16px 0; }
+.client-app .account-stages li:not(:last-child)::before { position:absolute; content:""; left:15px; top:48px; bottom:-16px; width:1px; background:var(--line-strong); }
+.client-app .account-stage-index { position:relative; z-index:1; flex:none; width:32px; height:32px; border:1px solid var(--line-strong); border-radius:50%; color:var(--muted); background:var(--surface); font-size:14px; }
+.client-app .account-stages .is-current .account-stage-index { color:var(--surface); border-color:var(--accent); background:var(--accent); }
+.client-app .account-stages .is-complete .account-stage-index { color:var(--accent); border-color:var(--accent-soft); background:var(--accent-soft); }
+.client-app .account-stages p { margin:6px 0 0; font-size:15px; }
+.client-document-filters { display:flex; gap:8px; overflow-x:auto; margin:16px 0 20px; padding:0 0 4px; scrollbar-width:thin; }
+.client-document-filters a { display:flex; align-items:center; flex-shrink:0; min-height:44px; padding:10px 14px; border:1px solid var(--line); border-radius:var(--control-radius); background:var(--surface); color:var(--muted); font-size:14px; text-decoration:none; }
+.client-document-filters a:hover { background:var(--surface-soft); }
+.client-document-filters a[aria-current=page] { color:var(--accent); border-color:var(--accent); background:var(--accent-soft); }
+.client-document-detail summary { display:grid; grid-template-columns:24px minmax(0,1fr) auto 18px; align-items:center; gap:12px; min-height:48px; list-style:none; cursor:pointer; }
 .client-document-detail summary::-webkit-details-marker { display:none; }
-.client-document-detail summary > svg { flex-shrink:0; color:#526b96; }
-.client-document-detail summary h3 { flex:1; margin:0; }
+.client-document-detail summary > svg { color:var(--muted); }
+.client-document-detail summary h3 { margin:0; font-size:16px; line-height:1.45; overflow-wrap:anywhere; }
 .client-document-detail[open] summary { margin-bottom:18px; }
-.client-document-detail summary span[data-status=accepted] { background:#fbfcff; color:#16345f; }
-.client-document-detail summary span[data-status=missing],.client-document-detail summary span[data-status=returned] { background:#fbfcff; color:#b53235; }
-.client-app .case-work-head > span { font-size:12px; background:#fbfcff; color:#526b96; border-radius:0; padding:5px 10px; }
-.client-more-list { display:grid; margin-top:22px; background:#fbfcff; border-radius:0; overflow:hidden; }
-.client-more-list a { min-height:60px; display:flex; align-items:center; gap:18px; padding:14px 20px; border-bottom:1px solid #fbfcff; color:var(--ink); text-decoration:none; }
-.client-more-list a > svg:first-child { color:#526b96; }
-.client-more-list a > svg:last-child { margin-left:auto; width:16px; }
-.client-profile-summary { display:flex; gap:16px; align-items:center; background:#fbfcff; padding:22px 18px; margin-top:20px; border-radius:0; text-decoration:none; color:var(--ink); }
-.client-profile-summary .client-avatar { display:grid; place-items:center; width:52px; height:52px; border-radius:0; font-size:22px; flex-shrink:0; }
-.client-profile-summary small { display:block; color:var(--muted); margin-top:4px; overflow-wrap:anywhere; }
-.client-profile-summary > svg { margin-left:auto; flex-shrink:0; }
-.client-next-payment > svg:first-child { margin-left:0; color:#526b96; }
-.client-next-payment strong { display:block; font-size:23px; margin-top:5px; }
-.client-signout { margin-top:28px; }
-.client-app .client-signout button { color:var(--muted); background:transparent; box-shadow:none; }
-.client-app ::selection,.auth-page ::selection { color:#fbfcff; background:#526b96; }
-.client-app :focus-visible,.auth-page :focus-visible { outline:3px solid #526b96; outline-offset:3px; }
-.client-app input,.client-app textarea { caret-color:#526b96; }
-@media(max-width:700px) {
- .client-header .account-header-top { width:calc(100% - 36px); padding-top:16px; }
- .client-header .brand-name { font-size:12px; }
- .client-header .brand-mark { width:32px; height:36px; }
- .client-app .account-content { margin-top:22px; }
- .client-app .account-detail > h1 { font-size:21px; }
- .client-app .account-detail .client-current-stage { padding:20px 20px 20px 66px; }
- .client-app .case-overview-grid { grid-template-columns:1fr 1fr; gap:10px; }
- .client-app .case-overview-grid > a { border:0; border-radius:0; padding:16px; background: #fbfcff; }
- .client-app .case-overview-grid strong { font-size:24px; }
- .client-app .account-page:has(.case-conversation-screen) { padding-bottom:0; }
- .client-app .account-page:has(.case-conversation-screen) > .client-header { display:none; }
- .client-app .account-detail:has(.case-conversation-screen) { width:100%; margin:0; }
- .client-app .account-detail:has(.case-conversation-screen) > .case-nav { display:none; }
- .client-app .case-conversation-screen { border:0; border-radius:0; }
+.client-document-detail[open] summary > svg:last-child { transform:rotate(90deg); }
+.client-document-detail summary span { padding:5px 9px; border-radius:7px; color:var(--muted); background:var(--surface-soft); font-size:13px; }
+.client-document-detail summary span[data-status=accepted] { color:var(--success); background:var(--success-soft); }
+.client-document-detail summary span[data-status=missing], .client-document-detail summary span[data-status=returned] { color:var(--danger); background:var(--danger-soft); }
+.client-more-list { display:flex; flex-direction:column; overflow:hidden; margin-top:24px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
+.client-more-list a { display:flex; align-items:center; gap:14px; min-height:64px; padding:16px 20px; color:var(--ink); text-decoration:none; }
+.client-more-list a + a { border-top:1px solid var(--line); }
+.client-more-list a:hover { background:var(--surface-soft); }
+.client-more-list a > svg { flex:none; color:var(--muted); }
+.client-more-list a > svg:last-child { width:18px; margin-left:auto; }
+.client-more-list .client-case-copy strong { font-size:16px; }
+.client-more-list .client-case-copy small { color:var(--muted); font-size:14px; }
+.client-profile-summary { display:flex; align-items:center; gap:16px; padding:24px; margin-top:24px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); color:var(--ink); text-decoration:none; }
+.client-profile-summary:hover { background:var(--surface-soft); }
+.client-profile-summary .client-avatar { display:grid; place-items:center; width:52px; height:52px; flex:none; border-radius:50%; background:var(--accent-soft); color:var(--accent); font-size:23px; font-weight:600; }
+.client-profile-summary > span:not(.client-avatar) { min-width:0; }
+.client-profile-summary small { display:block; margin-top:4px; color:var(--muted); font-size:14px; overflow-wrap:anywhere; }
+.client-profile-summary > svg:last-child { flex:none; margin-left:auto; color:var(--muted); }
+.client-next-payment > svg:first-child { flex:none; color:var(--accent); }
+.client-next-payment strong { display:block; margin-top:4px; font-size:24px; font-variant-numeric:tabular-nums; }
+.client-signout { margin-top:24px; }
+.client-app .client-signout button { border:1px solid var(--line); color:var(--muted); background:var(--surface); }
+.client-app .client-signout button:hover { color:var(--ink); background:var(--surface-soft); }
+.client-app .account-content.client-settings { max-width:760px; }
+.client-app .account-detail:has(.case-conversation-screen) > .client-case-heading { display:none; }
+.client-home-grid > .account-card { grid-column:1/-1; margin-top:0; }
+.client-app .account-identity-list { gap:16px; }
+.client-app .account-identity-list dt { font-size:14px; }
+.client-app .help-question { border-bottom:1px solid var(--line); }
+.client-app .help-question summary { min-height:48px; padding-block:16px; font-weight:600; cursor:pointer; }
+.client-app .help-question p { max-width:70ch; color:var(--muted); }
+@media (min-width:1100px) {
+  .client-app .account-detail > .case-overview { grid-template-columns:minmax(0,1fr) 340px; align-items:start; }
+  .client-app .account-detail > .case-overview > * { grid-column:1/-1; }
+  .client-app .account-detail > .case-overview > .client-current-stage { grid-column:1; }
+  .client-app .account-detail > .case-overview > .case-next-actions { grid-column:2; grid-row:1/3; }
+  .client-app .account-detail > .case-overview > .case-overview-grid { grid-column:1; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .client-app .account-detail .case-overview-grid a:nth-child(3) { border-left:0; }
+  .client-app .account-detail .case-overview-grid a:nth-child(n+3) { border-top:1px solid var(--line); }
+  .client-app .account-detail .account-case-facts { grid-template-columns:1fr; gap:14px; }
+}
+@media (max-width:1100px) {
+  .client-header .account-header-top { gap:16px; }
+  .client-desktop-nav a { gap:6px; padding-inline:9px; }
+  .client-desktop-nav svg { display:none; }
+}
+@media (max-width:800px) {
+  .client-app .account-page { padding-bottom:calc(88px + env(safe-area-inset-bottom)); }
+  .client-app .account-content { width:calc(100% - 32px); margin-top:24px; }
+  .client-app h1 { font-size:26px; }
+  .client-app h2 { font-size:19px; }
+  .client-app .client-header { position:relative; min-height:68px; padding:0 16px; }
+  .client-header .account-header-top { min-height:68px; gap:12px; }
+  .client-header .brand-name { font-size:13px; }
+  .client-header .brand-mark { width:36px; height:40px; }
+  .client-header-tools { gap:4px; }
+  .client-desktop-nav { display:none; }
+  .client-bottom-nav { position:fixed; z-index:40; bottom:0; left:0; right:0; display:flex; justify-content:space-around; padding:6px 8px calc(6px + env(safe-area-inset-bottom)); border-top:1px solid var(--line); background:var(--surface); }
+  .client-bottom-nav a { display:flex; flex:1; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-width:0; min-height:56px; padding:6px 2px; border-radius:10px; color:var(--muted); font-size:12px; font-weight:500; text-decoration:none; }
+  .client-bottom-nav a[aria-current=page] { color:var(--accent); background:var(--accent-soft); font-weight:600; }
+  .client-bottom-nav a:hover { color:var(--accent); }
+  .client-greeting { margin-bottom:24px; }
+  .client-greeting p { font-size:15px; }
+  .client-message-link { width:44px; height:44px; padding:10px; }
+  .client-message-link span { display:none; }
+  .client-home-grid { grid-template-columns:1fr; gap:28px; }
+  .client-app .account-card, .client-app .account-detail-card, .client-app .case-next-actions, .client-app .client-history, .client-app .client-timeline { padding:20px; }
+  .client-app .account-case-link { min-height:96px; padding:16px; }
+  .client-summary-heading { align-items:flex-start; }
+  .client-summary-heading h2 { font-size:18px; }
+  .client-home-primary { width:100%; }
+  .client-app .account-detail > .case-overview { gap:20px; margin-top:20px; }
+  .client-case-heading { flex-direction:column; gap:12px; margin-bottom:20px; }
+  .client-case-heading h1 { font-size:24px; }
+  .client-app .case-nav a { flex:none; padding:10px 12px; }
+  .client-app .case-overview-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .client-app .case-overview-grid a { padding:16px; }
+  .client-app .case-overview-grid a:nth-child(3) { border-left:0; }
+  .client-app .case-overview-grid a:nth-child(n+3) { border-top:1px solid var(--line); }
+  .client-app .account-case-facts { grid-template-columns:1fr; gap:14px; }
+  .client-document-detail summary { grid-template-columns:24px minmax(0,1fr) 18px; gap:8px 10px; }
+  .client-document-detail summary span { grid-column:2; grid-row:2; justify-self:start; }
+  .client-document-detail summary > svg:last-child { grid-column:3; grid-row:1/3; }
+  .client-more-list a { padding:16px; }
+  .client-profile-summary { padding:20px; }
+  .client-app .account-page:has(.case-conversation-screen) > .client-header { display:none; }
+  .client-app .account-detail:has(.case-conversation-screen) { width:100%; margin:0; }
+  .client-app .account-detail:has(.case-conversation-screen) > .account-case-topline,
+  .client-app .account-detail:has(.case-conversation-screen) > .client-case-heading,
+  .client-app .account-detail:has(.case-conversation-screen) > .case-nav { display:none; }
+  .client-app .case-conversation-screen { border:0; border-radius:0; }
 }

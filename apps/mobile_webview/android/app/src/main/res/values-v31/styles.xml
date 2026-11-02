@@ -1,0 +1,8 @@
+<resources>
+    <style name="AppTheme" parent="AppThemeBase">
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowSplashScreenBackground">@color/app_canvas</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/app_accent</item>
+    </style>
+</resources>

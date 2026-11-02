@@ -1,3 +1,4 @@
+import { deliverFile } from "../../../../lib/file-delivery";
 import { checkDocumentFile, storageAdmin } from "../../../../lib/document-files";
 import { recordFileAccess } from "../../../../lib/file-access-audit";
 import { createClient } from "../../../../lib/supabase/server";
@@ -30,8 +31,7 @@ export async function GET(request: Request, context: RouteContext<"/api/contract
   if (!await recordFileAccess(admin, auth.claims.sub, "contract", id, preview)) {
     return new Response("File access audit unavailable", { status: 503 });
   }
-  return new Response(file.bytes, {
-    headers: {
+  return deliverFile(admin, contract.storage_path, file.bytes, {
       "Content-Type": "application/pdf",
       "Content-Disposition": `${preview ? "inline" : "attachment"}; filename="contract-${id}.pdf"`,
       "Content-Length": String(file.size),
@@ -39,6 +39,5 @@ export async function GET(request: Request, context: RouteContext<"/api/contract
       "X-Content-Type-Options": "nosniff",
       "Content-Security-Policy": "sandbox",
       "Cross-Origin-Resource-Policy": "same-origin",
-    },
-  });
+    }, { preview, name: `contract-${id}.pdf`, transformed: false });
 }

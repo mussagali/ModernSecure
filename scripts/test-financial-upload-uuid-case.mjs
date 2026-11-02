@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 import ts from "typescript";
 import { uuidPattern } from "../lib/uuid.ts";
+import { staffWorkspaceEnabled } from "../lib/application-scope.ts";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const origin = "https://modernsecure.test";
@@ -74,6 +75,7 @@ function loadRoute(route, state, form) {
     "../../../lib/supabase/server": { createClient: async () => supabase },
     "../../../lib/upload-request": { readBoundedFormData: async () => form, UploadInputError: class extends Error {} },
     "../../../lib/uuid": { uuidPattern },
+    "../../../lib/application-scope": { staffWorkspaceEnabled },
   };
   vm.runInNewContext(compiled, {
     module: routeModule, exports: routeModule.exports,

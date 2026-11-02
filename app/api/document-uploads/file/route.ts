@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   if (!admin) return new Response("Document storage is not configured", { status: 503 });
 
   let form: FormData;
-  try { form = await readBoundedFormData(request, maxMultipartBytes); }
+  try { form = await readBoundedFormData(request, maxMultipartBytes, { admin, userId: auth.claims.sub }); }
   catch (error) {
     return new Response("Invalid upload", { status: error instanceof UploadInputError ? error.status : 400 });
   }

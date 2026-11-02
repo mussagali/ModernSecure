@@ -1,0 +1,5 @@
+GoogleService-Info.plist
+Local.xcconfig
+build/
+**/xcuserdata/
+.DS_Store

@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   if (!admin) return failure("Хранилище файлов сейчас недоступно.", 503);
 
   let form: FormData;
-  try { form = await readBoundedFormData(request, maxTotalBytes + 2 * 1024 * 1024); }
+  try { form = await readBoundedFormData(request, maxTotalBytes + 2 * 1024 * 1024, { admin, userId: auth.claims.sub }); }
   catch (error) {
     return failure("Не удалось прочитать файлы. Проверьте размер и повторите попытку.",
       error instanceof UploadInputError ? error.status : 400);

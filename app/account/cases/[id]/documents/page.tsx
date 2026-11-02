@@ -1,3 +1,5 @@
+import { ListSearch } from "../../../../../components/ListControls";
+import { queryText, searchPattern, listHref } from "../../../../../lib/list-query";
 import Link from "next/link";
 import { NavIcon } from "../../../../../components/NavIcon";
 import { formatDeadline } from "../../../../../lib/deadlines";
@@ -12,22 +14,25 @@ const fileStatus: Record<string, string> = {
   returned: "Возвращён", retracted: "Отозван",
 };
 
-export default async function ClientDocuments({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ uploaded?: string; uploadError?: string; retracted?: string; error?: string; filter?: string }> }) {
+export default async function ClientDocuments({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ uploaded?: string; uploadError?: string; retracted?: string; error?: string; filter?: string; q?: string }> }) {
   const { id } = await params;
   const { supabase, item } = await requireClientCase(id);
-  const { data: requests, error } = await supabase.from("document_requests").select("id, title, instructions, required, due_at, status, closure_reason, created_at").eq("case_id", id).order("created_at", { ascending: false });
+  const query = await searchParams;
+  const q = queryText(query.q);
+  let requestQuery = supabase.from("document_requests").select("id, title, instructions, required, due_at, status, closure_reason, created_at").eq("case_id", id);
+  if (q) requestQuery = requestQuery.ilike("title", searchPattern(q));
+  const { data: requests, error } = await requestQuery.order("created_at", { ascending: false }).order("id");
   if (error) throw new Error("Не удалось загрузить документы");
   const requestIds = (requests ?? []).map((request) => request.id);
   const { data: files, error: fileError } = requestIds.length ? await supabase.from("document_files").select("id, request_id, version_no, file_position, original_name, detected_mime_type, status, return_reason, uploaded_at").in("request_id", requestIds).neq("status", "quarantine").order("version_no", { ascending: false }).order("file_position") : { data: [], error: null };
   if (fileError) throw new Error("Не удалось загрузить файлы");
-  const query = await searchParams;
   const filter = ["missing", "under_review", "accepted"].includes(query.filter ?? "") ? query.filter : "all";
   const visibleRequests = (requests ?? []).filter(request => {
     const state = documentRequestState((files ?? []).filter(file => file.request_id === request.id));
     return filter === "all" || (request.status === "active" && (filter === "missing" ? ["missing", "returned", "incomplete"].includes(state) : state === filter));
   });
   const uploadsReady = Boolean(process.env.SUPABASE_SECRET_KEY);
-  return <section className="account-detail-section case-workspace"><h2>Документы</h2><nav className="client-document-filters" aria-label="Фильтр документов">{[["all", "Все"], ["missing", "Нужно загрузить"], ["under_review", "На проверке"], ["accepted", "Приняты"]].map(([value, label]) => <Link key={value} href={`?filter=${value}`} aria-current={filter === value ? "page" : undefined}>{label}</Link>)}</nav>
+  return <section className="account-detail-section case-workspace"><h2>Документы</h2><nav className="client-document-filters" aria-label="Фильтр документов">{[["all", "Все"], ["missing", "Нужно загрузить"], ["under_review", "На проверке"], ["accepted", "Приняты"]].map(([value, label]) => <Link key={value} href={listHref(`/account/cases/${id}/documents`, { filter: value, q })} aria-current={filter === value ? "page" : undefined}>{label}</Link>)}</nav><ListSearch action={`/account/cases/${id}/documents`} query={q} placeholder="Найти документ по названию" hidden={{ filter: filter ?? "all" }} resetHref={q ? `/account/cases/${id}/documents` : undefined} />
     {query.uploaded && <p className="case-feedback">Файлы получены и переданы сотруднику на рассмотрение. Это ещё не означает, что документ принят.</p>}
     {query.retracted && <p className="case-feedback">Файл отозван. Его можно отправить заново.</p>}
     {query.uploadError && <p className="case-feedback is-error">Не удалось отправить файл. Проверьте PDF/JPG/PNG/HEIC/HEIF, размер до 20 МБ на файл и повторите попытку. Если ошибка сохраняется, обратитесь к сотруднику.</p>}

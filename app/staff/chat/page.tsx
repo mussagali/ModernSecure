@@ -1,3 +1,6 @@
+import { loadListPage } from "../../../lib/list-page";
+import { queryPage, queryText } from "../../../lib/list-query";
+import { staffChatDirectory } from "../../../lib/staff-chat-directory";
 import type { Metadata } from "next";
 import { StaffChat } from "../../../components/StaffChat";
 import { requireStaff } from "../../../lib/staff";
@@ -6,11 +9,16 @@ import { uuidPattern } from "../../../lib/uuid";
 export const metadata: Metadata = { title: "Чат команды | Современная защита" };
 
 export default async function StaffChatPage({ searchParams }: {
-  searchParams: Promise<{ to?: string; fromCase?: string; beforeAt?: string; beforeId?: string }>;
+  searchParams: Promise<{ to?: string; fromCase?: string; beforeAt?: string; beforeId?: string; q?: string; page?: string; unread?: string }>;
 }) {
   const { supabase, userId } = await requireStaff();
   const query = await searchParams;
-  const { data: sidebar, error: sidebarError } = await supabase.rpc("staff_chat_sidebar");
+  const search = queryText(query.q);
+  let page = queryPage(query.page);
+  const unreadOnly = query.unread === "1";
+  const directory = await loadListPage(target => staffChatDirectory(supabase, search, target, unreadOnly), page);
+  const { data: sidebar, error: sidebarError, count } = directory;
+  page = directory.page;
   if (sidebarError) throw new Error("Не удалось загрузить чат команды");
   const conversations = ((sidebar ?? []) as Array<{
     user_id: string; display_name: string; role: "lawyer" | "manager" | "admin"; active: boolean;
@@ -27,7 +35,13 @@ export default async function StaffChatPage({ searchParams }: {
   }));
   const requested = query.to;
   const requestedId = requested && uuidPattern.test(requested) ? requested.toLowerCase() : null;
-  const selected = conversations.find((person) => person.user_id === requestedId) ?? null;
+  let selected = conversations.find((person) => person.user_id === requestedId) ?? null;
+  if (!selected && requestedId) {
+    const { data, error } = await supabase.rpc("staff_chat_sidebar").eq("user_id", requestedId).limit(1);
+    if (error) throw new Error("Не удалось загрузить выбранный диалог");
+    const person = data?.[0];
+    if (person) selected = { user_id: person.user_id, display_name: person.display_name, role: person.role, active: person.active, threadId: person.thread_id, lastMessageAt: person.last_message_at, lastMessage: person.last_message_body, unread: Number(person.unread_count) };
+  }
   const selectedId = selected?.user_id ?? null;
   let returnCase: { id: string; caseNumber: string } | null = null;
   if (selectedId && typeof query.fromCase === "string" && uuidPattern.test(query.fromCase)) {
@@ -93,6 +107,11 @@ export default async function StaffChatPage({ searchParams }: {
     selectedThreadId={selected?.threadId ?? null}
     returnCase={returnCase}
     conversations={conversations}
+    selectedPerson={selected}
+    directoryQuery={search}
+    directoryPage={page}
+    directoryCount={count ?? 0}
+    unreadOnly={unreadOnly}
     messages={shownMessages.map((message) => ({ ...message,
       caseRef: caseByMessage.get(message.id) ?? null,
       attachments: (attachmentsByMessage.get(message.id) ?? []).sort((a, b) => a.position - b.position) }))}
