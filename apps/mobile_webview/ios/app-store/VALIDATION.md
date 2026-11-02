@@ -1,5 +1,7 @@
 # Проверка подготовки iOS — 2 ноября 2026
 
+Это исторический отчёт о нативной сборке. Последующие изменения публикации, Apple membership и демо-доступа: [RELEASE-STATUS.ru.md](RELEASE-STATUS.ru.md).
+
 Проверенный исходный коммит: `84b426ca1f00acc2c6b090d000466dff0e8ab4b8`, ветка `release/app-store-preparation` в `shpshka/ModernSecure`.
 
 ## Выполнено

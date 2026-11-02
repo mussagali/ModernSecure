@@ -1,5 +1,7 @@
 # Подготовка ModernSecure к App Store
 
+Актуальный статус, подтверждённая Apple-команда и приватный демо-доступ: [RELEASE-STATUS.ru.md](RELEASE-STATUS.ru.md). Этот статус обновляет исторические блокеры ниже.
+
 Актуально на 2 ноября 2026 года. Текущий клиент: `apps/mobile_webview/ios`, Swift / WKWebView. `apps/client_mobile` — прежний Flutter-проект, его не отправляем. Версия первого релиза: `1.0.0`; Bundle ID: `kz.modernsecure.app`; сайт: `https://modernsecure.shpshka.work`.
 
 Unsigned Release собран в Xcode 26.3; приложение запущено на симуляторах iPhone и iPad, экран входа проверен по реальным снимкам. [Результаты и CI](VALIDATION.md). Это **не готовый к отправке релиз**: подпись Apple, реальное устройство, удаление аккаунта и материалы владельца ещё требуют завершения. Успех source preflight или симулятора не означает успех TestFlight или App Review.

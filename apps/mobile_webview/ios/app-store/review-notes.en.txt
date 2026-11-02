@@ -6,6 +6,11 @@ requests, secure document uploads/downloads and case conversations. Access
 is checked on the server for each account and role.
 
 Enter the dedicated reviewer username/password in App Review Information.
+The dedicated client was created and activated on November 2, 2026. Its
+confirmed sign-in and access to exactly one synthetic case were verified
+against the production backend. Credentials are stored privately in
+reviewer-access.local.json and have NOT been entered in App Store Connect.
+This backend check does not replace testing the submitted iOS build.
 Do not commit credentials here. Reviewer accounts must already have confirmed
 email, approval and access to synthetic case data. Provide a client account
 and any additional non-administrator roles needed for a complete review.
@@ -13,7 +18,9 @@ Explain the actual staff MFA setup without disabling security checks.
 
 Suggested client review path:
 1. Sign in with the supplied activated client account.
-2. Open an assigned synthetic case and inspect stages and tasks.
+2. Open the case titled "ДЕМО APPLE — проверка приложения, не юридическая услуга"
+   and inspect its three stages and the demo task. All seeded case/task data
+   is fictional. Use only non-sensitive files during review.
 3. Open Documents; upload the supplied non-sensitive QA PDF/photo.
 4. Open a published document in the native Quick Look preview.
 5. Open the case conversation and send a test message.
@@ -36,10 +43,14 @@ claim it is operational unless Firebase/APNs and actual device delivery have
 been configured and tested for the submitted build.
 
 MUST COMPLETE BEFORE REVIEW:
-- Company/provider identity and authorization to publish this brand.
-- Public support URL and live, approved privacy-policy URL.
+- Confirm authority to publish the company's brand through an Individual
+  developer membership. Operator: TOO "Sovremennaya Zashchita", BIN 220140025162.
+- Publish /support and verify working company contacts. Privacy and terms
+  are already published at /privacy and /terms on the production origin.
 - Actual in-app account deletion location, completion time, retained-data
-  exceptions and tested completion process. This flow is currently missing.
+  exceptions and tested completion process. The request form and staff queue
+  exist in the release branch but are NOT deployed. Do not submit until the
+  production migration and deployment are complete and the flow is tested.
 - Reviewer credentials and any MFA/testing instructions in private ASC fields.
 - Confirmation that all reviewer-visible content is synthetic.
 
