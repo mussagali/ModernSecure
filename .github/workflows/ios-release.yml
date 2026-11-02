@@ -1,0 +1,77 @@
+name: iOS signed archive
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: App version
+        required: true
+        default: '1.0.0'
+      build_number:
+        description: Unique increasing build number in App Store Connect
+        required: true
+      upload_to_testflight:
+        description: Validate with Apple and upload the IPA to App Store Connect (no App Review submission)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-signed-release
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: macos-15
+    environment: app-store
+    timeout-minutes: 45
+    env:
+      APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      IOS_VERSION: ${{ inputs.version }}
+      IOS_BUILD_NUMBER: ${{ inputs.build_number }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Select Xcode and install XcodeGen
+        shell: bash
+        run: |
+          set -euo pipefail
+          XCODE_PATH="$(find /Applications -maxdepth 1 -type d -name 'Xcode_26*.app' ! -iname '*beta*' ! -iname '*RC*' | sort -V | tail -n 1)"
+          test -n "$XCODE_PATH"
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          command -v xcodegen || brew install xcodegen
+      - name: Install private signing material
+        env:
+          APPLE_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_PROFILE_BASE64: ${{ secrets.APPLE_PROFILE_BASE64 }}
+        run: bash apps/mobile_webview/ios/scripts/install-signing.sh
+      - name: Archive and export IPA
+        run: bash apps/mobile_webview/ios/scripts/build.sh archive
+      - name: Validate and upload to TestFlight
+        if: inputs.upload_to_testflight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY_P8_BASE64: ${{ secrets.ASC_PRIVATE_KEY_P8_BASE64 }}
+        run: bash apps/mobile_webview/ios/scripts/upload-testflight.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ModernSecure-ios-${{ inputs.version }}-${{ inputs.build_number }}
+          path: |
+            apps/mobile_webview/ios/build/export/*.ipa
+            apps/mobile_webview/ios/build/*.xcarchive/dSYMs
+          if-no-files-found: error
+          retention-days: 7
+      - name: Remove runner signing material
+        if: always()
+        shell: bash
+        run: |
+          if [[ -n "${IOS_KEYCHAIN_PATH:-}" && -f "$IOS_KEYCHAIN_PATH" ]]; then
+            security delete-keychain "$IOS_KEYCHAIN_PATH"
+          fi
+          if [[ -n "${IOS_PROFILE_UUID:-}" ]]; then
+            rm -f "$HOME/Library/MobileDevice/Provisioning Profiles/$IOS_PROFILE_UUID.mobileprovision"
+          fi
+          rm -f "$RUNNER_TEMP/modernsecure-signing.p12" "$RUNNER_TEMP/modernsecure-profile.mobileprovision" "$RUNNER_TEMP/modernsecure-profile.plist"

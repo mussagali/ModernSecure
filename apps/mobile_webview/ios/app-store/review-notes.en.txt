@@ -1,0 +1,47 @@
+DRAFT — complete and verify before copying to App Store Connect.
+
+ModernSecure is the client and staff workspace of a legal services company.
+It provides access to assigned legal cases, case stages, tasks, document
+requests, secure document uploads/downloads and case conversations. Access
+is checked on the server for each account and role.
+
+Enter the dedicated reviewer username/password in App Review Information.
+Do not commit credentials here. Reviewer accounts must already have confirmed
+email, approval and access to synthetic case data. Provide a client account
+and any additional non-administrator roles needed for a complete review.
+Explain the actual staff MFA setup without disabling security checks.
+
+Suggested client review path:
+1. Sign in with the supplied activated client account.
+2. Open an assigned synthetic case and inspect stages and tasks.
+3. Open Documents; upload the supplied non-sensitive QA PDF/photo.
+4. Open a published document in the native Quick Look preview.
+5. Open the case conversation and send a test message.
+6. Open the profile, privacy information and account deletion flow.
+
+New self-registered accounts require email confirmation and administrator
+activation. The supplied review accounts must not be left awaiting activation.
+
+The app requires an internet connection. Its web workspace is hosted at
+https://modernsecure.shpshka.work. It includes a native iOS container with
+gesture navigation, document downloads and Quick Look previews, and native
+camera/photo selection through the web upload controls.
+
+Payment screens show records and payment evidence for legal-service contracts.
+Confirm the final business model before submitting; do not use these notes
+to describe a different payment flow or paid digital subscriptions.
+
+Push is optional and not configured in the initial repository setup. Do not
+claim it is operational unless Firebase/APNs and actual device delivery have
+been configured and tested for the submitted build.
+
+MUST COMPLETE BEFORE REVIEW:
+- Company/provider identity and authorization to publish this brand.
+- Public support URL and live, approved privacy-policy URL.
+- Actual in-app account deletion location, completion time, retained-data
+  exceptions and tested completion process. This flow is currently missing.
+- Reviewer credentials and any MFA/testing instructions in private ASC fields.
+- Confirmation that all reviewer-visible content is synthetic.
+
+Do not submit this draft with unresolved items or describe unfinished
+features as implemented.

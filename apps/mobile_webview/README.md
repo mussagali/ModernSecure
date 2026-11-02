@@ -122,7 +122,9 @@ xcodegen generate
 open ModernSecure.xcodeproj
 ```
 
-В Xcode задайте Team и `SITE_HOST` / `SITE_SCHEME`. Debug использует `http://localhost:3000` для симулятора на этом Mac. Release-плейсхолдер `REPLACE_WITH_YOUR_DOMAIN` обязательно замените. Для физического iPhone нужен доступный HTTPS-домен. Push требует Apple Developer, capabilities и provisioning profile. Иконка добавлена; подпись, сведения для магазинов и проверка требований публикации — отдельный этап после проверки на устройствах.
+Release использует `https://modernsecure.shpshka.work`; Debug по умолчанию использует `http://localhost:3000`. Team задаётся через игнорируемый `Local.xcconfig` по примеру `Local.xcconfig.example`. Общая схема Xcode, privacy manifest и версия `1.0.0` подготовлены. Firebase plist остаётся опциональным; после его добавления перегенерируйте проект.
+
+Полная инструкция, включая **сборку с Windows через GitHub Actions без собственного Mac**, подпись IPA, TestFlight, черновики App Store Connect и ещё не закрытые блокеры: [Подготовка к App Store](ios/app-store/README.md). Без успешной iOS-сборки, проверки на устройствах, удаления аккаунта и утверждённых правовых материалов приложение не считается готовым к отправке.
 
 ## Проверки разработчика
 

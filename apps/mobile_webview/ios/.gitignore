@@ -3,3 +3,12 @@ Local.xcconfig
 build/
 **/xcuserdata/
 .DS_Store
+*.xcarchive/
+*.ipa
+*.p12
+*.p8
+*.mobileprovision
+ExportOptions.local.plist
+app-store/release-evidence.local.json
+app-store/reviewer-access.local.*
+__pycache__/

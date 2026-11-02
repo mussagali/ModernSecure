@@ -1,0 +1,28 @@
+{
+  "teamId": "",
+  "appStoreConnectAppId": "",
+  "verified": {
+    "developerMembershipActive": false,
+    "providerIdentityAndBrandRightsConfirmed": false,
+    "bundleIdRegisteredToTeam": false,
+    "signedArchiveValidatedByApple": false,
+    "testFlightInstalledOnPhysicalIPhone": false,
+    "iPadTested": false,
+    "loginRegistrationRecoveryAndSessionTested": false,
+    "allRolePermissionsAndStaffMfaTested": false,
+    "realFileUploadDownloadAndShareTested": false,
+    "accountDeletionImplementedForEveryAccountState": false,
+    "accountDeletionEndToEndTested": false,
+    "retentionPolicyAndDeletionDeadlineApproved": false,
+    "privacyPolicyPublishedAndOwnerApproved": false,
+    "publicSupportPagePublishedWithRealContacts": false,
+    "privacyLabelsAndSdkPrivacyReportReviewed": false,
+    "encryptionDeclarationReviewed": false,
+    "reviewerDemoAccessEnteredInAppStoreConnect": false,
+    "screenshotsCapturedFromActualIosBuild": false,
+    "ageRatingAndContentQuestionnaireCompleted": false,
+    "webviewUtilityReviewedAgainstGuideline4_2": false,
+    "pushTestedOnDeviceOrNotAdvertised": false,
+    "metadataAndCopyrightApproved": false
+  }
+}

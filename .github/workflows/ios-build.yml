@@ -1,0 +1,54 @@
+name: iOS build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'apps/mobile_webview/ios/**'
+      - '.github/workflows/ios-build.yml'
+  pull_request:
+    paths:
+      - 'apps/mobile_webview/ios/**'
+      - '.github/workflows/ios-build.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install XcodeGen
+        run: command -v xcodegen || brew install xcodegen
+      - name: Select a supported stable Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          # macos-15 includes Xcode 26. Select explicitly instead of using its older default.
+          XCODE_PATH="$(find /Applications -maxdepth 1 -type d -name 'Xcode_26*.app' ! -iname '*beta*' ! -iname '*RC*' | sort -V | tail -n 1)"
+          test -n "$XCODE_PATH"
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          xcodebuild -version
+      - name: Check sources and release safeguards
+        run: python3 -m unittest discover -s apps/mobile_webview/ios/scripts -p 'test_*.py'
+      - name: Build Release for iOS Simulator without signing
+        env:
+          IOS_BUILD_NUMBER: ${{ github.run_number }}
+        run: bash apps/mobile_webview/ios/scripts/build.sh simulator
+      - name: Package simulator app
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            apps/mobile_webview/ios/build/simulator/Build/Products/Release-iphonesimulator/ModernSecure.app \
+            apps/mobile_webview/ios/build/ModernSecure-simulator.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ModernSecure-ios-simulator
+          path: apps/mobile_webview/ios/build/ModernSecure-simulator.zip
+          if-no-files-found: error
+          retention-days: 7
