@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthFrame } from "../../components/AuthFrame";
+import legal from "../../content/legal/documents.ru.json";
 
 export const metadata: Metadata = { title: "Поддержка | Современная защита" };
 export const dynamic = "force-dynamic";
@@ -8,8 +9,8 @@ export const dynamic = "force-dynamic";
 export default function SupportPage() {
   // Only contacts explicitly approved for public display; never publish private
   // account email or the staff-only contact settings as an implicit fallback.
-  const email = process.env.PUBLIC_SUPPORT_EMAIL?.trim() ?? "";
-  const phone = process.env.PUBLIC_SUPPORT_PHONE?.trim() ?? "";
+  const email = process.env.PUBLIC_SUPPORT_EMAIL?.trim() ?? legal.company.email;
+  const phone = process.env.PUBLIC_SUPPORT_PHONE?.trim() ?? legal.company.phone;
   const hours = process.env.PUBLIC_SUPPORT_HOURS?.trim();
   const emailLink = /^[^\s@/?#]+@[^\s@/?#]+\.[^\s@/?#]+$/.test(email) ? `mailto:${email}` : null;
   const normalizedPhone = phone.replace(/[\s().-]/g, "");
@@ -25,6 +26,8 @@ export default function SupportPage() {
         : <p role="status">Контакты поддержки пока не опубликованы компанией. Попробуйте открыть страницу позже.</p>}
     </section>
     <p><Link href="/forgot-password">Восстановить пароль</Link></p>
+    <p><Link href="/delete-account">Удаление аккаунта и персональных данных</Link></p>
+    <p>{legal.company.name} · БИН {legal.company.bin}</p>
     <p><Link href="/login">Перейти ко входу</Link></p>
   </AuthFrame>;
 }

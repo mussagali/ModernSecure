@@ -37,6 +37,7 @@ export default async function ProfilePage({ searchParams }: {
         <div className="auth-field"><label htmlFor="profile-city">Город</label><input id="profile-city" name="city" defaultValue={profile.city ?? ""} maxLength={100} autoComplete="address-level2" /></div>
         <button type="submit" className="account-activate-button">Сохранить изменения</button>
       </form></section>
+      <section className="account-card"><h2>Управление аккаунтом</h2><p><Link href="/delete-account">Удалить аккаунт и персональные данные</Link></p><p><Link href="/privacy">Политика конфиденциальности</Link></p></section>
     </div>
   </main>;
 }

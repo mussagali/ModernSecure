@@ -11,7 +11,7 @@ const anchoredCasePath = new RegExp(`^/(account|staff)/cases/${uuid}/(?:tasks#ta
 export function notificationHref(raw: string | null, audience: "client" | "staff") {
   const fallback = audience === "client" ? "/account" : "/staff/cases";
   if (!raw) return fallback;
-  if (audience === "staff" && (raw === "/staff/team?tab=pending" || raw === "/staff")) return raw;
+  if (audience === "staff" && (raw === "/staff/team?tab=pending" || raw === "/staff" || raw === "/staff/settings/deletion-requests")) return raw;
   if (audience === "client" && raw === "/account") return raw;
   if (raw.startsWith(audience === "client" ? "/account/" : "/staff/") && anchoredCasePath.test(raw)) return raw;
   if (audience === "staff" && staffChatPath.test(raw)) return raw;
@@ -20,6 +20,7 @@ export function notificationHref(raw: string | null, audience: "client" | "staff
 
 export function notificationActionLabel(raw: string | null, audience: "client" | "staff") {
   const target = notificationHref(raw, audience).split("#", 1)[0];
+  if (target === "/staff/settings/deletion-requests") return "Открыть запросы →";
   if (target === "/staff/team?tab=pending") return "Открыть заявки →";
   if (target === "/staff" || target === "/account") return "Открыть кабинет →";
   if (audience === "staff" && staffChatPath.test(target)) return "Открыть диалог →";

@@ -22,6 +22,7 @@ export default async function StaffSettingsPage({ searchParams }: {
     {(query.contactSaved || query.faqSaved || query.staleSaved) && <div className="staff-alert is-success" role="status">Изменения сохранены и записаны в журнал.</div>}
     {query.error && <div className="staff-alert is-error" role="alert">{query.error === "conflict" ? "Настройки уже изменились в другой вкладке. Обновите страницу и внесите изменения заново." : query.error === "invalid" ? "Проверьте заполнение и длину полей." : "Не удалось сохранить изменения. Обновите страницу и попробуйте снова."}</div>}
     <p><Link className="staff-text-link" href="/staff/settings/legal">Условия и согласия клиентов</Link></p>
+    <p><Link className="staff-text-link" href="/staff/settings/deletion-requests">Запросы на удаление аккаунтов — для главного администратора</Link></p>
     <section className="staff-form-panel"><div><h2>Контакты</h2><p>Укажите только действующие каналы связи. Эти данные доступны всем вошедшим клиентам.</p></div><form action={saveContactSettings} className="staff-form">
       <input type="hidden" name="expectedUpdatedAt" value={contact?.updated_at ?? ""} />
       <label>Телефон<input name="phone" type="tel" defaultValue={contact?.phone ?? ""} maxLength={40} /></label>
