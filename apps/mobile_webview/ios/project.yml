@@ -31,8 +31,6 @@ targets:
     platform: iOS
     sources:
       - path: Sources
-      - path: GoogleService-Info.plist
-        optional: true
     dependencies:
       - package: Firebase
         product: FirebaseMessaging

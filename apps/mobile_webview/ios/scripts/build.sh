@@ -23,7 +23,11 @@ BUILD_NUMBER="${IOS_BUILD_NUMBER:-1}"
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid IOS_VERSION' >&2; exit 1; }
 [[ "$BUILD_NUMBER" =~ ^[1-9][0-9]*$ ]] || { echo 'Invalid IOS_BUILD_NUMBER' >&2; exit 1; }
 xcodebuild -version
-xcodegen generate
+if [[ -f GoogleService-Info.plist ]]; then
+  xcodegen generate --spec project.push.yml
+else
+  xcodegen generate --spec project.yml
+fi
 python3 scripts/preflight.py
 COMMON=(-project ModernSecure.xcodeproj -scheme ModernSecure -configuration Release
   "MARKETING_VERSION=$VERSION" "CURRENT_PROJECT_VERSION=$BUILD_NUMBER")
