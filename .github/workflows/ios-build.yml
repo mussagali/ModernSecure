@@ -46,6 +46,15 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent \
             apps/mobile_webview/ios/build/simulator/Build/Products/Release-iphonesimulator/ModernSecure.app \
             apps/mobile_webview/ios/build/ModernSecure-simulator.zip
+      - name: Launch on iPhone and iPad simulators
+        run: python3 apps/mobile_webview/ios/scripts/smoke-simulator.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ModernSecure-ios-startup-screenshots
+          path: apps/mobile_webview/ios/build/smoke-screenshots
+          if-no-files-found: ignore
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         with:
           name: ModernSecure-ios-simulator
