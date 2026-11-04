@@ -7,6 +7,14 @@ on:
         description: Capture real authenticated demo screens for App Store (no upload)
         type: boolean
         default: false
+      screenshot_runner:
+        description: Standard Mac image for the screenshot capture job
+        type: choice
+        default: macos-15-intel
+        options:
+          - macos-15-intel
+          - macos-15
+          - macos-26
   push:
     paths:
       - 'apps/mobile_webview/ios/**'
@@ -69,7 +77,7 @@ jobs:
           retention-days: 7
   store-screenshots:
     if: github.event_name == 'workflow_dispatch' && inputs.capture_store_screenshots
-    runs-on: macos-15-intel
+    runs-on: ${{ inputs.screenshot_runner || 'macos-15-intel' }}
     environment: app-store
     timeout-minutes: 35
     steps:
