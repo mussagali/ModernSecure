@@ -3,6 +3,14 @@ name: iOS signed archive
 on:
   workflow_dispatch:
     inputs:
+      source_ref:
+        description: Trusted source branch to build
+        type: choice
+        required: true
+        options:
+          - release/app-store-preparation
+          - main
+        default: release/app-store-preparation
       version:
         description: App version
         required: true
@@ -32,7 +40,18 @@ jobs:
       IOS_VERSION: ${{ inputs.version }}
       IOS_BUILD_NUMBER: ${{ inputs.build_number }}
     steps:
+      - name: Check trusted source branch
+        shell: bash
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+        run: |
+          case "$SOURCE_REF" in
+            main|release/app-store-preparation) ;;
+            *) echo 'Select a trusted source branch.' >&2; exit 1 ;;
+          esac
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_ref }}
       - name: Select Xcode and install XcodeGen
         shell: bash
         run: |
