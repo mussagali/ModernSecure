@@ -23,6 +23,13 @@ on:
           - both
           - iphone
           - ipad
+      screenshot_engine:
+        description: Native UI capture engine
+        type: choice
+        default: xctest
+        options:
+          - xctest
+          - idb
   push:
     paths:
       - 'apps/mobile_webview/ios/**'
@@ -105,6 +112,13 @@ jobs:
           IOS_VERSION: '1.0.0'
           IOS_BUILD_NUMBER: '2'
         run: bash apps/mobile_webview/ios/scripts/build.sh simulator
+      - name: Install local native accessibility bridge when requested
+        if: inputs.screenshot_engine == 'idb'
+        run: |
+          test "$(uname -m)" = arm64
+          brew tap meta/fb
+          brew trust meta/fb
+          brew install meta/fb/idb
       - name: Read dedicated review credentials without logging them
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
@@ -114,7 +128,13 @@ jobs:
       - name: Capture real synthetic-case screens on iPhone and iPad
         env:
           SCREENSHOT_DEVICE_FAMILY: ${{ inputs.screenshot_devices || 'both' }}
-        run: python3 apps/mobile_webview/ios/scripts/capture-store-simulator.py
+          SCREENSHOT_ENGINE: ${{ inputs.screenshot_engine || 'xctest' }}
+        run: |
+          if [ "$SCREENSHOT_ENGINE" = idb ]; then
+            python3 apps/mobile_webview/ios/scripts/capture-idb-simulator.py
+          else
+            python3 apps/mobile_webview/ios/scripts/capture-store-simulator.py
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
