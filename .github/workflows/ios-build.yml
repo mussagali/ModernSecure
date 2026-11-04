@@ -79,7 +79,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.capture_store_screenshots
     runs-on: ${{ inputs.screenshot_runner || 'macos-15-intel' }}
     environment: app-store
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
       - name: Select Xcode and install XcodeGen

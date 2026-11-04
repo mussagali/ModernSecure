@@ -21,8 +21,8 @@ RUNNER_ID = 'kz.modernsecure.screenshot-tests.xctrunner'
 EXPECTED = ['01-cases.png', '02-case-overview.png', '03-tasks.png', '04-documents.png']
 
 
-def simctl(*arguments):
-    return subprocess.check_output(['xcrun', 'simctl', *arguments], text=True, timeout=180).strip()
+def simctl(*arguments, timeout=180):
+    return subprocess.check_output(['xcrun', 'simctl', *arguments], text=True, timeout=timeout).strip()
 
 
 def xcode(arguments, name, environment=None):
@@ -95,10 +95,11 @@ def main():
         udid = device['udid']
         print('Capturing ' + device['name'] + ' / ' + runtime, flush=True)
         try:
-            print(f'{family}: booting simulator (maximum 180 seconds per command).', flush=True)
+            print(f'{family}: booting simulator (up to 600 seconds for first-boot migration).', flush=True)
             if device['state'] != 'Booted':
                 simctl('boot', udid)
-            simctl('bootstatus', udid, '-b')
+            subprocess.run(['open', '-a', 'Simulator', '--args', '-CurrentDeviceUDID', udid], check=True)
+            simctl('bootstatus', udid, '-b', timeout=600)
             print(f'{family}: simulator booted.', flush=True)
             simctl('status_bar', udid, 'override', '--time', '9:41', '--dataNetwork', 'wifi',
                    '--wifiMode', 'active', '--wifiBars', '3', '--batteryState', 'charged', '--batteryLevel', '100')
@@ -150,7 +151,11 @@ def main():
             (OUTPUT / 'capture-report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
             print(f'{family}: capture failed ({type(error).__name__}); continuing with the other device family.', flush=True)
         finally:
-            subprocess.run(['xcrun', 'simctl', 'shutdown', udid], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            try:
+                subprocess.run(['xcrun', 'simctl', 'shutdown', udid], stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL, timeout=45)
+            except subprocess.TimeoutExpired:
+                print(f'{family}: shutdown requested; disposable runner will finish cleanup.', flush=True)
     if errors:
         raise RuntimeError('Capture checks failed; inspect the preserved real screenshots and diagnostics.')
 
