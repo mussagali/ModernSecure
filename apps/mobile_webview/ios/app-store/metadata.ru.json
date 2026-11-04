@@ -1,6 +1,9 @@
 {
   "locale": "ru",
-  "name": "Современная защита",
+  "name": "ModernSecure — Защита",
+  "bundleId": "kz.modernsecure.modernSecure",
+  "appStoreConnectAppId": "6824547106",
+  "sku": "modernsecure-ios-001",
   "subtitle": "Ваши дела и связь с юристом",
   "keywords": "юрист,дела,документы,помощь,кабинет",
   "promotionalText": "Следите за своими делами, передавайте документы и общайтесь с юридической компанией в одном приложении.",

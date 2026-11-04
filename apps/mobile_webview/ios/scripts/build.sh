@@ -53,7 +53,7 @@ from pathlib import Path
 settings = {
     'method': 'app-store-connect', 'destination': 'export', 'signingStyle': 'manual',
     'teamID': os.environ['APPLE_TEAM_ID'], 'signingCertificate': 'Apple Distribution',
-    'provisioningProfiles': {'kz.modernsecure.app': os.environ['IOS_PROFILE_UUID']},
+    'provisioningProfiles': {'kz.modernsecure.modernSecure': os.environ['IOS_PROFILE_UUID']},
     'manageAppVersionAndBuildNumber': False, 'uploadSymbols': True,
 }
 Path('build').mkdir(exist_ok=True)

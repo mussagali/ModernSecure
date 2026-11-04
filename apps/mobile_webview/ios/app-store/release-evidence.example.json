@@ -3,6 +3,7 @@
   "appStoreConnectAppId": "",
   "verified": {
     "developerMembershipActive": false,
+    "developerAgreementCurrent": false,
     "providerIdentityAndBrandRightsConfirmed": false,
     "bundleIdRegisteredToTeam": false,
     "signedArchiveValidatedByApple": false,
@@ -13,6 +14,7 @@
     "realFileUploadDownloadAndShareTested": false,
     "accountDeletionImplementedForEveryAccountState": false,
     "accountDeletionEndToEndTested": false,
+    "productionBackendMigrationAndWebReleaseVerified": false,
     "retentionPolicyAndDeletionDeadlineApproved": false,
     "privacyPolicyPublishedAndOwnerApproved": false,
     "publicSupportPagePublishedWithRealContacts": false,

@@ -22,6 +22,8 @@ class ReleaseSafeguards(unittest.TestCase):
             "ModernSecure.xcodeproj/project.pbxproj",
             "ModernSecure.xcodeproj/xcshareddata/xcschemes/ModernSecure.xcscheme",
             "app-store/metadata.ru.json", "app-store/release-evidence.example.json",
+            "scripts/install-signing.sh", "scripts/build.sh",
+            "scripts/verify-bundle.py", "scripts/smoke-simulator.py",
         ):
             destination = self.root / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
@@ -42,6 +44,20 @@ class ReleaseSafeguards(unittest.TestCase):
         path.write_bytes(plistlib.dumps(info))
         self.assertTrue(preflight.check_sources(self.root))
 
+    def test_stale_bundle_id_blocks_build(self):
+        path = self.root / "project.yml"
+        path.write_text(path.read_text(encoding="utf-8").replace(
+            "kz.modernsecure.modernSecure", "kz.modernsecure.app"), encoding="utf-8")
+        self.assertIn("XcodeGen bundle ID differs from App Store Connect metadata",
+                      preflight.check_sources(self.root))
+
+    def test_stale_profile_validator_blocks_build(self):
+        path = self.root / "scripts/install-signing.sh"
+        path.write_text(path.read_text(encoding="utf-8").replace(
+            "kz.modernsecure.modernSecure", "kz.modernsecure.app"), encoding="utf-8")
+        self.assertIn("Bundle ID missing or stale in install-signing.sh",
+                      preflight.check_sources(self.root))
+
     def test_absent_firebase_resource_blocks_clean_checkout(self):
         path = self.root / "ModernSecure.xcodeproj/project.pbxproj"
         path.write_text(path.read_text() + "\n/* GoogleService-Info.plist in Resources */\n")
@@ -60,11 +76,16 @@ class ReleaseSafeguards(unittest.TestCase):
         metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
         evidence = json.loads((self.root / "app-store/release-evidence.example.json").read_text())
         evidence["teamId"] = "ABCDE12345"
-        evidence["appStoreConnectAppId"] = "1234567890"
+        evidence["appStoreConnectAppId"] = metadata["appStoreConnectAppId"]
         evidence["verified"] = {key: True for key in evidence["verified"]}
         path = self.root / "evidence.json"
         path.write_text(json.dumps(evidence))
         self.assertEqual(preflight.check_submission(self.root, path), [])
+        evidence["appStoreConnectAppId"] = "1234567890"
+        path.write_text(json.dumps(evidence))
+        self.assertIn("Release evidence refers to a different App Store Connect app",
+                      preflight.check_submission(self.root, path))
+        evidence["appStoreConnectAppId"] = metadata["appStoreConnectAppId"]
         del evidence["verified"]["accountDeletionEndToEndTested"]
         path.write_text(json.dumps(evidence))
         self.assertTrue(preflight.check_submission(self.root, path))

@@ -23,7 +23,7 @@ team = os.environ['APPLE_TEAM_ID']
 if not re.fullmatch(r'[A-Z0-9]{10}', team):
     raise SystemExit('Invalid Apple Team ID')
 e = p.get('Entitlements', {})
-if p.get('TeamIdentifier') != [team] or e.get('application-identifier') != team + '.kz.modernsecure.app':
+if p.get('TeamIdentifier') != [team] or e.get('application-identifier') != team + '.kz.modernsecure.modernSecure':
     raise SystemExit('Provisioning profile belongs to a different team or bundle ID')
 if p['ExpirationDate'] <= datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None):
     raise SystemExit('Provisioning profile expired')

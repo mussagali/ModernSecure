@@ -1,37 +1,59 @@
-# Статус загрузки — 2 ноября 2026
+# Статус загрузки — 4 ноября 2026
 
-Пакет материалов подготовлен, но подписанного IPA и готовности к App Review пока нет.
+Карточка приложения и предыдущая сборка в TestFlight существуют. Текущая Swift/WKWebView-версия из этой ветки ещё не собрана с подписью и не готова к App Review. Отправки на проверку и публикации в этом сеансе не было.
 
-## Подтверждено
+## Подтверждено через computer use
 
-- Текущий клиент: Swift/WKWebView, `apps/mobile_webview/ios`; версия `1.0.0`, Bundle ID `kz.modernsecure.app`.
-- Apple Developer: Team ID `HRXCR95QG3`, Individual, имя Mussagali Mussakhan, следующее продление 17 октября 2027 года. Проверено через Membership details. Регистрация Bundle ID и запись App Store Connect ещё не проверены.
-- На аккаунте Apple есть уведомление об обновлённом лицензионном соглашении: принять до 14 ноября 2026 года. От имени владельца оно не принималось.
-- Privacy: https://modernsecure.shpshka.work/privacy ; Terms: https://modernsecure.shpshka.work/terms . Тексты опубликованы для ТОО «Современная Защита», БИН 220140025162.
-- Отдельный клиент Apple активирован; email подтверждён. Реальный вход и доступ только к одному вымышленному делу проверены через обычную пользовательскую сессию и RLS. Добавлена вымышленная задача. Пароль — только в игнорируемом `reviewer-access.local.json` рядом с этим файлом.
-- Аккаунт не является администратором и не связан с реальными клиентскими делами. Права сотрудников/MFA не ослаблялись. В App Store Connect доступ пока не внесён.
-- Подготовлены GitHub Actions для сборки на macOS, подписи и опциональной загрузки TestFlight. Успешная неподписанная iOS-сборка и запуск iPhone/iPad описаны в VALIDATION.md.
+- Apple Developer: Team ID `HRXCR95QG3`, Individual, Mussagali Mussakhan; продление 17 октября 2027 года.
+- Владелец явно подтвердил в переписке право публикации бренда ТОО «Современная Защита» через свой Individual аккаунт и предоставил контакт для закрытых полей App Review. Имя, фамилия, телефон в международном формате и email сохранены в App Store Connect; личные контакты не добавлены в публичный Support URL или отслеживаемые файлы.
+- Apple требует принять обновлённое соглашение до 14 ноября 2026. Оно не принималось от имени владельца.
+- [ModernSecure — Защита, Apple ID 6824547106](https://appstoreconnect.apple.com/apps/6824547106/distribution): SKU `modernsecure-ios-001`, основной язык Russian, Bundle ID `kz.modernsecure.modernSecure`.
+- В карточке сохранены описание, promotional text, keywords, copyright и версия `1.0.0`; в App Information — подзаголовок и категория Business (подтверждено статусом Saved). В App Privacy сохранён URL `https://modernsecure.shpshka.work/privacy`. Support URL оставлен пустым до устранения 404.
+- App Privacy, возрастной рейтинг и Content Rights ещё требуют заполнения; контакт App Review сохранён по явному разрешению владельца; демо-доступ ещё не внесён. Статус карточки: `Prepare for Submission`.
+- В TestFlight есть **предыдущая** сборка `1.0.0 (1)`, загруженная 19 октября 2026 в 20:16 по отображению Apple. Binary State: `Validated`; размер 15,4 MB; минимум iOS 13.0; iPhone/iPad; executable `Runner.app/Runner`. В группе ModernSecure Internal показаны 1 установка и 4 сессии. Это не проверка текущего Swift-клиента с минимумом iOS 16.0.
+- На портале существуют Distribution certificate и активный профиль `ModernSecure App Store` (`6P9986A6SD`), срок до 16 октября 2027. App ID профиля совпадает; в capabilities указан только In-App Purchase, APNs нет. Их наличие не подтверждает наличие P12 с приватным ключом на этом компьютере. Новые сертификаты/ключи не создавались, существующие не отзывались.
 
-## Обязательные оставшиеся шаги
+## Подготовлено в репозитории
 
-1. Владелец проверяет и принимает обновлённое соглашение Apple; подтверждает право публикации бренда компании через индивидуальный аккаунт.
-2. Зарегистрировать или проверить `kz.modernsecure.app` в команде, создать запись приложения App Store Connect; сохранить numeric app ID в приватное evidence.
-3. Получить Distribution certificate с приватным ключом и App Store provisioning profile. Администратор GitHub настраивает environment `app-store`, `APPLE_TEAM_ID=HRXCR95QG3` и секреты из README. Для загрузки через API нужен App Store Connect API key. Секреты не отправлять в чат или Git.
-4. Дать доступ к production Supabase `bdkrihsiprkmukyjyspv` и к развёртыванию сайта. Открытый аккаунт Supabase содержит `dukqvwqxgwyadffmdeee` (Modernsecure, Singapore) и другой проект; переход в production возвращает список организаций. Не применять миграцию в другую базу.
-5. В production применить только новую миграцию `20261102009700_account_deletion_requests.sql` после сверки истории; затем развернуть release-ветку. `/support`, `/delete-account`, `/deletion-policy` пока возвращают 404. Fresh-install SQL не предназначен для существующей базы.
-6. Проверить рабочие контакты поддержки, фактическое размещение персональных данных и выполнение удаления/законного хранения. Почта `mail@sovz.kz` из публичного справочника не проверена; MX не обнаружены. Политика не заменяет проверку инфраструктуры.
-7. Получить подписанный IPA через `iOS signed archive`, пройти Apple validation и TestFlight. Проверить на iPhone/iPad вход, согласия, сессию, файлы, переписку и запрос удаления; ручное исполнение удаления проверить на отдельном одноразовом QA-аккаунте, сохранив рабочий доступ для Apple.
-8. Снять реальные рабочие экраны iOS с вымышленными данными. Текущие снимки показывают только вход и не составляют полный комплект магазина.
-9. В App Store Connect внести metadata.ru.json, проверенные App Privacy, возрастной рейтинг, export compliance, рабочий контакт App Review, заметки и приватный логин/пароль. Владелец проверяет заявления перед отправкой.
+- Текущий клиент: `apps/mobile_webview/ios`, Swift/WKWebView, версия `1.0.0`. Старый Flutter `apps/client_mobile` не является текущим клиентом.
+- Bundle ID исправлен с `kz.modernsecure.app` на `kz.modernsecure.modernSecure` в XcodeGen, Xcode-проекте, проверке профиля, экспорте IPA и проверках бинарника/симулятора. Android ID не менялся.
+- Source preflight и **8 тестов** пройдены, в том числе проверки рассогласования Bundle ID. Успех этих тестов не означает успешную Xcode-сборку или App Review.
+- Готовы GitHub Actions для macOS, подписи и опциональной загрузки TestFlight. Исходники подготовлены в ветке `release/app-store-preparation`; облачная проверка выполняется workflow `iOS build`, подписанная сборка — отдельным `iOS signed archive`. После изменения Bundle ID новая Xcode-сборка ещё не запускалась; исторические результаты см. в [VALIDATION.md](VALIDATION.md).
+- Выделенный ревьюер повторно проверен 4 ноября через обычную пользовательскую сессию: вход успешен, доступ ровно к одному вымышленному делу. Доступ не административный; реальные клиентские данные не подключены; MFA не ослаблялась.
+- Пароль хранится только в игнорируемом `reviewer-access.local.json`; его нельзя включать в архив материалов, Git, логи или этот документ.
 
-## Приватный тестовый доступ
+## Проверка production 4 ноября
 
-`reviewer-access.local.json` нельзя публиковать на сайте, включать в архив материалов или коммитить. Логин/пароль вводятся только в App Store Connect → App Review Information. При первом входе ревьюер читает текущие юридические тексты и проходит обычный экран согласий. На iOS этот сценарий пока не проверен.
+| Проверка | Результат |
+|---|---|
+| `/privacy`, `/terms` | HTTP 200; документы компании опубликованы ранее |
+| `/support`, `/delete-account`, `/deletion-policy` | HTTP 404 |
+| Вход выделенного ревьюера и изоляция вымышленного дела | Пройдены через обычную сессию/RLS |
+| `own_account_deletion_request` | `PGRST202`: RPC отсутствует в production |
+| Прямое подключение к production PostgreSQL | `ECONNRESET`; миграции не применялись |
 
-Сценарий подготовки аккаунта: `node scripts/prepare-apple-review.mjs --env=handoff/app.env --accounts=handoff/accounts.json --expect-project=bdkrihsiprkmukyjyspv`. По умолчанию только план; `--apply` создаёт/проверяет собственные демо-объекты, не сбрасывает существующие пароли и не удаляет данные.
+Production Supabase: `bdkrihsiprkmukyjyspv`. Приватный отчёт без паролей: `artifacts/ios-app-store/reviewer-check-2026-11-04.json`. Не применять миграции в другой проект с похожим названием.
+
+## Оставшийся список в порядке выполнения
+
+1. Владелец проверяет и принимает обновлённое соглашение Apple. Право публикации бренда через индивидуальный аккаунт уже подтверждено; контакт App Review предоставлен отдельно и не публикуется в материалах магазина.
+2. Восстановить доступ к production-базе и развёртыванию сайта. Сверить историю миграций; применить только недостающие миграции, включая `20261102009700_account_deletion_requests.sql`, затем развернуть release-ветку. Fresh-install SQL для существующей базы не использовать.
+3. Проверить поддержку и реальные бизнес-контакты, хранение персональных данных, срок и исполнителя удаления. Ручное удаление допустимо по правилам Apple при понятном сроке и подтверждении завершения; одна запись запроса не доказывает фактического удаления. Проверить полный цикл на одноразовом QA-аккаунте, сохранив рабочий аккаунт Apple.
+4. Для новой сборки использовать существующую карточку `6824547106` и точный Bundle ID `kz.modernsecure.modernSecure`. Нужны P12 с приватным ключом/паролем и App Store provisioning profile. Текущий проект использует production APNs entitlement: профиль прежнего Runner без APNs не подходит. Если подпись хранится в прежнем облачном сервисе сборки, можно использовать его после проверки проекта.
+5. Настроить environment GitHub `app-store`, `APPLE_TEAM_ID=HRXCR95QG3` и секреты из [README](README.md). Для API-загрузки нужен командный App Store Connect API key. Секреты не отправлять в чат/Git. Выполнить `iOS signed archive` с новым номером сборки **выше 1**; пройти Apple validation и TestFlight.
+6. Проверить итоговую сборку на iPhone/iPad: регистрация, подтверждение email, согласия, активация, восстановление пароля, сохранение сессии, права ролей/MFA, документы, Quick Look/шаринг, переписка, отсутствие сети, удаление аккаунта. Push не рекламировать до настройки и физического теста Firebase/APNs.
+7. Снять рабочие экраны итогового приложения с вымышленными данными. По [актуальной спецификации Apple](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/) обязательны iPhone с Dynamic Island (medium display) и iPad 13-inch для универсального приложения. Например: iPhone 17 Pro — 1206 × 2622; iPad Pro 13-inch — 2064 × 2752; без прозрачности. Прежние снимки показывают только вход. Не подменять их Android/браузерными изображениями.
+8. Заполнить App Privacy по фактическим данным/SDK и Privacy Report нового archive; не выбирать «Data Not Collected». Завершить возрастную анкету с учётом переписки, файлов и вопросов social media, Content Rights и export compliance. Категория Business уже сохранена. Подтвердить бизнес-модель услуг, цену и территории; для ЕС нужен trader status по DSA. Подготовить подтверждение полномочий компании, если Apple запросит его.
+9. После развёртывания сохранить рабочий Support URL, добавить приватный демо-доступ, заметки ревьюеру, протестированные модели/ОС, внешние сервисы. Контакт App Review уже сохранён. Выбрать проверенную новую сборку. Режим выпуска согласовать с владельцем; metadata предлагает ручной выпуск.
+10. Отправить на App Review после закрытия блокеров. После одобрения выполнить выпуск. Соответствие guideline 4.2 оценивает Apple; наличие WKWebView и иконки не гарантирует одобрения.
 
 ## Источники требований
 
-- https://developer.apple.com/help/app-review/before-submitting-for-review/complete-review
-- https://developer.apple.com/support/offering-account-deletion-in-your-app/
-- https://developer.apple.com/help/app-store-connect/get-started/app-store-connect-workflow/
+Проверены 4 ноября 2026. С 28 апреля 2026 минимальны Xcode 26 / iOS 26 SDK; текущий workflow проверяет SDK.
+
+- [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
+- [Минимальные SDK](https://developer.apple.com/news/upcoming-requirements/?id=04282026a)
+- [Информация для полного ревью](https://developer.apple.com/help/app-review/before-submitting-for-review/complete-review)
+- [Удаление аккаунта](https://developer.apple.com/help/app-review/guideline-reference/5-1-1-account-deletion)
+- [App Privacy](https://developer.apple.com/app-store/app-privacy-details/)
+- [Скриншоты](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/)

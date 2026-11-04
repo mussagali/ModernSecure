@@ -1,6 +1,6 @@
 # Проверка подготовки iOS — 2 ноября 2026
 
-Это исторический отчёт о нативной сборке. Последующие изменения публикации, Apple membership и демо-доступа: [RELEASE-STATUS.ru.md](RELEASE-STATUS.ru.md).
+Это исторический отчёт о нативной сборке со старым Bundle ID `kz.modernsecure.app`. 4 ноября ID текущего клиента исправлен на `kz.modernsecure.modernSecure`; новая Xcode-сборка после этого ещё не выполнялась. Последующие изменения публикации, Apple membership и демо-доступа: [RELEASE-STATUS.ru.md](RELEASE-STATUS.ru.md).
 
 Проверенный исходный коммит: `84b426ca1f00acc2c6b090d000466dff0e8ab4b8`, ветка `release/app-store-preparation` в `shpshka/ModernSecure`.
 

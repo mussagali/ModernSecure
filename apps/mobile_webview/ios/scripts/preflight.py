@@ -55,6 +55,17 @@ def check_sources(root=ROOT):
     check((width, height) == (1024, 1024), "App icon must be 1024 x 1024")
     check(color in (0, 2), "App Store icon must have no alpha/transparency channel")
     metadata = json.loads((root / "app-store/metadata.ru.json").read_text(encoding="utf-8"))
+    bundle_id = metadata.get("bundleId", "")
+    check(bool(re.fullmatch(r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+", bundle_id)),
+          "App Store Connect bundle ID missing from metadata")
+    check(f"PRODUCT_BUNDLE_IDENTIFIER: {bundle_id}\n" in spec,
+          "XcodeGen bundle ID differs from App Store Connect metadata")
+    project_ids = re.findall(r"PRODUCT_BUNDLE_IDENTIFIER = ([^;]+);", project)
+    check(bool(project_ids) and all(value == bundle_id for value in project_ids),
+          "Generated Xcode project bundle ID differs from App Store Connect metadata")
+    for script in ("install-signing.sh", "build.sh", "verify-bundle.py", "smoke-simulator.py"):
+        check(bundle_id in (root / "scripts" / script).read_text(encoding="utf-8"),
+              f"Bundle ID missing or stale in {script}")
     for name, limit in (("name", 30), ("subtitle", 30), ("keywords", 100), ("description", 4000), ("promotionalText", 170)):
         check(isinstance(metadata.get(name), str) and 0 < len(metadata[name]) <= limit, f"Invalid App Store field: {name}")
     return errors
@@ -79,6 +90,8 @@ def check_submission(root=ROOT, evidence_path=None):
         errors.append("Valid Apple Developer Team ID missing")
     if not evidence.get("appStoreConnectAppId", "").isdigit():
         errors.append("App Store Connect numeric app ID missing")
+    elif evidence["appStoreConnectAppId"] != metadata.get("appStoreConnectAppId"):
+        errors.append("Release evidence refers to a different App Store Connect app")
     for key in template["verified"]:
         if evidence.get("verified", {}).get(key) is not True:
             errors.append(f"Release blocker: {key}")

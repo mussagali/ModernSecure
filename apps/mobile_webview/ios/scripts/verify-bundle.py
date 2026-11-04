@@ -8,7 +8,7 @@ app = Path(sys.argv[1])
 version, build = sys.argv[2:4]
 info = plistlib.loads((app / "Info.plist").read_bytes())
 expected = {
-    "CFBundleIdentifier": "kz.modernsecure.app",
+    "CFBundleIdentifier": "kz.modernsecure.modernSecure",
     "CFBundleShortVersionString": version,
     "CFBundleVersion": build,
     "SiteURL": "https://modernsecure.shpshka.work",

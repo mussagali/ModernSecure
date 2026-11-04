@@ -60,7 +60,7 @@ targets:
         aps-environment: $(APS_ENVIRONMENT)
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: kz.modernsecure.app
+        PRODUCT_BUNDLE_IDENTIFIER: kz.modernsecure.modernSecure
         APS_ENVIRONMENT: development
       configs:
         Release:

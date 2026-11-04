@@ -43,8 +43,10 @@ claim it is operational unless Firebase/APNs and actual device delivery have
 been configured and tested for the submitted build.
 
 MUST COMPLETE BEFORE REVIEW:
-- Confirm authority to publish the company's brand through an Individual
-  developer membership. Operator: TOO "Sovremennaya Zashchita", BIN 220140025162.
+- Authority to publish the company's brand through the Individual membership
+  was confirmed by the account holder on November 4, 2026. Operator:
+  TOO "Sovremennaya Zashchita", BIN 220140025162. Provide supporting
+  authorization documents if requested by Apple.
 - Publish /support and verify working company contacts. Privacy and terms
   are already published at /privacy and /terms on the production origin.
 - Actual in-app account deletion location, completion time, retained-data
@@ -56,3 +58,18 @@ MUST COMPLETE BEFORE REVIEW:
 
 Do not submit this draft with unresolved items or describe unfinished
 features as implemented.
+
+November 4, 2026 preparation update (remove this internal section before review):
+- ASC app 6824547106 already exists with bundle ID kz.modernsecure.modernSecure.
+  Current Swift sources and signing scripts have been aligned to that ID.
+- Existing TestFlight 1.0.0 (1), uploaded October 19, is Runner.app/Runner,
+  minimum iOS 13. It does not verify the current Swift container. Use a newly
+  tested build number greater than 1 for this release.
+- Reviewer sign-in and isolation to the synthetic case were rechecked today.
+  No reviewer credentials have been entered in ASC during this preparation.
+- Production /support, /delete-account and /deletion-policy still return 404.
+  Production deletion RPC is missing (PGRST202); direct PostgreSQL access
+  failed (ECONNRESET). No migration or web deployment was performed.
+- Include the actual tested device/OS combinations, external services
+  (Next.js web host, Supabase auth/database/storage, Firebase only if enabled)
+  and any regional differences in the final review notes.

@@ -103,7 +103,7 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`. После успешной п
 Firebase не нужен для открытия сайта или сборки APK. Текущая реализация доставки использует FCM HTTP v1; на iOS FCM передаёт уведомления через APNs.
 
 1. Создайте Firebase-проект. Добавьте Android-приложения с нужными package ID. Скачайте `google-services.json` в `android/app/`. Для debug нужен клиент с суффиксом `.debug`, для release — без него. Файл исключён из git.
-2. Добавьте iOS-приложение `kz.modernsecure.app`, положите `GoogleService-Info.plist` в `ios/`, затем перегенерируйте проект. В Firebase настройте APNs-ключ из Apple Developer.
+2. Добавьте iOS-приложение `kz.modernsecure.modernSecure`, положите `GoogleService-Info.plist` в `ios/`, затем перегенерируйте проект. В Firebase настройте APNs-ключ из Apple Developer.
 3. В окружение сервера добавьте `FIREBASE_SERVICE_ACCOUNT_JSON` с ключом сервисного аккаунта Firebase Messaging и случайный `CRON_SECRET`. Не помещайте сервисный ключ в мобильное приложение и не используйте префикс `NEXT_PUBLIC_`.
 4. Подключите периодический HTTPS GET `/api/internal/push` с заголовком `Authorization: Bearer <CRON_SECRET>`. За один вызов обрабатывается до 20 доставок; частоту и лимиты выбирайте под хостинг. Готового расписания Vercel Cron в репозитории нет, пока не выбран тариф/планировщик.
 5. Пересоберите приложения. Войдите активированным аккаунтом, включите уведомления и проверьте доставку на настоящем устройстве, выход из аккаунта, смену аккаунта и отзыв доступа.

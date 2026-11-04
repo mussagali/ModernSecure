@@ -35,7 +35,7 @@ for family, prefix in (("iphone", "iPhone"), ("ipad", "iPad")):
             simctl("boot", udid)
         simctl("bootstatus", udid, "-b")
         simctl("install", udid, str(app))
-        launch = simctl("launch", udid, "kz.modernsecure.app", capture=True).stdout.strip()
+        launch = simctl("launch", udid, "kz.modernsecure.modernSecure", capture=True).stdout.strip()
         print(launch, flush=True)
         # Bounded settle for the remote login page; screenshots still need visual review.
         time.sleep(12)
