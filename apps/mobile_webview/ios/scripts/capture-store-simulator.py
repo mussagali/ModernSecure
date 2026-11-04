@@ -26,16 +26,24 @@ def simctl(*arguments, timeout=180):
 
 
 def xcode(arguments, name, environment=None):
+    failure = None
     with (PRIVATE / (name + '.log')).open('w', encoding='utf-8') as log:
         result = subprocess.Popen(['xcodebuild', *arguments], cwd=ROOT, env=environment,
                                   stdout=log, stderr=subprocess.STDOUT)
         deadline = time.monotonic() + (900 if name == 'build' else 420)
         next_diagnostic = time.monotonic() + 30
+        last_phase = None
         try:
             while result.poll() is None:
                 if time.monotonic() > deadline:
                     raise RuntimeError(name + ' exceeded bounded capture time')
                 if name != 'build' and time.monotonic() >= next_diagnostic:
+                    phase_file = Path(environment.get('TEST_RUNNER_SCREENSHOT_OUTPUT_DIRECTORY', str(PRIVATE))) / 'diagnostic-phase.txt'
+                    if phase_file.is_file():
+                        phase = phase_file.read_text(encoding='utf-8')
+                        if phase != last_phase and re.fullmatch(r'waiting-for-login|entering-dedicated-(?:email|password)(?:-\d+-of-\d+)?|waiting-for-synthetic-case-after-login|opening-(?:case|tasks|documents)', phase):
+                            print(name + ': UI phase=' + phase, flush=True)
+                            last_phase = phase
                     # A failed diagnostic must not interrupt XCTest or leave
                     # xcodebuild running while the next simulator boots.
                     udid = environment['SCREENSHOT_SIMULATOR_UDID']
@@ -52,6 +60,8 @@ def xcode(arguments, name, environment=None):
                         print(name + ': diagnostic frame timed out; XCTest continues.', flush=True)
                     next_diagnostic = time.monotonic() + 45
                 time.sleep(2)
+        except Exception as error:
+            failure = error
         finally:
             if result.poll() is None:
                 result.terminate()
@@ -60,15 +70,19 @@ def xcode(arguments, name, environment=None):
                 except subprocess.TimeoutExpired:
                     result.kill()
                     result.wait(timeout=20)
-    if result.returncode:
+    if result.returncode or failure:
         # Do not publish raw XCTest activities, typed credentials, or snapshots.
         text = (PRIVATE / (name + '.log')).read_text(encoding='utf-8', errors='replace')
         safe = [line for line in text.splitlines() if re.search(r'error:|CaptureError|SCREENSHOT_CAPTURED|SCREENSHOT_INPUT_CHECK|\*\* TEST|\*\* BUILD', line)]
-        secrets = json.loads((ROOT / 'build/screenshot-access.local.json').read_text())
-        for line in safe[-15:]:
-            for secret in secrets.values():
-                line = line.replace(secret, '[omitted]')
-            print(line[:2500], flush=True)
+        secret_file = ROOT / 'build/screenshot-access.local.json'
+        if secret_file.is_file():
+            secrets = json.loads(secret_file.read_text())
+            for line in safe[-15:]:
+                for secret in secrets.values():
+                    line = line.replace(secret, '[omitted]')
+                print(line[:2500], flush=True)
+        if failure:
+            raise failure
         raise RuntimeError(f'{name} failed; raw log retained only in private runner directory')
 
 
@@ -143,6 +157,15 @@ def main():
             environment['TEST_RUNNER_SCREENSHOT_EMAIL'] = credentials['email']
             environment['TEST_RUNNER_SCREENSHOT_PASSWORD'] = credentials['password']
             environment['SCREENSHOT_SIMULATOR_UDID'] = udid
+            images = PRIVATE / (family + '-captures')
+            images.mkdir(exist_ok=True)
+            environment['TEST_RUNNER_SCREENSHOT_OUTPUT_DIRECTORY'] = str(images)
+            # Warm the same production app before XCTest starts its own runner.
+            app_bundle = ROOT / 'build/simulator/Build/Products/Release-iphonesimulator/ModernSecure.app'
+            simctl('install', udid, str(app_bundle))
+            simctl('launch', '--terminate-running-process', udid, 'kz.modernsecure.modernSecure', timeout=60)
+            print(f'{family}: production app installed and launched.', flush=True)
+            time.sleep(12)
             print(f'{family}: starting bounded UI capture test.', flush=True)
             test_error = None
             try:
@@ -151,8 +174,6 @@ def main():
                 test_error = type(error).__name__
                 errors.append(family + ': UI capture failed (' + test_error + ')')
                 print(f'{family}: preserving completed captures and diagnostics after UI test failure.', flush=True)
-            container = Path(simctl('get_app_container', udid, RUNNER_ID, 'data'))
-            images = container / 'Documents/AppStoreScreenshots'
             target = OUTPUT / family
             target.mkdir(exist_ok=True)
             files = []

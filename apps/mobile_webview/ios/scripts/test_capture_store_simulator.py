@@ -1,4 +1,6 @@
 import importlib.util
+import io
+import json
 from itertools import chain, repeat
 import subprocess
 import tempfile
@@ -14,6 +16,27 @@ spec.loader.exec_module(capture)
 
 
 class CaptureProcessTests(unittest.TestCase):
+    def test_timeout_preserves_failure_and_masks_private_log_values(self):
+        process = Mock(returncode=None)
+        process.poll.side_effect = [None, None]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'build').mkdir()
+            (root / 'build/screenshot-access.local.json').write_text(json.dumps({'password': 'canary-secret-value'}))
+            def start(*args, **kwargs):
+                kwargs['stdout'].write('error: failure involving canary-secret-value\n')
+                return process
+            output = io.StringIO()
+            with patch.object(capture, 'ROOT', root), patch.object(capture, 'PRIVATE', root), \
+                 patch.object(capture.subprocess, 'Popen', side_effect=start), \
+                 patch.object(capture.time, 'monotonic', side_effect=[0, 0, 421]), \
+                 patch('sys.stdout', output):
+                with self.assertRaisesRegex(RuntimeError, 'bounded capture time'):
+                    capture.xcode([], 'iphone', {'SCREENSHOT_SIMULATOR_UDID': 'test-device'})
+            self.assertNotIn('canary-secret-value', output.getvalue())
+            self.assertIn('[omitted]', output.getvalue())
+        process.terminate.assert_called_once()
+
     def test_runner_launch_failure_retries_on_the_same_booted_device(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

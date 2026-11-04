@@ -2,24 +2,35 @@ import XCTest
 
 final class StoreScreenshots: XCTestCase {
     private let app = XCUIApplication(bundleIdentifier: "kz.modernsecure.modernSecure")
-    private var phase = "launch"
+    private var phase = "launch" { didSet { savePhase() } }
+
+    private func outputDirectory() throws -> URL {
+        let environment = ProcessInfo.processInfo.environment
+        guard let path = environment["SCREENSHOT_OUTPUT_DIRECTORY"],
+              let home = environment["SIMULATOR_HOST_HOME"], path.hasPrefix(home + "/")
+        else { throw CaptureError.missingCaptureDirectory }
+        let directory = URL(fileURLWithPath: path, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
+    }
+
+    private func savePhase() {
+        guard let directory = try? outputDirectory() else { return }
+        try? Data(phase.utf8).write(to: directory.appendingPathComponent("diagnostic-phase.txt"), options: .atomic)
+    }
 
     override func tearDownWithError() throws {
         // Diagnostics are kept separate and never selected for App Store upload.
         if testRun?.hasSucceeded == false {
+            savePhase()
             try? capture("diagnostic-failure")
-            let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                .appendingPathComponent("AppStoreScreenshots", isDirectory: true)
-            try? Data(phase.utf8).write(to: directory.appendingPathComponent("diagnostic-phase.txt"))
         }
         app.terminate()
     }
 
     private func capture(_ name: String) throws {
         // Actual rendered app pixels. No fixtures, substituted HTML, or overlays.
-        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("AppStoreScreenshots", isDirectory: true)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let directory = try outputDirectory()
         Thread.sleep(forTimeInterval: 1)
         try XCUIScreen.main.screenshot().pngRepresentation.write(to: directory.appendingPathComponent(name + ".png"))
         print("SCREENSHOT_CAPTURED: " + name)
@@ -57,8 +68,9 @@ final class StoreScreenshots: XCTestCase {
         phase = "entering-dedicated-password"
         passwordField.tap()
         // Give WebKit time to process each secure-field keystroke on a slow VM.
-        for character in password {
+        for (index, character) in password.enumerated() {
             passwordField.typeText(String(character))
+            if index % 5 == 4 { phase = "entering-dedicated-password-\(index + 1)-of-\(password.count)" }
         }
         let enteredLength = (passwordField.value as? String)?.count ?? -1
         print("SCREENSHOT_INPUT_CHECK: emailMatches=true; passwordLength=" + String(enteredLength))
@@ -92,7 +104,7 @@ final class StoreScreenshots: XCTestCase {
     }
 
     private enum CaptureError: Error {
-        case missingDedicatedAccess, loginUnavailable, demoCaseUnavailable, inputValueMismatch
+        case missingDedicatedAccess, loginUnavailable, demoCaseUnavailable, inputValueMismatch, missingCaptureDirectory
         case caseUnavailable, tasksUnavailable, documentsUnavailable, missingNavigation
     }
 }
