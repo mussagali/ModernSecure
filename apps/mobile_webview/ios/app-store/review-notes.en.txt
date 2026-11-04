@@ -73,3 +73,9 @@ November 4, 2026 preparation update (remove this internal section before review)
 - Include the actual tested device/OS combinations, external services
   (Next.js web host, Supabase auth/database/storage, Firebase only if enabled)
   and any regional differences in the final review notes.
+
+Current Swift source validation on November 4: commit 5f720788d270460d9b65c0ca8c8fee88be665b48
+built unsigned in GitHub Actions and launched on iPhone 17 Pro / iPad Pro
+13-inch (M5), iOS Simulator 26.2. Both screenshots show the loaded sign-in
+screen. This is startup validation only; do not present it as physical-device
+or authenticated end-to-end testing of the submitted binary.

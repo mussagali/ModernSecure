@@ -1,4 +1,18 @@
-# Проверка подготовки iOS — 2 ноября 2026
+# Проверка подготовки iOS — 4 ноября 2026
+
+## Текущая облачная сборка
+
+- Коммит `5f720788d270460d9b65c0ca8c8fee88be665b48`, ветка `release/app-store-preparation`.
+- [GitHub Actions push run 41824495515](https://github.com/shpshka/ModernSecure/actions/runs/41824495515) и [PR run 41824504706](https://github.com/shpshka/ModernSecure/actions/runs/41824504706) завершились успешно.
+- Release для iOS Simulator без подписи собран на macOS с Xcode 26.3 (17C529). Проверки итогового Bundle ID `kz.modernsecure.modernSecure`, production HTTPS origin, версии, privacy manifest и asset catalog пройдены.
+- Приложение установлено и запущено на iPhone 17 Pro и iPad Pro 13-inch (M5), runtime iOS 26.2. Реальные PNG просмотрены: на обоих устройствах загрузился экран входа; ошибки конфигурации/сети не показаны.
+- Артефакты: `ModernSecure-ios-simulator`, `ModernSecure-ios-startup-screenshots`. Приватные локальные снимки: `artifacts/ios-app-store/cloud-41824495515/`. Эти снимки показывают только старт приложения.
+- Это не подписанный IPA, TestFlight или проверка физического устройства. Вход и полные сценарии в итоговой iOS-сборке ещё требуют теста; отсутствие production удаления и поддержки сохраняется.
+- Подпись заблокирована отсутствием настроенного environment/секретов и прав администратора GitHub; подробности в [RELEASE-STATUS.ru.md](RELEASE-STATUS.ru.md).
+
+---
+
+# Историческая проверка — 2 ноября 2026
 
 Это исторический отчёт о нативной сборке со старым Bundle ID `kz.modernsecure.app`. 4 ноября ID текущего клиента исправлен на `kz.modernsecure.modernSecure`; новая Xcode-сборка после этого ещё не выполнялась. Последующие изменения публикации, Apple membership и демо-доступа: [RELEASE-STATUS.ru.md](RELEASE-STATUS.ru.md).
 

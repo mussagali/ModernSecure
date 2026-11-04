@@ -1,6 +1,6 @@
 # Статус загрузки — 4 ноября 2026
 
-Карточка приложения и предыдущая сборка в TestFlight существуют. Текущая Swift/WKWebView-версия из этой ветки ещё не собрана с подписью и не готова к App Review. Отправки на проверку и публикации в этом сеансе не было.
+Карточка приложения и предыдущая сборка в TestFlight существуют. Текущая Swift/WKWebView-версия успешно собрана без подписи в GitHub Actions и запущена на iPhone/iPad Simulator; подписанный IPA и готовность к App Review ещё не подтверждены. Отправки на проверку и публикации в этом сеансе не было.
 
 ## Подтверждено через computer use
 
@@ -18,7 +18,7 @@
 - Текущий клиент: `apps/mobile_webview/ios`, Swift/WKWebView, версия `1.0.0`. Старый Flutter `apps/client_mobile` не является текущим клиентом.
 - Bundle ID исправлен с `kz.modernsecure.app` на `kz.modernsecure.modernSecure` в XcodeGen, Xcode-проекте, проверке профиля, экспорте IPA и проверках бинарника/симулятора. Android ID не менялся.
 - Source preflight и **8 тестов** пройдены, в том числе проверки рассогласования Bundle ID. Успех этих тестов не означает успешную Xcode-сборку или App Review.
-- Готовы GitHub Actions для macOS, подписи и опциональной загрузки TestFlight. Исходники подготовлены в ветке `release/app-store-preparation`; облачная проверка выполняется workflow `iOS build`, подписанная сборка — отдельным `iOS signed archive`. После изменения Bundle ID новая Xcode-сборка ещё не запускалась; исторические результаты см. в [VALIDATION.md](VALIDATION.md).
+- Готовы GitHub Actions для macOS, подписи и опциональной загрузки TestFlight. Исходники подготовлены в ветке `release/app-store-preparation`; облачная проверка выполняется workflow `iOS build`, подписанная сборка — отдельным `iOS signed archive`. После изменения Bundle ID сборка коммита `5f720788d270460d9b65c0ca8c8fee88be665b48` прошла: [push run](https://github.com/shpshka/ModernSecure/actions/runs/41824495515), [PR run](https://github.com/shpshka/ModernSecure/actions/runs/41824504706). Проверены Bundle ID итогового .app и старт на iPhone 17 Pro / iPad Pro 13-inch (M5), iOS 26.2. Реальные стартовые снимки просмотрены; это экран входа, не проверка сценариев после авторизации. Подробности см. в [VALIDATION.md](VALIDATION.md).
 - Выделенный ревьюер повторно проверен 4 ноября через обычную пользовательскую сессию: вход успешен, доступ ровно к одному вымышленному делу. Доступ не административный; реальные клиентские данные не подключены; MFA не ослаблялась.
 - Пароль хранится только в игнорируемом `reviewer-access.local.json`; его нельзя включать в архив материалов, Git, логи или этот документ.
 
@@ -33,6 +33,15 @@
 | Прямое подключение к production PostgreSQL | `ECONNRESET`; миграции не применялись |
 
 Production Supabase: `bdkrihsiprkmukyjyspv`. Приватный отчёт без паролей: `artifacts/ios-app-store/reviewer-check-2026-11-04.json`. Не применять миграции в другой проект с похожим названием.
+
+## Облачная подпись и доступ GitHub
+
+- Репозиторий доступен для чтения и push; текущий GitHub credential имеет `push=true`, `admin=false`, `maintain=false`.
+- В GitHub отсутствует environment `app-store`; repository Actions secrets пусты. Создание environment через API вернуло 404; подтверждённые права не позволяют завершить настройку администратором. Ничего не создано, права доступа не изменялись.
+- Для владельца репозитория: создать `app-store`, задать `APPLE_TEAM_ID=HRXCR95QG3`, добавить секреты из README. Ограничить environment ветками `main` и `release/app-store-preparation`.
+- На default branch зарегистрирован только `iOS build`. `iOS signed archive` пока находится в draft PR #1; перед ручным запуском workflow должен появиться на default branch. Полную release-ветку нельзя разворачивать до согласования миграций production.
+- В App Store Connect существует командный API key с ролью App Manager и последним использованием 19 октября. Название не подтверждает конкретный сервис сборки. Приватный `.p8` не получен; существующий ключ не отзывался и не изменялся.
+- Собственный Mac не требуется: проверенная сборка выполнена на macOS GitHub Actions. Для подписанного релиза нужны права администратора GitHub и приватные материалы подписи, а не другой ноутбук.
 
 ## Оставшийся список в порядке выполнения
 
