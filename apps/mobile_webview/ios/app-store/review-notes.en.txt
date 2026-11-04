@@ -8,7 +8,10 @@ is checked on the server for each account and role.
 Enter the dedicated reviewer username/password in App Review Information.
 The dedicated client was created and activated on November 2, 2026. Its
 confirmed sign-in and access to exactly one synthetic case were verified
-against the production backend. Credentials are stored privately in
+against the prior bdkrihsiprkmukyjyspv backend. The current local web
+configuration points to dukqvwqxgwyadffmdeee; its connection to the live
+Vercel deployment and the reviewer account must be checked again before
+submission. Credentials are stored privately in
 reviewer-access.local.json and have NOT been entered in App Store Connect.
 This backend check does not replace testing the submitted iOS build.
 Do not commit credentials here. Reviewer accounts must already have confirmed
@@ -68,8 +71,12 @@ November 4, 2026 preparation update (remove this internal section before review)
 - Reviewer sign-in and isolation to the synthetic case were rechecked today.
   No reviewer credentials have been entered in ASC during this preparation.
 - Production /support, /delete-account and /deletion-policy still return 404.
-  Production deletion RPC is missing (PGRST202); direct PostgreSQL access
-  failed (ECONNRESET). No migration or web deployment was performed.
+  Deletion RPC is missing in both checked Supabase projects. Direct PostgreSQL
+  access to the prior project failed (ECONNRESET). The newly accessible project
+  has 37 public tables, no migration history and lacks a dependency of the
+  current deletion migration. No migration or web deployment was performed.
+- The owner has no Vercel access. Resolve hosting ownership and the intended
+  backend before treating the demo credentials as valid for the live app.
 - Include the actual tested device/OS combinations, external services
   (Next.js web host, Supabase auth/database/storage, Firebase only if enabled)
   and any regional differences in the final review notes.
@@ -79,3 +86,12 @@ built unsigned in GitHub Actions and launched on iPhone 17 Pro / iPad Pro
 13-inch (M5), iOS Simulator 26.2. Both screenshots show the loaded sign-in
 screen. This is startup validation only; do not present it as physical-device
 or authenticated end-to-end testing of the submitted binary.
+
+Signed build update on November 4: commit d85fba84f339a45bab5b284012f6588350607cfd,
+version 1.0.0 (2), completed signing, archive and export in run 41840680104.
+Apple confirmed VERIFY SUCCEEDED and UPLOAD SUCCEEDED with no errors at
+13:47 UTC. TestFlight processing is tracked separately. The actual exported
+IPA has the correct bundle ID, iOS 16 minimum, iOS 26.2 SDK, all four iPad
+orientations and 15 bundled privacy manifests. This still does not establish
+physical-device or authenticated end-to-end testing. Do not paste this internal
+status section into the final review notes.

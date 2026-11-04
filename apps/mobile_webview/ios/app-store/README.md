@@ -4,19 +4,19 @@
 
 Актуально на 4 ноября 2026 года. Состояние портала Apple и оставшиеся блокеры см. в RELEASE-STATUS.ru.md; исторические формулировки ниже не заменяют этот статус. Текущий клиент: `apps/mobile_webview/ios`, Swift / WKWebView. `apps/client_mobile` — прежний Flutter-проект, его не отправляем. Версия первого релиза: `1.0.0`; Bundle ID: `kz.modernsecure.modernSecure`; сайт: `https://modernsecure.shpshka.work`.
 
-Unsigned Release собран в Xcode 26.3; приложение запущено на симуляторах iPhone и iPad, экран входа проверен по реальным снимкам. [Результаты и CI](VALIDATION.md). Это **не готовый к отправке релиз**: подпись Apple, реальное устройство, удаление аккаунта и материалы владельца ещё требуют завершения. Успех source preflight или симулятора не означает успех TestFlight или App Review.
+Unsigned Release собран в Xcode 26.3; приложение запущено на симуляторах iPhone и iPad, экран входа проверен по реальным снимкам. [Результаты и CI](VALIDATION.md). Это **не готовый к отправке релиз**: обработка новой подписанной сборки, реальное устройство, удаление аккаунта и материалы владельца ещё требуют завершения. Успех source preflight или симулятора не означает успех TestFlight или App Review.
 
 ## Сборка с Windows без своего Mac
 
 В репозитории подготовлены GitHub Actions, использующие macOS с полным Xcode. Для загрузок Apple с 28 апреля 2026 года требуется iOS 26 SDK или новее; workflow выбирает стабильный Xcode 26 на `macos-15`, а build-скрипт проверяет SDK. GitHub может учитывать macOS-минуты по тарифу приватного репозитория.
 
-1. Разместить изменения в `shpshka/ModernSecure`, проверить вкладку **Actions → iOS build**. Этот процесс не требует Apple-ключей: собирает Release для симулятора, выдаёт `ModernSecure-ios-simulator`, запускает приложение на доступных iPhone/iPad и сохраняет реальные стартовые скриншоты. Это проверка старта, а не входа в дело или всех сценариев. Симуляторный `.app` нельзя установить на iPhone или отправить в магазин.
+1. Разместить изменения в `mussagali/ModernSecure`, проверить вкладку **Actions → iOS build**. Этот процесс не требует Apple-ключей: собирает Release для симулятора, выдаёт `ModernSecure-ios-simulator`, запускает приложение на доступных iPhone/iPad и сохраняет реальные стартовые скриншоты. Это проверка старта, а не входа в дело или всех сценариев. Симуляторный `.app` нельзя установить на iPhone или отправить в магазин.
 2. В Apple Developer проверить **Membership details**: Active membership, Team ID, Entity Type. Наличие Apple ID само по себе не подтверждает участие в платной программе. Apple ID, пароль и коды 2FA в проект не добавляются.
 3. Использовать зарегистрированный App ID `kz.modernsecure.modernSecure` в команде `HRXCR95QG3`. ID проверен через существующую карточку и активный профиль. В текущих entitlements включён Push Notifications; профиль должен поддерживать production APNs даже если доставка Firebase пока не включена.
-4. На портале уже есть **Distribution certificate**, срок до 16 октября 2027. Для CI получить соответствующий `.p12` с приватным ключом и паролем из прежней среды подписи. Сертификата `.cer` без приватного ключа недостаточно. Если ключ утрачен, владелец может подготовить новый CSR/сертификат; существующий сертификат не отзывать автоматически. На Windows CSR и `.p12` можно подготовить OpenSSL; см. ниже.
-5. На портале есть активный **ModernSecure App Store**, ID `6P9986A6SD`, срок до 16 октября 2027. На странице capabilities указан только In-App Purchase; production APNs для текущего Swift-проекта ещё нужно включить в App ID и перегенерировать профиль. Скачать подходящий `.mobileprovision`; development, ad hoc и enterprise не подходят.
+4. С разрешения владельца создан отдельный CI-сертификат Apple Distribution `3BH2F77SSD` до 4 ноября 2027; P12 с приватным ключом и паролем уже сохранены в environment secrets. Прежний сертификат не отозван. При экспорте OpenSSL 3 для macOS security import использовать совместимые `-keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1 -iter 100000`; пароль передавать через защищённое окружение, не аргументом командной строки.
+5. Push Notifications включён; создан профиль `ModernSecure CI App Store 20261104` (`7L6UX23T54`) для нового сертификата. Команда, Bundle ID, production APNs и срок проверены. Профиль уже сохранён в `APPLE_PROFILE_BASE64`.
 6. Использовать уже созданное приложение **ModernSecure — Защита**, Apple ID `6824547106`, SKU `modernsecure-ios-001`, iOS, основной язык Russian, Bundle ID `kz.modernsecure.modernSecure`. Повторное создание не требуется. Individual membership проверен; право представлять компанию и использовать бренд явно подтверждено владельцем 4 ноября 2026.
-7. В **GitHub → Settings → Environments** создать окружение `app-store` для подписанного workflow. Добавить environment variable `APPLE_TEAM_ID`. Подписанный workflow предназначен для доверенной ветки; по возможности ограничить разрешённые ветки этого окружения основной/релизной веткой.
+7. В **GitHub → Settings → Environments** уже настроено окружение `app-store` для подписанного workflow. Добавить environment variable `APPLE_TEAM_ID`. Подписанный workflow предназначен для доверенной ветки; по возможности ограничить разрешённые ветки этого окружения основной/релизной веткой.
 8. Добавить следующие **environment secrets**. Значения не коммитить, не вставлять в issues, логи или чат.
 
 | Secret | Содержимое |
@@ -28,7 +28,7 @@ Unsigned Release собран в Xcode 26.3; приложение запущен
 | `ASC_ISSUER_ID` | Issuer ID этого командного ключа, только для загрузки |
 | `ASC_PRIVATE_KEY_P8_BASE64` | Base64 скачанного `.p8`, только для загрузки |
 
-API-ключ App Store Connect создаёт уполномоченный владелец в **Users and Access → Integrations → App Store Connect API**. Нужен ключ с правом загрузки сборок (например App Manager), а не ключ APNs. Для сборки и скачивания IPA три `ASC_*` секрета не нужны. Сценарий использует командный ключ с Issuer ID; индивидуальные ключи без Issuer ID в него не подставляются.
+API-ключ App Store Connect создаёт уполномоченный владелец в **Users and Access → Integrations → App Store Connect API**. Нужен ключ с правом загрузки сборок (для текущего CI создан Developer), а не ключ APNs. Для сборки и скачивания IPA три `ASC_*` секрета не нужны. Сценарий использует командный ключ с Issuer ID; индивидуальные ключи без Issuer ID в него не подставляются.
 
 Base64 в PowerShell (скопировать результат напрямую в поле GitHub Secret):
 
@@ -40,7 +40,7 @@ Base64 в PowerShell (скопировать результат напрямую
 9. После появления workflow на основной ветке открыть **Actions → iOS signed archive → Run workflow**. Задать версию `1.0.0` и ещё не использованный возрастающий номер сборки **выше 1** (сборка `1.0.0 (1)` уже загружена). Оставить `upload_to_testflight=false`, если нужен только архив IPA. При `true` выполняются валидация Apple и загрузка в App Store Connect для последующей обработки. Workflow не отправляет приложение на App Review и не публикует его.
 10. Установить обработанную сборку через TestFlight на физический iPhone, затем проверить iPad: проект поддерживает оба типа устройств. Для внешнего TestFlight может потребоваться отдельная Beta App Review. Дождаться успешного тестирования перед App Review.
 
-Приватные материалы импортируются в временную связку ключей GitHub runner; cleanup удаляет связку, профиль и файлы. Скрипт отклоняет просроченный профиль, другую команду/Bundle ID, development/ad hoc/enterprise профиль и отсутствие production APNs. Подписанный IPA и dSYM хранятся как приватный Actions artifact 7 дней. Workflow ещё нужно запустить и проверить в реальном окружении — локальный Windows не доказывает успешную сборку iOS.
+Приватные материалы импортируются в временную связку ключей GitHub runner; cleanup удаляет связку, профиль и файлы. Скрипт отклоняет просроченный профиль, другую команду/Bundle ID, development/ad hoc/enterprise профиль и отсутствие production APNs. Подписанный IPA и dSYM хранятся как Actions artifact 7 дней; доступ определяется настройками репозитория. Workflow запущен для `1.0.0 (2)`; подтверждённые результаты и границы проверки указаны в VALIDATION.md.
 
 ### CSR и сертификат без Mac
 
@@ -52,7 +52,7 @@ openssl req -new -key distribution.key -out distribution.csr
 # Загрузить только distribution.csr при создании Apple Distribution certificate.
 # Скачанный сертификат Apple distribution.cer:
 openssl x509 -inform DER -in distribution.cer -out distribution.pem
-openssl pkcs12 -export -inkey distribution.key -in distribution.pem -out distribution.p12
+openssl pkcs12 -export -inkey distribution.key -in distribution.pem -out distribution.p12 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1 -iter 100000
 ```
 
 Приватные `.key`, `.p12`, `.p8`, пароль и резервные копии остаются у владельца. Отдельный сертификат для CI упрощает его отзыв без влияния на другие приложения. Никакие сертификаты автоматически не создаются и не отзываются этими скриптами.
