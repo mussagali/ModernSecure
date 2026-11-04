@@ -15,6 +15,14 @@ on:
           - macos-15-intel
           - macos-15
           - macos-26
+      screenshot_devices:
+        description: Device family to capture (select one when diagnosing a failure)
+        type: choice
+        default: both
+        options:
+          - both
+          - iphone
+          - ipad
   push:
     paths:
       - 'apps/mobile_webview/ios/**'
@@ -104,6 +112,8 @@ jobs:
           ASC_PRIVATE_KEY_P8_BASE64: ${{ secrets.ASC_PRIVATE_KEY_P8_BASE64 }}
         run: node apps/mobile_webview/ios/scripts/load-screenshot-access.mjs
       - name: Capture real synthetic-case screens on iPhone and iPad
+        env:
+          SCREENSHOT_DEVICE_FAMILY: ${{ inputs.screenshot_devices || 'both' }}
         run: python3 apps/mobile_webview/ios/scripts/capture-store-simulator.py
       - uses: actions/upload-artifact@v4
         if: always()

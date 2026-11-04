@@ -63,7 +63,7 @@ def xcode(arguments, name, environment=None):
     if result.returncode:
         # Do not publish raw XCTest activities, typed credentials, or snapshots.
         text = (PRIVATE / (name + '.log')).read_text(encoding='utf-8', errors='replace')
-        safe = [line for line in text.splitlines() if re.search(r'error:|CaptureError|SCREENSHOT_CAPTURED|\*\* TEST|\*\* BUILD', line)]
+        safe = [line for line in text.splitlines() if re.search(r'error:|CaptureError|SCREENSHOT_CAPTURED|SCREENSHOT_INPUT_CHECK|\*\* TEST|\*\* BUILD', line)]
         secrets = json.loads((ROOT / 'build/screenshot-access.local.json').read_text())
         for line in safe[-15:]:
             for secret in secrets.values():
@@ -112,11 +112,16 @@ def main():
     source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     report = {'sourceCommit': source, 'version': '1.0.0', 'build': '2',
               'origin': 'https://modernsecure.shpshka.work', 'syntheticCaseOnly': True, 'devices': []}
+    requested_family = os.environ.get('SCREENSHOT_DEVICE_FAMILY', 'both')
+    if requested_family not in {'both', 'iphone', 'ipad'}:
+        raise RuntimeError('Unknown screenshot device family')
     errors = []
     for family, names, size in [
         ('iphone', ['iPhone 17 Pro', 'iPhone 16 Pro'], (1206, 2622)),
         ('ipad', ['iPad Pro 13-inch (M5)', 'iPad Pro 13-inch (M4)'], (2064, 2752)),
     ]:
+        if requested_family != 'both' and family != requested_family:
+            continue
         choices = [(r, d) for r in runtimes for wanted in names for d in inventory[r]
                    if d.get('isAvailable') and d['name'] == wanted]
         if not choices:

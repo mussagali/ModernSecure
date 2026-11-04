@@ -48,12 +48,21 @@ final class StoreScreenshots: XCTestCase {
         phase = "waiting-for-login"
         let emailField = app.webViews.textFields.firstMatch
         guard emailField.waitForExistence(timeout: 90) else { throw CaptureError.loginUnavailable }
+        phase = "entering-dedicated-email"
         emailField.tap()
         emailField.typeText(email)
+        guard (emailField.value as? String) == email else { throw CaptureError.inputValueMismatch }
         let passwordField = app.webViews.secureTextFields.firstMatch
         guard passwordField.exists else { throw CaptureError.loginUnavailable }
+        phase = "entering-dedicated-password"
         passwordField.tap()
-        passwordField.typeText(password)
+        // Give WebKit time to process each secure-field keystroke on a slow VM.
+        for character in password {
+            passwordField.typeText(String(character))
+        }
+        let enteredLength = (passwordField.value as? String)?.count ?? -1
+        print("SCREENSHOT_INPUT_CHECK: emailMatches=true; passwordLength=" + String(enteredLength))
+        guard enteredLength == password.count else { throw CaptureError.inputValueMismatch }
         let login = app.webViews.buttons.matching(NSPredicate(format: "label == %@", "Войти")).firstMatch
         guard login.exists else { throw CaptureError.loginUnavailable }
         login.tap()
@@ -83,7 +92,7 @@ final class StoreScreenshots: XCTestCase {
     }
 
     private enum CaptureError: Error {
-        case missingDedicatedAccess, loginUnavailable, demoCaseUnavailable
+        case missingDedicatedAccess, loginUnavailable, demoCaseUnavailable, inputValueMismatch
         case caseUnavailable, tasksUnavailable, documentsUnavailable, missingNavigation
     }
 }
