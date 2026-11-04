@@ -37,14 +37,26 @@ def label(node):
 
 
 def role(node):
-    return str(node.get('type') or node.get('role') or '').lower()
+    return ' '.join(str(node.get(key) or '') for key in ['type', 'role', 'role_description', 'subrole']).lower()
+
+
+def safe_summary(nodes):
+    known = ['Вход в аккаунт', 'Электронная почта', 'Пароль', 'Войти', DEMO_TITLE,
+             'Текущий этап', 'Задачи', 'Документы', 'Нужно загрузить']
+    return [{'type': str(node.get('type', ''))[:60], 'role': str(node.get('role', ''))[:60],
+             'labelKind': next((text for text in known if text in label(node)), '[redacted]'),
+             'frame': node.get('frame'), 'hasValue': bool(node.get('AXValue'))}
+            for node in nodes[:300]]
 
 
 class Screen:
     def __init__(self, udid):
         self.udid = udid
+        self.last_nodes = []
+        self.last_operation = 'not-started'
 
     def call(self, *arguments):
+        self.last_operation = ':'.join(arguments[:2])
         # Never let CalledProcessError/TimeoutExpired echo a secret argument.
         try:
             result = subprocess.run(['idb', *arguments, '--udid', self.udid],
@@ -52,12 +64,14 @@ class Screen:
         except (OSError, subprocess.SubprocessError):
             raise CaptureError('Native accessibility command unavailable or timed out') from None
         if result.returncode:
-            raise CaptureError('Native accessibility operation failed; private details omitted')
+            raise CaptureError('Native accessibility operation failed (exit ' + str(result.returncode) + ')')
         return result.stdout
 
     def read(self):
         try:
-            return flatten(json.loads(self.call('ui', 'describe-all', '--api', 'axbridge')))
+            self.last_nodes = flatten(json.loads(self.call('ui', 'describe-all', '--api', 'axbridge',
+                                                         '--client-type', 'xctest')))
+            return self.last_nodes
         except json.JSONDecodeError:
             raise CaptureError('Native accessibility response was not valid JSON') from None
 
@@ -84,9 +98,20 @@ class Screen:
         return str(round(frame['x'] + frame['width'] / 2)), str(round(frame['y'] + frame['height'] / 2))
 
     def set_field(self, text, value):
-        _, node = self.wait(lambda node: ('textfield' in role(node) or 'textinput' in role(node))
-                            and text in label(node))
-        self.call('ui', 'set-value', *self.point(node), '--value', value, '--api', 'axbridge')
+        placeholder = 'name@example.com' if text == 'Электронная почта' else 'Пароль'
+        matches = lambda node: ('textfield' in role(node) or 'textinput' in role(node)) \
+            and (text in label(node) or placeholder == node.get('AXValue')
+                 or placeholder == node.get('placeholder'))
+        _, node = self.wait(matches)
+        point = self.point(node)
+        try:
+            self.call('ui', 'set-value', *point, '--value', value, '--api', 'axbridge')
+        except CaptureError:
+            # Some WebKit secure fields expose no accessibility value setter.
+            _, node = self.wait(matches)
+            self.call('ui', 'tap', *self.point(node))
+            self.read()
+            self.call('ui', 'text', value)
         # Refresh after each UI action; no accessibility values are printed.
         self.read()
 
@@ -138,6 +163,7 @@ def main():
         images.mkdir(exist_ok=True)
         files = []
         phase = 'boot'
+        screen = None
         try:
             if device['state'] != 'Booted':
                 common.simctl('boot', udid)
@@ -177,6 +203,11 @@ def main():
             print(f'{family}: capture stopped at {phase}; private details omitted.', flush=True)
             diagnostic = OUTPUT / 'diagnostics' / family
             diagnostic.mkdir(parents=True, exist_ok=True)
+            if screen:
+                (diagnostic / 'accessibility-summary.json').write_text(json.dumps({
+                    'lastOperation': screen.last_operation,
+                    'elements': safe_summary(screen.last_nodes),
+                }, ensure_ascii=False, indent=2), encoding='utf-8')
             try:
                 common.simctl('io', udid, 'screenshot', str(diagnostic / 'diagnostic-failure.png'), timeout=15)
             except subprocess.SubprocessError:

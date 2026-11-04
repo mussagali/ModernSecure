@@ -92,7 +92,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
   store-screenshots:
-    if: github.event_name == 'workflow_dispatch' && inputs.capture_store_screenshots
+    if: '!cancelled() && github.event_name == ''workflow_dispatch'' && inputs.capture_store_screenshots'
     runs-on: ${{ inputs.screenshot_runner || 'macos-15-intel' }}
     environment: app-store
     timeout-minutes: 45
@@ -120,6 +120,8 @@ jobs:
           brew tap meta/fb
           brew trust meta/fb
           brew install meta/fb/idb
+          idb ui describe-all --help
+          idb ui set-value --help
       - name: Read dedicated review credentials without logging them
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}

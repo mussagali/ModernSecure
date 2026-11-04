@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 import subprocess
 import unittest
@@ -10,6 +11,14 @@ spec.loader.exec_module(capture)
 
 
 class NativeBridgePrivacyTests(unittest.TestCase):
+    def test_diagnostic_summary_omits_unknown_labels_and_all_field_values(self):
+        nodes = [{'type': 'TextField', 'AXLabel': 'private-client-name', 'AXValue': 'private-password'},
+                 {'type': 'TextField', 'AXLabel': 'Пароль', 'AXValue': 'another-private-password'}]
+        summary = json.dumps(capture.safe_summary(nodes), ensure_ascii=False)
+        self.assertNotIn('private-client-name', summary)
+        self.assertNotIn('private-password', summary)
+        self.assertIn('Пароль', summary)
+
     def test_failed_command_does_not_disclose_private_arguments(self):
         secret = 'synthetic-test-secret'
         failure = subprocess.CalledProcessError(1, ['idb', '--value', secret])
