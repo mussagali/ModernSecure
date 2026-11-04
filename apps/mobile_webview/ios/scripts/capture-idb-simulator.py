@@ -170,9 +170,15 @@ def main():
             common.simctl('bootstatus', udid, '-b', timeout=600)
             common.simctl('status_bar', udid, 'override', '--time', '9:41', '--dataNetwork', 'wifi',
                           '--wifiMode', 'active', '--wifiBars', '3', '--batteryState', 'charged', '--batteryLevel', '100')
+            screen = Screen(udid)
+            # Disposable Simulator only. WebKit starts its accessibility server
+            # at app launch, so enable it before launching the production app.
+            screen.call('set', '--domain', 'com.apple.Accessibility',
+                        'ApplicationAccessibilityEnabled', '--type', 'bool', 'true')
+            screen.call('set', '--domain', 'com.apple.Accessibility',
+                        'AutomationEnabled', '--type', 'bool', 'true')
             common.simctl('install', udid, str(ROOT / 'build/simulator/Build/Products/Release-iphonesimulator/ModernSecure.app'))
             common.simctl('launch', '--terminate-running-process', udid, 'kz.modernsecure.modernSecure', timeout=60)
-            screen = Screen(udid)
             screen.call('ui', 'rotate', 'PORTRAIT')
             phase = 'login'
             print(f'{family}: filling isolated account through native accessibility; values omitted.', flush=True)

@@ -162,8 +162,9 @@ def main():
             environment['TEST_RUNNER_SCREENSHOT_OUTPUT_DIRECTORY'] = str(images)
             # Warm the same production app before XCTest starts its own runner.
             app_bundle = ROOT / 'build/simulator/Build/Products/Release-iphonesimulator/ModernSecure.app'
-            simctl('install', udid, str(app_bundle))
-            simctl('launch', '--terminate-running-process', udid, 'kz.modernsecure.modernSecure', timeout=60)
+            print(f'{family}: installing production app (up to 420 seconds on a cold runner).', flush=True)
+            simctl('install', udid, str(app_bundle), timeout=420)
+            simctl('launch', '--terminate-running-process', udid, 'kz.modernsecure.modernSecure', timeout=120)
             print(f'{family}: production app installed and launched.', flush=True)
             time.sleep(12)
             print(f'{family}: starting bounded UI capture test.', flush=True)
