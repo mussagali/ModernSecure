@@ -90,7 +90,8 @@ or authenticated end-to-end testing of the submitted binary.
 Signed build update on November 4: commit d85fba84f339a45bab5b284012f6588350607cfd,
 version 1.0.0 (2), completed signing, archive and export in run 41840680104.
 Apple confirmed VERIFY SUCCEEDED and UPLOAD SUCCEEDED with no errors at
-13:47 UTC. TestFlight processing is tracked separately. The actual exported
+13:47 UTC. Apple subsequently processed build 2 as VALID and ready for
+internal beta testing; it was added to ModernSecure Internal. The actual exported
 IPA has the correct bundle ID, iOS 16 minimum, iOS 26.2 SDK, all four iPad
 orientations and 15 bundled privacy manifests. This still does not establish
 physical-device or authenticated end-to-end testing. Do not paste this internal

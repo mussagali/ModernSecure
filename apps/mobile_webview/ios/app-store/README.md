@@ -4,7 +4,7 @@
 
 Актуально на 4 ноября 2026 года. Состояние портала Apple и оставшиеся блокеры см. в RELEASE-STATUS.ru.md; исторические формулировки ниже не заменяют этот статус. Текущий клиент: `apps/mobile_webview/ios`, Swift / WKWebView. `apps/client_mobile` — прежний Flutter-проект, его не отправляем. Версия первого релиза: `1.0.0`; Bundle ID: `kz.modernsecure.modernSecure`; сайт: `https://modernsecure.shpshka.work`.
 
-Unsigned Release собран в Xcode 26.3; приложение запущено на симуляторах iPhone и iPad, экран входа проверен по реальным снимкам. [Результаты и CI](VALIDATION.md). Это **не готовый к отправке релиз**: обработка новой подписанной сборки, реальное устройство, удаление аккаунта и материалы владельца ещё требуют завершения. Успех source preflight или симулятора не означает успех TestFlight или App Review.
+Подписанная `1.0.0 (2)` собрана в Xcode 26.3, прошла Apple validation и обработку TestFlight, добавлена в ModernSecure Internal (`IN_BETA_TESTING`). Ранее unsigned Release запущен на симуляторах iPhone и iPad, экран входа проверен по реальным снимкам. [Результаты и CI](VALIDATION.md). Это **не готовый к App Review релиз**: физическая проверка, production-удаление/поддержка и материалы Apple остаются в чек-листе.
 
 ## Сборка с Windows без своего Mac
 
