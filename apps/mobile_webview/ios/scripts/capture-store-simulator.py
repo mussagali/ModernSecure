@@ -85,8 +85,11 @@ def main():
     print('Building test-only capture runner; shipping app sources unchanged.', flush=True)
     xcode([*common, '-destination', 'generic/platform=iOS Simulator', 'build-for-testing'], 'build')
     inventory = json.loads(simctl('list', 'devices', 'available', '--json'))['devices']
-    runtimes = sorted((r for r in inventory if '.iOS-' in r),
-                      key=lambda r: tuple(map(int, re.findall(r'\d+', r))), reverse=True)
+    # Keep capture reproducible on the runtime used for the validated build.
+    runtime_id = 'com.apple.CoreSimulator.SimRuntime.iOS-26-2'
+    if runtime_id not in inventory:
+        raise RuntimeError('The required iOS 26.2 screenshot runtime is unavailable')
+    runtimes = [runtime_id]
     source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     report = {'sourceCommit': source, 'version': '1.0.0', 'build': '2',
               'origin': 'https://modernsecure.shpshka.work', 'syntheticCaseOnly': True, 'devices': []}

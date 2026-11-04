@@ -86,9 +86,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          XCODE_PATH="$(find /Applications -maxdepth 1 -type d -name 'Xcode_26*.app' ! -iname '*beta*' ! -iname '*RC*' | sort -V | tail -n 1)"
-          test -n "$XCODE_PATH"
+          # Match the validated App Store binary and known-good startup captures.
+          XCODE_PATH="/Applications/Xcode_26.3.app"
+          test -d "$XCODE_PATH"
           sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          xcodebuild -version
           command -v xcodegen || brew install xcodegen
       - name: Build unchanged Release app for Simulator
         env:
