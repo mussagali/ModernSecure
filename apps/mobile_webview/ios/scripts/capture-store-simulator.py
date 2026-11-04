@@ -128,11 +128,8 @@ def main():
             print(f'{family}: booting simulator (up to 600 seconds for first-boot migration).', flush=True)
             if device['state'] != 'Booted':
                 simctl('boot', udid)
-            try:
-                subprocess.run(['open', '-a', 'Simulator', '--args', '-CurrentDeviceUDID', udid],
-                               check=True, timeout=30)
-            except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
-                print(f'{family}: Simulator window unavailable; waiting for the runtime directly.', flush=True)
+            # Run headlessly, as in the successful native startup captures.
+            # The Simulator GUI adds rendering load on the small hosted VM.
             simctl('bootstatus', udid, '-b', timeout=600)
             print(f'{family}: simulator booted.', flush=True)
             simctl('status_bar', udid, 'override', '--time', '9:41', '--dataNetwork', 'wifi',
