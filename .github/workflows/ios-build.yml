@@ -43,7 +43,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ios-build-${{ github.ref }}
+  # Capture engines use separate disposable VMs and only produce local artifacts.
+  group: ios-build-${{ github.ref }}-${{ inputs.capture_store_screenshots && inputs.screenshot_engine || 'default' }}
   cancel-in-progress: true
 
 jobs:
