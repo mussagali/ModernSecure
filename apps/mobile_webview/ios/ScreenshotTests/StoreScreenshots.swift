@@ -2,6 +2,18 @@ import XCTest
 
 final class StoreScreenshots: XCTestCase {
     private let app = XCUIApplication(bundleIdentifier: "kz.modernsecure.modernSecure")
+    private var phase = "launch"
+
+    override func tearDownWithError() throws {
+        // Diagnostics are kept separate and never selected for App Store upload.
+        if testRun?.hasSucceeded == false {
+            try? capture("diagnostic-failure")
+            let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("AppStoreScreenshots", isDirectory: true)
+            try? Data(phase.utf8).write(to: directory.appendingPathComponent("diagnostic-phase.txt"))
+        }
+        app.terminate()
+    }
 
     private func capture(_ name: String) throws {
         // Actual rendered app pixels. No fixtures, substituted HTML, or overlays.
@@ -10,6 +22,7 @@ final class StoreScreenshots: XCTestCase {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         Thread.sleep(forTimeInterval: 1)
         try XCUIScreen.main.screenshot().pngRepresentation.write(to: directory.appendingPathComponent(name + ".png"))
+        print("SCREENSHOT_CAPTURED: " + name)
     }
 
     private func tapLink(_ label: String) throws {
@@ -22,6 +35,7 @@ final class StoreScreenshots: XCTestCase {
 
     func testCaptureSyntheticCase() throws {
         continueAfterFailure = false
+        executionTimeAllowance = 240
         let environment = ProcessInfo.processInfo.environment
         guard let email = environment["SCREENSHOT_EMAIL"],
               email == "apple-review-modernsecure@example.test",
@@ -31,6 +45,7 @@ final class StoreScreenshots: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
         app.launchArguments = ["-AppleLanguages", "(ru)", "-AppleLocale", "ru_RU"]
         app.launch()
+        phase = "waiting-for-login"
         let emailField = app.webViews.textFields.firstMatch
         guard emailField.waitForExistence(timeout: 90) else { throw CaptureError.loginUnavailable }
         emailField.tap()
@@ -42,21 +57,25 @@ final class StoreScreenshots: XCTestCase {
         let login = app.webViews.buttons.matching(NSPredicate(format: "label == %@", "Войти")).firstMatch
         guard login.exists else { throw CaptureError.loginUnavailable }
         login.tap()
+        phase = "waiting-for-synthetic-case-after-login"
 
         // Never capture an arbitrary account or a real client case.
         let demo = app.webViews.links.matching(NSPredicate(format: "label CONTAINS %@", "ДЕМО APPLE")).firstMatch
         guard demo.waitForExistence(timeout: 90) else { throw CaptureError.demoCaseUnavailable }
         try capture("01-cases")
+        phase = "opening-case"
         demo.tap()
         guard app.webViews.staticTexts["Текущий этап"].waitForExistence(timeout: 45)
         else { throw CaptureError.caseUnavailable }
         try capture("02-case-overview")
 
+        phase = "opening-tasks"
         try tapLink("Задачи")
         guard app.webViews.staticTexts["Задачи по делу"].waitForExistence(timeout: 45)
         else { throw CaptureError.tasksUnavailable }
         try capture("03-tasks")
 
+        phase = "opening-documents"
         try tapLink("Документы")
         guard app.webViews.links["Нужно загрузить"].waitForExistence(timeout: 45)
         else { throw CaptureError.documentsUnavailable }

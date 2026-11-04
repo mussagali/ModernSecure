@@ -11,6 +11,7 @@ import re
 import shutil
 import struct
 import subprocess
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,17 +22,40 @@ EXPECTED = ['01-cases.png', '02-case-overview.png', '03-tasks.png', '04-document
 
 
 def simctl(*arguments):
-    return subprocess.check_output(['xcrun', 'simctl', *arguments], text=True).strip()
+    return subprocess.check_output(['xcrun', 'simctl', *arguments], text=True, timeout=180).strip()
 
 
 def xcode(arguments, name, environment=None):
     with (PRIVATE / (name + '.log')).open('w', encoding='utf-8') as log:
-        result = subprocess.run(['xcodebuild', *arguments], cwd=ROOT, env=environment,
-                                stdout=log, stderr=subprocess.STDOUT, timeout=1200)
+        result = subprocess.Popen(['xcodebuild', *arguments], cwd=ROOT, env=environment,
+                                  stdout=log, stderr=subprocess.STDOUT)
+        deadline = time.monotonic() + (900 if name == 'build' else 420)
+        next_diagnostic = time.monotonic() + 30
+        while result.poll() is None:
+            if time.monotonic() > deadline:
+                result.terminate()
+                try:
+                    result.wait(timeout=20)
+                except subprocess.TimeoutExpired:
+                    result.kill()
+                    result.wait()
+                raise RuntimeError(name + ' exceeded bounded capture time')
+            if name != 'build' and time.monotonic() >= next_diagnostic:
+                # Real simulator frames help distinguish boot/login/navigation
+                # failures. Dedicated account only; password input stays masked.
+                udid = environment['SCREENSHOT_SIMULATOR_UDID']
+                destination = OUTPUT / 'diagnostics' / name
+                destination.mkdir(parents=True, exist_ok=True)
+                frame = destination / ('frame-' + str(int(time.monotonic())) + '.png')
+                subprocess.run(['xcrun', 'simctl', 'io', udid, 'screenshot', str(frame)],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
+                print(name + ': simulator diagnostic frame captured (not an App Store image).', flush=True)
+                next_diagnostic = time.monotonic() + 45
+            time.sleep(2)
     if result.returncode:
         # Do not publish raw XCTest activities, typed credentials, or snapshots.
         text = (PRIVATE / (name + '.log')).read_text(encoding='utf-8', errors='replace')
-        safe = [line for line in text.splitlines() if re.search(r'error:|CaptureError|\*\* TEST|\*\* BUILD', line)]
+        safe = [line for line in text.splitlines() if re.search(r'error:|CaptureError|SCREENSHOT_CAPTURED|\*\* TEST|\*\* BUILD', line)]
         secrets = json.loads((ROOT / 'build/screenshot-access.local.json').read_text())
         for line in safe[-15:]:
             for secret in secrets.values():
@@ -58,6 +82,7 @@ def main():
     source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     report = {'sourceCommit': source, 'version': '1.0.0', 'build': '2',
               'origin': 'https://modernsecure.shpshka.work', 'syntheticCaseOnly': True, 'devices': []}
+    errors = []
     for family, names, size in [
         ('iphone', ['iPhone 17 Pro', 'iPhone 16 Pro'], (1206, 2622)),
         ('ipad', ['iPad Pro 13-inch (M5)', 'iPad Pro 13-inch (M4)'], (2064, 2752)),
@@ -70,34 +95,64 @@ def main():
         udid = device['udid']
         print('Capturing ' + device['name'] + ' / ' + runtime, flush=True)
         try:
+            print(f'{family}: booting simulator (maximum 180 seconds per command).', flush=True)
             if device['state'] != 'Booted':
                 simctl('boot', udid)
             simctl('bootstatus', udid, '-b')
+            print(f'{family}: simulator booted.', flush=True)
             simctl('status_bar', udid, 'override', '--time', '9:41', '--dataNetwork', 'wifi',
                    '--wifiMode', 'active', '--wifiBars', '3', '--batteryState', 'charged', '--batteryLevel', '100')
             environment = os.environ.copy()
             environment['TEST_RUNNER_SCREENSHOT_EMAIL'] = credentials['email']
             environment['TEST_RUNNER_SCREENSHOT_PASSWORD'] = credentials['password']
-            xcode([*common, '-destination', 'id=' + udid, '-parallel-testing-enabled', 'NO',
-                   '-resultBundlePath', str(PRIVATE / (family + '.xcresult')), 'test-without-building'],
-                  family, environment)
+            environment['SCREENSHOT_SIMULATOR_UDID'] = udid
+            print(f'{family}: starting bounded UI capture test.', flush=True)
+            test_error = None
+            try:
+                xcode([*common, '-destination', 'id=' + udid, '-parallel-testing-enabled', 'NO',
+                       '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '240',
+                       '-maximum-test-execution-time-allowance', '300',
+                       '-resultBundlePath', str(PRIVATE / (family + '.xcresult')), 'test-without-building'],
+                      family, environment)
+            except (RuntimeError, subprocess.TimeoutExpired) as error:
+                test_error = type(error).__name__
+                errors.append(family + ': UI capture failed (' + test_error + ')')
+                print(f'{family}: preserving completed captures and diagnostics after UI test failure.', flush=True)
             container = Path(simctl('get_app_container', udid, RUNNER_ID, 'data'))
             images = container / 'Documents/AppStoreScreenshots'
             target = OUTPUT / family
             target.mkdir(exist_ok=True)
             files = []
             for name in EXPECTED:
+                if not (images / name).is_file():
+                    if test_error:
+                        continue
+                    raise RuntimeError('Expected authenticated screenshot missing')
                 blob = (images / name).read_bytes()
                 if blob[:8] != b'\x89PNG\r\n\x1a\n' or struct.unpack('>II', blob[16:24]) != size:
                     raise RuntimeError('Unexpected screenshot format or native dimensions')
                 shutil.copyfile(images / name, target / name)
                 files.append({'name': family + '/' + name, 'width': size[0], 'height': size[1],
                               'sha256': hashlib.sha256(blob).hexdigest()})
-            report['devices'].append({'family': family, 'device': device['name'], 'runtime': runtime, 'files': files})
+            diagnostics = OUTPUT / 'diagnostics' / family
+            diagnostics.mkdir(parents=True, exist_ok=True)
+            for name in ['diagnostic-failure.png', 'diagnostic-phase.txt']:
+                if (images / name).is_file():
+                    shutil.copyfile(images / name, diagnostics / name)
+            report['devices'].append({'family': family, 'device': device['name'], 'runtime': runtime,
+                                      'captureTestPassed': test_error is None, 'files': files})
+            report['errors'] = errors
             (OUTPUT / 'capture-report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
             print(f'Captured {len(files)} native {family} screenshots.', flush=True)
+        except (RuntimeError, OSError, subprocess.SubprocessError) as error:
+            errors.append(family + ': ' + type(error).__name__)
+            report['errors'] = errors
+            (OUTPUT / 'capture-report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+            print(f'{family}: capture failed ({type(error).__name__}); continuing with the other device family.', flush=True)
         finally:
             subprocess.run(['xcrun', 'simctl', 'shutdown', udid], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if errors:
+        raise RuntimeError('Capture checks failed; inspect the preserved real screenshots and diagnostics.')
 
 
 if __name__ == '__main__':
