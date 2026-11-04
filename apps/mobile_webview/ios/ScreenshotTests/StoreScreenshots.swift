@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 final class StoreScreenshots: XCTestCase {
     private let app = XCUIApplication(bundleIdentifier: "kz.modernsecure.modernSecure")
@@ -44,13 +45,30 @@ final class StoreScreenshots: XCTestCase {
         link.tap()
     }
 
+    private func pasteDedicatedPassword(_ password: String, into field: XCUIElement) throws {
+        // Use the ordinary iOS edit menu, avoiding secure keyboard event loss
+        // on slow cloud Simulators. The disposable device clipboard is cleared.
+        UIPasteboard.general.string = password
+        defer { UIPasteboard.general.items = [] }
+        field.press(forDuration: 1.2)
+        let paste = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label == %@ OR label == %@", "Вставить", "Paste")
+        ).firstMatch
+        guard paste.waitForExistence(timeout: 15) else { throw CaptureError.pasteUnavailable }
+        paste.tap()
+        let allowPaste = app.buttons.matching(NSPredicate(
+            format: "label == %@ OR label == %@", "Разрешить вставку", "Allow Paste"
+        )).firstMatch
+        if allowPaste.waitForExistence(timeout: 3) { allowPaste.tap() }
+    }
+
     func testCaptureSyntheticCase() throws {
         continueAfterFailure = false
         executionTimeAllowance = 240
         let environment = ProcessInfo.processInfo.environment
         guard let email = environment["SCREENSHOT_EMAIL"],
               email == "apple-review-modernsecure@example.test",
-              let password = environment["SCREENSHOT_PASSWORD"], !password.isEmpty
+              let password = environment["SCREENSHOT_PASSWORD"], password.count == 40
         else { throw CaptureError.missingDedicatedAccess }
 
         XCUIDevice.shared.orientation = .portrait
@@ -67,9 +85,7 @@ final class StoreScreenshots: XCTestCase {
         guard passwordField.exists else { throw CaptureError.loginUnavailable }
         phase = "entering-dedicated-password"
         passwordField.tap()
-        // Type into the focused descendant as one keyboard operation. Repeated
-        // secure-field operations can reset its insertion state in WebKit.
-        app.typeText(password)
+        try pasteDedicatedPassword(password, into: passwordField)
         let enteredLength = (passwordField.value as? String)?.count ?? -1
         print("SCREENSHOT_INPUT_CHECK: emailMatches=true; secureValueReportedLength=" + String(enteredLength))
         // Secure accessibility values may be obscured; authentication and the
@@ -106,7 +122,7 @@ final class StoreScreenshots: XCTestCase {
     }
 
     private enum CaptureError: Error {
-        case missingDedicatedAccess, loginUnavailable, demoCaseUnavailable, inputValueMismatch, missingCaptureDirectory
+        case missingDedicatedAccess, loginUnavailable, demoCaseUnavailable, inputValueMismatch, missingCaptureDirectory, pasteUnavailable
         case caseUnavailable, tasksUnavailable, documentsUnavailable, missingNavigation
     }
 }
