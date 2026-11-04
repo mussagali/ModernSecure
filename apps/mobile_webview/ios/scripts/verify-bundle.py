@@ -16,6 +16,12 @@ expected = {
 for key, value in expected.items():
     if info.get(key) != value:
         raise SystemExit(f"Compiled bundle has incorrect {key}")
+ipad_orientations = info.get("UISupportedInterfaceOrientations~ipad", info.get("UISupportedInterfaceOrientations", []))
+if set(ipad_orientations) != {
+    "UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown",
+    "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight",
+}:
+    raise SystemExit("Compiled bundle must support all four iPad multitasking orientations")
 manifest = plistlib.loads((app / "PrivacyInfo.xcprivacy").read_bytes())
 if manifest.get("NSPrivacyTracking") is not False:
     raise SystemExit("Compiled privacy manifest has an unexpected tracking declaration")

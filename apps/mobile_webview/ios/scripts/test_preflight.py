@@ -37,6 +37,13 @@ class ReleaseSafeguards(unittest.TestCase):
         path.write_text(path.read_text().replace("modernsecure.shpshka.work", "REPLACE_WITH_YOUR_DOMAIN"))
         self.assertTrue(preflight.check_sources(self.root))
 
+    def test_missing_ipad_orientation_blocks_build(self):
+        path = self.root / "Info.plist"
+        info = plistlib.loads(path.read_bytes())
+        info["UISupportedInterfaceOrientations~ipad"].remove("UIInterfaceOrientationPortraitUpsideDown")
+        path.write_bytes(plistlib.dumps(info))
+        self.assertIn("iPad multitasking requires all four orientations", preflight.check_sources(self.root))
+
     def test_unsafe_transport_blocks_build(self):
         path = self.root / "Info.plist"
         info = plistlib.loads(path.read_bytes())

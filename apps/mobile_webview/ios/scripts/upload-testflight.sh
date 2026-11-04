@@ -21,6 +21,8 @@ if not key.startswith(b'-----BEGIN PRIVATE KEY-----'):
     raise SystemExit('Invalid App Store Connect .p8 private key')
 Path(os.environ['API_PRIVATE_KEYS_DIR'], 'AuthKey_' + os.environ['ASC_KEY_ID'] + '.p8').write_bytes(key)
 PY
-xcrun altool --validate-app --type ios --file "$IPA" --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
-xcrun altool --upload-app --type ios --file "$IPA" --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+xcrun altool --validate-app --type ios --file "$IPA" --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1 | tee build/altool-validate.log
+python3 scripts/check-altool-result.py validate build/altool-validate.log
+xcrun altool --upload-app --type ios --file "$IPA" --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1 | tee build/altool-upload.log
+python3 scripts/check-altool-result.py upload build/altool-upload.log
 echo 'Uploaded to App Store Connect for processing. App Review submission and public release were not performed.'

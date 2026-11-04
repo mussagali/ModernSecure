@@ -34,6 +34,13 @@ def check_sources(root=ROOT):
           "Release must use the production HTTPS origin")
     check(info.get("CFBundleShortVersionString") == "$(MARKETING_VERSION)", "Version must use MARKETING_VERSION")
     check(info.get("CFBundleVersion") == "$(CURRENT_PROJECT_VERSION)", "Build must use CURRENT_PROJECT_VERSION")
+    ipad_orientations = info.get("UISupportedInterfaceOrientations~ipad", info.get("UISupportedInterfaceOrientations", []))
+    check(set(ipad_orientations) == {
+        "UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown",
+        "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight",
+    }, "iPad multitasking requires all four orientations")
+    check("UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]" in spec,
+          "XcodeGen must preserve all four iPad orientations")
     check(not info.get("NSAppTransportSecurity", {}).get("NSAllowsArbitraryLoads"), "Arbitrary HTTP loads enabled")
     check(not info.get("NSAppTransportSecurity", {}).get("NSAllowsArbitraryLoadsInWebContent"), "HTTP WebView loads enabled")
     check(manifest.get("NSPrivacyTracking") is False and manifest.get("NSPrivacyTrackingDomains") == [], "Unexpected tracking declaration")
