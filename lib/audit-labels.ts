@@ -1,5 +1,7 @@
 const actions: Record<string, string> = {
   accepted: "Принято",
+  requested: "Запрос зарегистрирован",
+  updated: "Обновлено",
   approved: "Аккаунт активирован",
   registration_approved: "Регистрация одобрена",
   installment_cancelled: "Платёж графика отменён",
@@ -40,6 +42,7 @@ const actions: Record<string, string> = {
 
 const entities: Record<string, string> = {
   account: "Аккаунт",
+  account_deletion_request: "Запрос на удаление аккаунта",
   case: "Дело",
   case_assignment: "Назначение на дело",
   case_internal_note: "Внутренняя заметка",

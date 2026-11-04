@@ -15,6 +15,9 @@ function load(file, dependencies = {}) {
 }
 const returns = load("../lib/return-path.ts");
 const { workspaceDestination } = load("../lib/workspace-destination.ts", { "./return-path": returns });
+assert.equal(workspaceDestination({role:"lawyer",active:false,mfa_passed:false},"/delete-account"),"/delete-account");
+assert.equal(workspaceDestination(null,"//evil.test/delete-account"),"/account");
+assert.equal(workspaceDestination(null,"/delete-account?next=https://evil.test"),"/account");
 for (const invalid of ["https://evil.test", "//evil.test", "/staff/../../evil", "/staff/%2f%2fevil", "/staff\\evil", "/staffing", "/account"]) {
   assert.equal(returns.safeStaffReturn(invalid), "/staff");
 }

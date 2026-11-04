@@ -12,6 +12,6 @@ export function AuthFrame({ children, title, description, wide = false }: {
     <div className="auth-layout">
       <section className="auth-main" aria-labelledby="auth-title"><div className="auth-content"><h1 id="auth-title">{title}</h1><p className="auth-description">{description}</p>{children}</div></section>
     </div>
-    <footer className="auth-footer"><nav aria-label="Правовая информация"><Link href="/terms">Условия использования</Link><Link href="/privacy">Конфиденциальность</Link></nav></footer>
+    <footer className="auth-footer"><nav aria-label="Помощь и правовая информация"><Link href="/support">Поддержка</Link><Link href="/delete-account">Удаление аккаунта</Link><Link href="/terms">Условия использования</Link><Link href="/privacy">Конфиденциальность</Link></nav></footer>
   </main>;
 }

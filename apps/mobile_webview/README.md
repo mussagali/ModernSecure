@@ -18,7 +18,7 @@ Android debug APK собран и проверен на Pixel 7 / Android API 36
 
 Реальная загрузка и скачивание 6 МиБ через подписанные Storage URL проверены с совпадением SHA-256. Тестовые объекты удалены. Это проверка транспорта, не полного сценария каждого вида документа.
 
-iOS-проект сгенерирован XcodeGen, Swift-файлы прошли синтаксический разбор. Полного Xcode/iOS SDK на этом Mac нет: сборка IPA и работа на iPhone **не проверены**.
+iOS Release собран без подписи в GitHub Actions с Xcode 26.3. Проверены запуск и загрузка экрана входа на симуляторах iPhone 17 Pro и iPad Pro 13″ с iOS 26.2. Подписанный IPA, TestFlight и физические устройства **ещё не проверены**. Подробности и ссылка на проверку: [результаты подготовки iOS](ios/app-store/VALIDATION.md).
 
 Рабочий HTTPS-домен: `https://modernsecure.shpshka.work`. Проверяемый debug APK собран с `-PsiteUrl=https://modernsecure.shpshka.work` и запущен в Android-эмуляторе. Без параметра `siteUrl` debug-сборка использует `http://localhost:3000`. Firebase пока не настроен, push отключён конфигурацией. Фактическая доставка push, фоновые переходы по уведомлениям, загрузка/скачивание файлов на физических телефонах и выпуск в магазины ещё не проверены. Заготовка не считается готовым релизом App Store / Google Play.
 
@@ -103,7 +103,7 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`. После успешной п
 Firebase не нужен для открытия сайта или сборки APK. Текущая реализация доставки использует FCM HTTP v1; на iOS FCM передаёт уведомления через APNs.
 
 1. Создайте Firebase-проект. Добавьте Android-приложения с нужными package ID. Скачайте `google-services.json` в `android/app/`. Для debug нужен клиент с суффиксом `.debug`, для release — без него. Файл исключён из git.
-2. Добавьте iOS-приложение `kz.modernsecure.app`, положите `GoogleService-Info.plist` в `ios/`, затем перегенерируйте проект. В Firebase настройте APNs-ключ из Apple Developer.
+2. Добавьте iOS-приложение `kz.modernsecure.modernSecure`, положите `GoogleService-Info.plist` в `ios/`, затем перегенерируйте проект. В Firebase настройте APNs-ключ из Apple Developer.
 3. В окружение сервера добавьте `FIREBASE_SERVICE_ACCOUNT_JSON` с ключом сервисного аккаунта Firebase Messaging и случайный `CRON_SECRET`. Не помещайте сервисный ключ в мобильное приложение и не используйте префикс `NEXT_PUBLIC_`.
 4. Подключите периодический HTTPS GET `/api/internal/push` с заголовком `Authorization: Bearer <CRON_SECRET>`. За один вызов обрабатывается до 20 доставок; частоту и лимиты выбирайте под хостинг. Готового расписания Vercel Cron в репозитории нет, пока не выбран тариф/планировщик.
 5. Пересоберите приложения. Войдите активированным аккаунтом, включите уведомления и проверьте доставку на настоящем устройстве, выход из аккаунта, смену аккаунта и отзыв доступа.
@@ -122,7 +122,9 @@ xcodegen generate
 open ModernSecure.xcodeproj
 ```
 
-В Xcode задайте Team и `SITE_HOST` / `SITE_SCHEME`. Debug использует `http://localhost:3000` для симулятора на этом Mac. Release-плейсхолдер `REPLACE_WITH_YOUR_DOMAIN` обязательно замените. Для физического iPhone нужен доступный HTTPS-домен. Push требует Apple Developer, capabilities и provisioning profile. Иконка добавлена; подпись, сведения для магазинов и проверка требований публикации — отдельный этап после проверки на устройствах.
+Release использует `https://modernsecure.shpshka.work`; Debug по умолчанию использует `http://localhost:3000`. Team задаётся через игнорируемый `Local.xcconfig` по примеру `Local.xcconfig.example`. Общая схема Xcode, privacy manifest и версия `1.0.0` подготовлены. Firebase plist остаётся опциональным; после его добавления перегенерируйте проект.
+
+Полная инструкция, включая **сборку с Windows через GitHub Actions без собственного Mac**, подпись IPA, TestFlight, черновики App Store Connect и ещё не закрытые блокеры: [Подготовка к App Store](ios/app-store/README.md). Без успешной iOS-сборки, проверки на устройствах, удаления аккаунта и утверждённых правовых материалов приложение не считается готовым к отправке.
 
 ## Проверки разработчика
 

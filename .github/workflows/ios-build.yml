@@ -1,0 +1,152 @@
+name: iOS build
+
+on:
+  workflow_dispatch:
+    inputs:
+      capture_store_screenshots:
+        description: Capture real authenticated demo screens for App Store (no upload)
+        type: boolean
+        default: false
+      screenshot_runner:
+        description: Standard Mac image for the screenshot capture job
+        type: choice
+        default: macos-15-intel
+        options:
+          - macos-15-intel
+          - macos-15
+          - macos-26
+      screenshot_devices:
+        description: Device family to capture (select one when diagnosing a failure)
+        type: choice
+        default: both
+        options:
+          - both
+          - iphone
+          - ipad
+      screenshot_engine:
+        description: Native UI capture engine
+        type: choice
+        default: xctest
+        options:
+          - xctest
+          - idb
+  push:
+    paths:
+      - 'apps/mobile_webview/ios/**'
+      - '.github/workflows/ios-build.yml'
+  pull_request:
+    paths:
+      - 'apps/mobile_webview/ios/**'
+      - '.github/workflows/ios-build.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  # Capture engines use separate disposable VMs and only produce local artifacts.
+  group: ios-build-${{ github.ref }}-${{ inputs.capture_store_screenshots && inputs.screenshot_engine || 'default' }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    if: github.event_name != 'workflow_dispatch' || !inputs.capture_store_screenshots
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install XcodeGen
+        run: command -v xcodegen || brew install xcodegen
+      - name: Select a supported stable Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          # macos-15 includes Xcode 26. Select explicitly instead of using its older default.
+          XCODE_PATH="$(find /Applications -maxdepth 1 -type d -name 'Xcode_26*.app' ! -iname '*beta*' ! -iname '*RC*' | sort -V | tail -n 1)"
+          test -n "$XCODE_PATH"
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          xcodebuild -version
+      - name: Check sources and release safeguards
+        run: python3 -m unittest discover -s apps/mobile_webview/ios/scripts -p 'test_*.py'
+      - name: Build Release for iOS Simulator without signing
+        env:
+          IOS_BUILD_NUMBER: ${{ github.run_number }}
+        run: bash apps/mobile_webview/ios/scripts/build.sh simulator
+      - name: Package simulator app
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            apps/mobile_webview/ios/build/simulator/Build/Products/Release-iphonesimulator/ModernSecure.app \
+            apps/mobile_webview/ios/build/ModernSecure-simulator.zip
+      - name: Launch on iPhone and iPad simulators
+        run: python3 apps/mobile_webview/ios/scripts/smoke-simulator.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ModernSecure-ios-startup-screenshots
+          path: apps/mobile_webview/ios/build/smoke-screenshots
+          if-no-files-found: ignore
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ModernSecure-ios-simulator
+          path: apps/mobile_webview/ios/build/ModernSecure-simulator.zip
+          if-no-files-found: error
+          retention-days: 7
+  store-screenshots:
+    if: '!cancelled() && github.event_name == ''workflow_dispatch'' && inputs.capture_store_screenshots'
+    runs-on: ${{ inputs.screenshot_runner || 'macos-15-intel' }}
+    environment: app-store
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - name: Select Xcode and install XcodeGen
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Match the validated App Store binary and known-good startup captures.
+          XCODE_PATH="/Applications/Xcode_26.3.app"
+          test -d "$XCODE_PATH"
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          xcodebuild -version
+          command -v xcodegen || brew install xcodegen
+      - name: Build unchanged Release app for Simulator
+        env:
+          IOS_VERSION: '1.0.0'
+          IOS_BUILD_NUMBER: '2'
+        run: bash apps/mobile_webview/ios/scripts/build.sh simulator
+      - name: Install local native accessibility bridge when requested
+        if: inputs.screenshot_engine == 'idb'
+        run: |
+          test "$(uname -m)" = arm64
+          brew tap meta/fb
+          brew trust meta/fb
+          brew install meta/fb/idb
+          idb ui describe-all --help
+          idb ui set-value --help
+      - name: Read dedicated review credentials without logging them
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY_P8_BASE64: ${{ secrets.ASC_PRIVATE_KEY_P8_BASE64 }}
+        run: node apps/mobile_webview/ios/scripts/load-screenshot-access.mjs
+      - name: Capture real synthetic-case screens on iPhone and iPad
+        env:
+          SCREENSHOT_DEVICE_FAMILY: ${{ inputs.screenshot_devices || 'both' }}
+          SCREENSHOT_ENGINE: ${{ inputs.screenshot_engine || 'xctest' }}
+        run: |
+          if [ "$SCREENSHOT_ENGINE" = idb ]; then
+            python3 apps/mobile_webview/ios/scripts/capture-idb-simulator.py
+          else
+            python3 apps/mobile_webview/ios/scripts/capture-store-simulator.py
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ModernSecure-ios-store-screenshots
+          path: apps/mobile_webview/ios/build/store-screenshots
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Remove private test credentials and logs
+        if: always()
+        run: |
+          rm -f apps/mobile_webview/ios/build/screenshot-access.local.json
+          rm -rf apps/mobile_webview/ios/build/private-screenshot-tests

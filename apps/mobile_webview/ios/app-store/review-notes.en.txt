@@ -1,0 +1,13 @@
+Saved in App Store Connect on November 4, 2026. Not submitted: Apple validation requires screenshots and Support URL. Credentials are stored only in private review fields.
+
+ModernSecure is the client and staff workspace of TOO "Sovremennaya Zashchita", a legal services company in Kazakhstan (BIN 220140025162). The account holder confirmed authority to publish the company's brand through this Apple Developer membership.
+
+The app provides assigned legal cases, stages, tasks, document requests, document uploads/downloads and case conversations. Access depends on the assigned account and role. The iOS container includes gesture navigation and native Quick Look document previews.
+
+Sign in using the dedicated client credentials in the private review fields. The account was activated and isolated to one synthetic case during the last backend check on November 4, 2026. No real client case was assigned to it. Open the case titled "ДЕМО APPLE — проверка приложения, не юридическая услуга" to inspect the demo stages and task. Use only non-sensitive test attachments and messages.
+
+New registrations require email confirmation and company activation. An internet connection is required. The hosted workspace is https://modernsecure.shpshka.work. Payment screens concern separate legal-service contracts. Push delivery is not configured for this release and is not advertised as operational.
+
+Validation completed: signed version 1.0.0 (2), Xcode 26.3 / iOS 26.2 SDK, Apple build validation and TestFlight processing. Simulator startup was checked on iPhone and iPad. Authenticated workflows in the final binary and physical-device installation have not yet been verified.
+
+Known outstanding deployment issues: the public privacy page currently reports that its document could not be loaded; /support and the new in-app account deletion request page have not been deployed. The repository contains draft support/deletion pages and a database migration, but these changes are not present in the hosted workspace. These limitations are disclosed and must not be treated as completed features.

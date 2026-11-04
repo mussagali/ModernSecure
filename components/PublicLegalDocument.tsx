@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 import { Brand } from "./Brand";
+import { LegalText } from "./LegalText";
 
 // Server component: only the currently published legal text is returned to visitors.
 export async function PublicLegalDocument({ type }: { type: "terms" | "privacy" }) {
@@ -14,9 +15,9 @@ export async function PublicLegalDocument({ type }: { type: "terms" | "privacy" 
   return <main className="legal-page">
     <header><Brand href="/login" /><Link href="/login">К входу</Link></header>
     <article><h1>{document?.title || title}</h1>
-      {document ? <><p className="legal-version">Версия {document.version}</p><div className="legal-body">{document.body}</div></>
+      {document ? <><p className="legal-version">Версия {document.version}</p><LegalText body={document.body} /></>
         : <p role="status">{result?.error || !db ? "Не удалось загрузить документ. Попробуйте открыть страницу позже." : "Документ ещё не опубликован компанией. Обратитесь к администратору за действующей редакцией."}</p>}
     </article>
-    <nav aria-label="Правовая информация"><Link href="/terms">Условия использования</Link><Link href="/privacy">Конфиденциальность</Link></nav>
+    <nav aria-label="Правовая информация"><Link href="/terms">Условия использования</Link><Link href="/privacy">Конфиденциальность</Link><Link href="/deletion-policy">Правила удаления</Link><Link href="/delete-account">Удалить аккаунт</Link><Link href="/support">Поддержка</Link></nav>
   </main>;
 }

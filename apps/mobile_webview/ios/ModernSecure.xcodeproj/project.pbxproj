@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		15EC61B368F669B1EBCF0776 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 22718FD225D2F0CB7B3E18A9 /* GoogleService-Info.plist */; };
+		AAA000000000000000000001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AAA000000000000000000002 /* PrivacyInfo.xcprivacy */; };
 		2661DFB6F4480DFDB4F1EEE5 /* WebController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4550070F21F3C26F9EFC0E2A /* WebController.swift */; };
 		40BEABA9C03B220C3344F7CB /* ModernSecureApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E90CB6E218CD089218AB0B0 /* ModernSecureApp.swift */; };
 		CFA95079A469D8B2E2776B3F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FBDB30BC760B423188D9AA95 /* Assets.xcassets */; };
@@ -16,7 +16,8 @@
 
 /* Begin PBXFileReference section */
 		1E90CB6E218CD089218AB0B0 /* ModernSecureApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernSecureApp.swift; sourceTree = "<group>"; };
-		22718FD225D2F0CB7B3E18A9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		AAA000000000000000000002 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		AAA000000000000000000003 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 		4550070F21F3C26F9EFC0E2A /* WebController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebController.swift; sourceTree = "<group>"; };
 		474CF8CA5110E0526BB34F18 /* ModernSecure.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ModernSecure.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FBDB30BC760B423188D9AA95 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -48,6 +49,7 @@
 				FBDB30BC760B423188D9AA95 /* Assets.xcassets */,
 				1E90CB6E218CD089218AB0B0 /* ModernSecureApp.swift */,
 				4550070F21F3C26F9EFC0E2A /* WebController.swift */,
+				AAA000000000000000000002 /* PrivacyInfo.xcprivacy */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -55,7 +57,7 @@
 		CC5C0D7193FE8F25FCC8BD5C = {
 			isa = PBXGroup;
 			children = (
-				22718FD225D2F0CB7B3E18A9 /* GoogleService-Info.plist */,
+				AAA000000000000000000003 /* Signing.xcconfig */,
 				4154588456D71B4F8EFFA6A3 /* Sources */,
 				2C58423F3F23781619EB7A81 /* Products */,
 			);
@@ -99,10 +101,11 @@
 				};
 			};
 			buildConfigurationList = A9C474C123AAFE3CB3F2DB7A /* Build configuration list for PBXProject "ModernSecure" */;
-			developmentRegion = en;
+			developmentRegion = ru;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
+				ru,
 				en,
 			);
 			mainGroup = CC5C0D7193FE8F25FCC8BD5C;
@@ -126,7 +129,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CFA95079A469D8B2E2776B3F /* Assets.xcassets in Resources */,
-				15EC61B368F669B1EBCF0776 /* GoogleService-Info.plist in Resources */,
+				AAA000000000000000000001 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -147,7 +150,11 @@
 /* Begin XCBuildConfiguration section */
 		446FB3CAB7CB117428052736 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AAA000000000000000000003 /* Signing.xcconfig */;
 			buildSettings = {
+				MARKETING_VERSION = 1.0.0;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_LANGUAGE = ru;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -196,7 +203,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SITE_HOST = REPLACE_WITH_YOUR_DOMAIN;
+				SITE_HOST = modernsecure.shpshka.work;
 				SITE_SCHEME = https;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
@@ -207,7 +214,11 @@
 		};
 		5A19BB9CF42FF31D232C76E7 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AAA000000000000000000003 /* Signing.xcconfig */;
 			buildSettings = {
+				MARKETING_VERSION = 1.0.0;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_LANGUAGE = ru;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -276,6 +287,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APS_ENVIRONMENT = production;
+				PROVISIONING_PROFILE_SPECIFIER = "$(APP_STORE_PROFILE_UUID)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = ModernSecure.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -284,7 +296,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = kz.modernsecure.app;
+				PRODUCT_BUNDLE_IDENTIFIER = kz.modernsecure.modernSecure;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -302,7 +314,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = kz.modernsecure.app;
+				PRODUCT_BUNDLE_IDENTIFIER = kz.modernsecure.modernSecure;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

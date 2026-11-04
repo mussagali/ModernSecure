@@ -254,12 +254,21 @@ final class WebController: UIViewController, WKNavigationDelegate, WKUIDelegate,
         } else if action == "settings" {
             if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
         } else if action == "disable" {
-            UserDefaults.standard.set(false, forKey: "pushEnabled"); Messaging.messaging().deleteToken(completion: nil); reply(["configured": true, "enabled": false])
+            UserDefaults.standard.set(false, forKey: "pushEnabled")
+            pushWaiting = false
+            Messaging.messaging().isAutoInitEnabled = false
+            Messaging.messaging().deleteToken { [weak self] error in
+                DispatchQueue.main.async {
+                    self?.reply(["configured": true, "enabled": false, "error": error != nil])
+                }
+            }
         }
     }
     private func sendPushToken() {
         guard pushWaiting, FirebaseApp.app() != nil, Messaging.messaging().apnsToken != nil else { return }
         pushWaiting = false; Messaging.messaging().isAutoInitEnabled = true
+        // The server uses FCM registration tokens. Migrating to Firebase's newer
+        // installation-ID API requires a coordinated server transport change.
         Messaging.messaging().token { [weak self] token, error in
             DispatchQueue.main.async {
                 guard let token, error == nil else { self?.reply(["configured": true, "error": true]); return }

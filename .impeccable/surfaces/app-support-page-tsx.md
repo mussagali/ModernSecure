@@ -1,0 +1,9 @@
+# Public support: `/support`
+
+Purpose: provide support without authentication, including the App Store Support URL. This narrow extension reuses the incumbent `AuthFrame` and the authentication rules in `DESIGN.md`; it introduces no visual system or token changes. Preserve the existing brand header, desktop companion, responsive content column, typography, links, and footer treatment.
+
+Public contacts default to the sourced company email/phone in `content/legal/documents.ru.json`; `PUBLIC_SUPPORT_EMAIL` and `PUBLIC_SUPPORT_PHONE` override them, with optional `PUBLIC_SUPPORT_HOURS`. Valid email/phone values become contact links; hours appear only with an available contact. With neither valid contact, show the truthful unpublished-contact state. Never use a private Apple ID, account contact, or staff-only setting. Display the user-confirmed operator ТОО «Современная Защита», БИН 220140025162. Password recovery, account deletion, and login remain available below the contact section.
+
+Baseline comparison: the support link and navigation label are now incumbent; the current `AuthFrame` diff adds account deletion to its footer without changing its structure or styling. `PRODUCT.md`, `DESIGN.md`, and `.impeccable/design.json` have no current diff. No unrelated design drift was established by this limited source comparison; rendered drift remains unassessed. See `app-delete-account-page-tsx.md` for the legal/deletion extension and deployment limits.
+
+Visual verification is pending. Browser access to the host was unavailable, so no screenshots were captured. Finish review returned `recapture`, with no visual approval. Recapture desktop and phone layouts with configured contacts and the unpublished-contact state; check footer wrapping, contact wrapping, focus visibility, and overflow before claiming rendered review complete.

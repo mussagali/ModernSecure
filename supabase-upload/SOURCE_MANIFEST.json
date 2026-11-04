@@ -1,7 +1,7 @@
 {
-  "schemaVersion": "20261028009600",
-  "installSha256": "22d5a1c4bd76211f78dbad75361fb3942d4e6b198c3b9c6ecec6c87be9c384ed",
-  "note": "Migration 008 owner-specific provisioning removed. Original migrations remain unchanged. Supabase CLI migration history is not modified.",
+  "schemaVersion": "20261102009700",
+  "installSha256": "9c6b70c9bddf86da71bcb586d165f46c197937657df27c118b90e8b0d19fe0ec",
+  "note": "Migration 008 owner-specific provisioning removed. Original migrations remain unchanged. Source SHA-256 uses LF-normalized text for consistent Windows/macOS builds. Supabase CLI migration history is not modified.",
   "migrations": [
     {
       "file": "20261010000100_core_schema.sql",
@@ -481,6 +481,11 @@
     {
       "file": "20261028009600_client_account_email_lookup.sql",
       "sha256": "15ae0b1edc7dcf8934095634755b93c4ed4c8004b8ac730e35094ca9adb8c667",
+      "adapted": false
+    },
+    {
+      "file": "20261102009700_account_deletion_requests.sql",
+      "sha256": "1cc057d4ad20bde96bce3ee68fa5c9c7b44d769b890001243b0d9d671a38eed6",
       "adapted": false
     }
   ]

@@ -1,0 +1,7 @@
+# Generate this spec only after adding your private Firebase configuration.
+include:
+  - project.yml
+targets:
+  ModernSecure:
+    sources:
+      - path: GoogleService-Info.plist

@@ -10,7 +10,7 @@ const files = readdirSync(path.join(root, 'supabase/migrations')).filter(name =>
 const parts = [];
 const manifest = [];
 for (const name of files) {
-  const original = readFileSync(path.join(root, 'supabase/migrations', name), 'utf8');
+  const original = readFileSync(path.join(root, 'supabase/migrations', name), 'utf8').replace(/\r\n/g, '\n');
   let sql = original;
   if (name === '20261011000800_role_boundaries.sql') {
     const boundary = sql.indexOf('create unique index staff_one_primary_admin');
@@ -73,7 +73,7 @@ writeFileSync(path.join(output, '01_INSTALL_SCHEMA.sql'), sql, 'utf8');
 writeFileSync(path.join(output, 'SOURCE_MANIFEST.json'), JSON.stringify({
   schemaVersion: files.at(-1).split('_')[0],
   installSha256: createHash('sha256').update(sql).digest('hex'),
-  note: 'Migration 008 owner-specific provisioning removed. Original migrations remain unchanged. Supabase CLI migration history is not modified.',
+  note: 'Migration 008 owner-specific provisioning removed. Original migrations remain unchanged. Source SHA-256 uses LF-normalized text for consistent Windows/macOS builds. Supabase CLI migration history is not modified.',
   migrations: manifest,
 }, null, 2) + '\n');
 console.log(`Created supabase-upload/01_INSTALL_SCHEMA.sql from ${files.length} migrations (${Buffer.byteLength(sql)} bytes)`);
