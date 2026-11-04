@@ -69,7 +69,7 @@ jobs:
           retention-days: 7
   store-screenshots:
     if: github.event_name == 'workflow_dispatch' && inputs.capture_store_screenshots
-    runs-on: macos-15
+    runs-on: macos-15-intel
     environment: app-store
     timeout-minutes: 35
     steps:
