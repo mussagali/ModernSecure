@@ -68,8 +68,27 @@ def xcode(arguments, name, environment=None):
         for line in safe[-15:]:
             for secret in secrets.values():
                 line = line.replace(secret, '[omitted]')
-            print(line[:500], flush=True)
+            print(line[:2500], flush=True)
         raise RuntimeError(f'{name} failed; raw log retained only in private runner directory')
+
+
+def capture_ui_test(common, udid, family, environment):
+    arguments = [*common, '-destination', 'id=' + udid, '-parallel-testing-enabled', 'NO',
+                 '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '240',
+                 '-maximum-test-execution-time-allowance', '300']
+    try:
+        xcode([*arguments, '-resultBundlePath', str(PRIVATE / (family + '.xcresult')),
+               'test-without-building'], family, environment)
+    except RuntimeError:
+        log = PRIVATE / (family + '.log')
+        text = log.read_text(encoding='utf-8', errors='replace') if log.is_file() else ''
+        # Retry only the simulator's failure to start XCTest, never an app test
+        # failure or a missing demo case. The already-booted device is reused.
+        if 'Simulator device failed to launch ' + RUNNER_ID not in text:
+            raise
+        print(f'{family}: XCTest runner launch failed; retrying once on the booted device.', flush=True)
+        xcode([*arguments, '-resultBundlePath', str(PRIVATE / (family + '-retry.xcresult')),
+               'test-without-building'], family + '-retry', environment)
 
 
 def main():
@@ -125,11 +144,7 @@ def main():
             print(f'{family}: starting bounded UI capture test.', flush=True)
             test_error = None
             try:
-                xcode([*common, '-destination', 'id=' + udid, '-parallel-testing-enabled', 'NO',
-                       '-test-timeouts-enabled', 'YES', '-default-test-execution-time-allowance', '240',
-                       '-maximum-test-execution-time-allowance', '300',
-                       '-resultBundlePath', str(PRIVATE / (family + '.xcresult')), 'test-without-building'],
-                      family, environment)
+                capture_ui_test(common, udid, family, environment)
             except (RuntimeError, subprocess.TimeoutExpired) as error:
                 test_error = type(error).__name__
                 errors.append(family + ': UI capture failed (' + test_error + ')')

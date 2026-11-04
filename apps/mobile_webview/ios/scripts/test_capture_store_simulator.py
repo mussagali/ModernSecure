@@ -14,6 +14,27 @@ spec.loader.exec_module(capture)
 
 
 class CaptureProcessTests(unittest.TestCase):
+    def test_runner_launch_failure_retries_on_the_same_booted_device(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'iphone.log').write_text('Simulator device failed to launch ' + capture.RUNNER_ID)
+            with patch.object(capture, 'PRIVATE', root), \
+                 patch.object(capture, 'xcode', side_effect=[RuntimeError('launch failed'), None]) as xcode:
+                capture.capture_ui_test([], 'same-device', 'iphone', {})
+            self.assertEqual(xcode.call_count, 2)
+            for call in xcode.call_args_list:
+                self.assertIn('id=same-device', call.args[0])
+
+    def test_real_app_test_failure_is_not_retried(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'iphone.log').write_text('CaptureError.demoCaseUnavailable')
+            with patch.object(capture, 'PRIVATE', root), \
+                 patch.object(capture, 'xcode', side_effect=RuntimeError('app test failed')) as xcode:
+                with self.assertRaises(RuntimeError):
+                    capture.capture_ui_test([], 'same-device', 'iphone', {})
+            xcode.assert_called_once()
+
     def test_diagnostic_timeout_does_not_interrupt_successful_xctest(self):
         process = Mock(returncode=0)
         process.poll.side_effect = [None, 0, 0]
