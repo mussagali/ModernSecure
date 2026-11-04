@@ -67,14 +67,16 @@ final class StoreScreenshots: XCTestCase {
         guard passwordField.exists else { throw CaptureError.loginUnavailable }
         phase = "entering-dedicated-password"
         passwordField.tap()
-        // Give WebKit time to process each secure-field keystroke on a slow VM.
-        for (index, character) in password.enumerated() {
-            passwordField.typeText(String(character))
-            if index % 5 == 4 { phase = "entering-dedicated-password-\(index + 1)-of-\(password.count)" }
-        }
+        // Type into the focused descendant as one keyboard operation. Repeated
+        // secure-field operations can reset its insertion state in WebKit.
+        app.typeText(password)
         let enteredLength = (passwordField.value as? String)?.count ?? -1
-        print("SCREENSHOT_INPUT_CHECK: emailMatches=true; passwordLength=" + String(enteredLength))
-        guard enteredLength == password.count else { throw CaptureError.inputValueMismatch }
+        print("SCREENSHOT_INPUT_CHECK: emailMatches=true; secureValueReportedLength=" + String(enteredLength))
+        // Secure accessibility values may be obscured; authentication and the
+        // full synthetic-case gate below validate the actual submitted input.
+        if let value = passwordField.value as? String, value.isEmpty || value == "Пароль" {
+            throw CaptureError.inputValueMismatch
+        }
         let login = app.webViews.buttons.matching(NSPredicate(format: "label == %@", "Войти")).firstMatch
         guard login.exists else { throw CaptureError.loginUnavailable }
         login.tap()
