@@ -2,6 +2,11 @@ name: iOS build
 
 on:
   workflow_dispatch:
+    inputs:
+      capture_store_screenshots:
+        description: Capture real authenticated demo screens for App Store (no upload)
+        type: boolean
+        default: false
   push:
     paths:
       - 'apps/mobile_webview/ios/**'
@@ -20,6 +25,7 @@ concurrency:
 
 jobs:
   simulator:
+    if: github.event_name != 'workflow_dispatch' || !inputs.capture_store_screenshots
     runs-on: macos-15
     timeout-minutes: 35
     steps:
@@ -61,3 +67,43 @@ jobs:
           path: apps/mobile_webview/ios/build/ModernSecure-simulator.zip
           if-no-files-found: error
           retention-days: 7
+  store-screenshots:
+    if: github.event_name == 'workflow_dispatch' && inputs.capture_store_screenshots
+    runs-on: macos-15
+    environment: app-store
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+      - name: Select Xcode and install XcodeGen
+        shell: bash
+        run: |
+          set -euo pipefail
+          XCODE_PATH="$(find /Applications -maxdepth 1 -type d -name 'Xcode_26*.app' ! -iname '*beta*' ! -iname '*RC*' | sort -V | tail -n 1)"
+          test -n "$XCODE_PATH"
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          command -v xcodegen || brew install xcodegen
+      - name: Build unchanged Release app for Simulator
+        env:
+          IOS_VERSION: '1.0.0'
+          IOS_BUILD_NUMBER: '2'
+        run: bash apps/mobile_webview/ios/scripts/build.sh simulator
+      - name: Read dedicated review credentials without logging them
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY_P8_BASE64: ${{ secrets.ASC_PRIVATE_KEY_P8_BASE64 }}
+        run: node apps/mobile_webview/ios/scripts/load-screenshot-access.mjs
+      - name: Capture real synthetic-case screens on iPhone and iPad
+        run: python3 apps/mobile_webview/ios/scripts/capture-store-simulator.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ModernSecure-ios-store-screenshots
+          path: apps/mobile_webview/ios/build/store-screenshots
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Remove private test credentials and logs
+        if: always()
+        run: |
+          rm -f apps/mobile_webview/ios/build/screenshot-access.local.json
+          rm -rf apps/mobile_webview/ios/build/private-screenshot-tests
