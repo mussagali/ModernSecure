@@ -31,27 +31,35 @@ def xcode(arguments, name, environment=None):
                                   stdout=log, stderr=subprocess.STDOUT)
         deadline = time.monotonic() + (900 if name == 'build' else 420)
         next_diagnostic = time.monotonic() + 30
-        while result.poll() is None:
-            if time.monotonic() > deadline:
+        try:
+            while result.poll() is None:
+                if time.monotonic() > deadline:
+                    raise RuntimeError(name + ' exceeded bounded capture time')
+                if name != 'build' and time.monotonic() >= next_diagnostic:
+                    # A failed diagnostic must not interrupt XCTest or leave
+                    # xcodebuild running while the next simulator boots.
+                    udid = environment['SCREENSHOT_SIMULATOR_UDID']
+                    destination = OUTPUT / 'diagnostics' / name
+                    destination.mkdir(parents=True, exist_ok=True)
+                    frame = destination / ('frame-' + str(int(time.monotonic())) + '.png')
+                    try:
+                        diagnostic = subprocess.run(
+                            ['xcrun', 'simctl', 'io', udid, 'screenshot', str(frame)],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+                        if diagnostic.returncode == 0:
+                            print(name + ': simulator diagnostic frame captured (not an App Store image).', flush=True)
+                    except subprocess.TimeoutExpired:
+                        print(name + ': diagnostic frame timed out; XCTest continues.', flush=True)
+                    next_diagnostic = time.monotonic() + 45
+                time.sleep(2)
+        finally:
+            if result.poll() is None:
                 result.terminate()
                 try:
                     result.wait(timeout=20)
                 except subprocess.TimeoutExpired:
                     result.kill()
-                    result.wait()
-                raise RuntimeError(name + ' exceeded bounded capture time')
-            if name != 'build' and time.monotonic() >= next_diagnostic:
-                # Real simulator frames help distinguish boot/login/navigation
-                # failures. Dedicated account only; password input stays masked.
-                udid = environment['SCREENSHOT_SIMULATOR_UDID']
-                destination = OUTPUT / 'diagnostics' / name
-                destination.mkdir(parents=True, exist_ok=True)
-                frame = destination / ('frame-' + str(int(time.monotonic())) + '.png')
-                subprocess.run(['xcrun', 'simctl', 'io', udid, 'screenshot', str(frame)],
-                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
-                print(name + ': simulator diagnostic frame captured (not an App Store image).', flush=True)
-                next_diagnostic = time.monotonic() + 45
-            time.sleep(2)
+                    result.wait(timeout=20)
     if result.returncode:
         # Do not publish raw XCTest activities, typed credentials, or snapshots.
         text = (PRIVATE / (name + '.log')).read_text(encoding='utf-8', errors='replace')
@@ -98,7 +106,11 @@ def main():
             print(f'{family}: booting simulator (up to 600 seconds for first-boot migration).', flush=True)
             if device['state'] != 'Booted':
                 simctl('boot', udid)
-            subprocess.run(['open', '-a', 'Simulator', '--args', '-CurrentDeviceUDID', udid], check=True)
+            try:
+                subprocess.run(['open', '-a', 'Simulator', '--args', '-CurrentDeviceUDID', udid],
+                               check=True, timeout=30)
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                print(f'{family}: Simulator window unavailable; waiting for the runtime directly.', flush=True)
             simctl('bootstatus', udid, '-b', timeout=600)
             print(f'{family}: simulator booted.', flush=True)
             simctl('status_bar', udid, 'override', '--time', '9:41', '--dataNetwork', 'wifi',
