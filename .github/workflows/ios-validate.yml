@@ -1,8 +1,15 @@
-name: iOS validate existing IPA
+name: iOS validate or upload existing IPA
 
 on:
   workflow_dispatch:
     inputs:
+      operation:
+        description: Validate only, or upload the exact IPA for TestFlight processing (no App Review or release)
+        type: choice
+        options:
+          - validate
+          - upload
+        default: validate
       archive_run_id:
         description: Successful signed archive run in this repository
         required: true
@@ -60,15 +67,34 @@ jobs:
           test -n "$XCODE_PATH"
           sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
       - name: Validate with Apple without upload or App Review submission
+        if: inputs.operation != 'upload'
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_PRIVATE_KEY_P8_BASE64: ${{ secrets.ASC_PRIVATE_KEY_P8_BASE64 }}
         run: bash apps/mobile_webview/ios/scripts/upload-testflight.sh validate
+      - name: Check app identity and prevent duplicate build upload
+        if: inputs.operation == 'upload'
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY_P8_BASE64: ${{ secrets.ASC_PRIVATE_KEY_P8_BASE64 }}
+          IOS_BUILD_NUMBER: '4'
+        run: node apps/mobile_webview/ios/scripts/inspect-store.mjs
+      - name: Upload exact validated IPA for TestFlight processing
+        if: inputs.operation == 'upload'
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY_P8_BASE64: ${{ secrets.ASC_PRIVATE_KEY_P8_BASE64 }}
+        run: bash apps/mobile_webview/ios/scripts/upload-testflight.sh upload
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ModernSecure-apple-validation
-          path: apps/mobile_webview/ios/build/altool-validate.log
+          path: |
+            apps/mobile_webview/ios/build/altool-validate.log
+            apps/mobile_webview/ios/build/altool-upload.log
+            apps/mobile_webview/ios/build/store-status.json
           if-no-files-found: ignore
           retention-days: 7
