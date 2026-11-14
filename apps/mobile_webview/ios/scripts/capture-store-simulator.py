@@ -7,6 +7,7 @@ a sanitized device/source report can enter the screenshots artifact.
 import hashlib
 import json
 import os
+import platform
 import re
 import shutil
 import struct
@@ -121,7 +122,8 @@ def main():
     subprocess.run(['xcodegen', 'generate', '--spec', 'project.screenshots.yml'], cwd=ROOT, check=True)
     common = ['-project', 'ModernSecure.xcodeproj', '-scheme', 'ModernSecureScreenshots',
               '-configuration', 'Release', '-derivedDataPath', 'build/simulator',
-              'CODE_SIGNING_ALLOWED=NO', 'MARKETING_VERSION=1.0.1', 'CURRENT_PROJECT_VERSION=4']
+              'CODE_SIGNING_ALLOWED=NO', 'MARKETING_VERSION=1.0.1', 'CURRENT_PROJECT_VERSION=4',
+              'ONLY_ACTIVE_ARCH=YES', 'ARCHS=' + platform.machine()]
     print('Building test-only capture runner; shipping app sources unchanged.', flush=True)
     xcode([*common, '-destination', 'generic/platform=iOS Simulator', 'build-for-testing'], 'build')
     inventory = json.loads(simctl('list', 'devices', 'available', '--json'))['devices']

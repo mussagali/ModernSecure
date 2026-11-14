@@ -50,7 +50,7 @@ final class StoreScreenshots: XCTestCase {
         link.tap()
     }
 
-    private func pasteDedicatedPassword(_ password: String, into field: XCUIElement) throws {
+    private func pasteDedicatedText(_ password: String, into field: XCUIElement) throws {
         // Use the ordinary iOS edit menu, avoiding secure keyboard event loss
         // on slow cloud Simulators. The disposable device clipboard is cleared.
         UIPasteboard.general.string = password
@@ -84,13 +84,14 @@ final class StoreScreenshots: XCTestCase {
         guard emailField.waitForExistence(timeout: 90) else { throw CaptureError.loginUnavailable }
         phase = "entering-dedicated-email"
         emailField.tap()
-        emailField.typeText(email)
-        guard (emailField.value as? String) == email else { throw CaptureError.inputValueMismatch }
+        try pasteDedicatedText(email, into: emailField)
+        let emailReady = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", email), object: emailField)
+        guard XCTWaiter.wait(for: [emailReady], timeout: 10) == .completed else { throw CaptureError.inputValueMismatch }
         let passwordField = app.webViews.secureTextFields.firstMatch
         guard passwordField.exists else { throw CaptureError.loginUnavailable }
         phase = "entering-dedicated-password"
         passwordField.tap()
-        try pasteDedicatedPassword(password, into: passwordField)
+        try pasteDedicatedText(password, into: passwordField)
         let enteredLength = (passwordField.value as? String)?.count ?? -1
         print("SCREENSHOT_INPUT_CHECK: emailMatches=true; secureValueReportedLength=" + String(enteredLength))
         // Secure accessibility values may be obscured; authentication and the
