@@ -6,6 +6,8 @@ set -euo pipefail
 : "${ASC_PRIVATE_KEY_P8_BASE64:?Missing App Store Connect API key secret}"
 [[ "$ASC_KEY_ID" =~ ^[A-Z0-9]{10}$ ]] || { echo 'Invalid ASC key ID' >&2; exit 1; }
 [[ "$ASC_ISSUER_ID" =~ ^[A-Fa-f0-9-]{36}$ ]] || { echo 'Invalid ASC issuer ID' >&2; exit 1; }
+MODE="${1:-upload}"
+[[ "$MODE" == validate || "$MODE" == upload ]] || { echo "Use validate or upload" >&2; exit 1; }
 cd "$(dirname "$0")/.."
 IPA=build/export/ModernSecure.ipa
 test -f "$IPA"
@@ -23,6 +25,10 @@ Path(os.environ['API_PRIVATE_KEYS_DIR'], 'AuthKey_' + os.environ['ASC_KEY_ID'] +
 PY
 xcrun altool --validate-app --type ios --file "$IPA" --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1 | tee build/altool-validate.log
 python3 scripts/check-altool-result.py validate build/altool-validate.log
+if [[ "$MODE" == validate ]]; then
+  echo "Apple validation complete. No build uploaded or submitted for review."
+  exit 0
+fi
 xcrun altool --upload-app --type ios --file "$IPA" --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1 | tee build/altool-upload.log
 python3 scripts/check-altool-result.py upload build/altool-upload.log
 echo 'Uploaded to App Store Connect for processing. App Review submission and public release were not performed.'

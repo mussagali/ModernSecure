@@ -1,0 +1,74 @@
+name: iOS validate existing IPA
+
+on:
+  workflow_dispatch:
+    inputs:
+      archive_run_id:
+        description: Successful signed archive run in this repository
+        required: true
+        default: '43601921272'
+      artifact_name:
+        description: Signed archive artifact name
+        required: true
+        default: ModernSecure-ios-1.0.1-4
+      ipa_sha256:
+        description: Expected SHA-256 of the downloaded IPA
+        required: true
+        default: 67b0572a8efa0d5b5360dc5fd4bf0bdab14281501a2bd359d6b3fda9b4c12ab6
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    environment: app-store
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify successful signed source run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCHIVE_RUN_ID: ${{ inputs.archive_run_id }}
+        run: |
+          [[ "$ARCHIVE_RUN_ID" =~ ^[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$ARCHIVE_RUN_ID" > "$RUNNER_TEMP/archive-run.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          run = json.loads(Path(os.environ['RUNNER_TEMP'], 'archive-run.json').read_text())
+          assert run['path'] == '.github/workflows/ios-release.yml'
+          assert run['conclusion'] == 'success'
+          assert run['head_branch'] == 'main'
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.archive_run_id }}
+          name: ${{ inputs.artifact_name }}
+          path: apps/mobile_webview/ios/build
+      - name: Verify exact binary and select Xcode
+        env:
+          EXPECTED_SHA: ${{ inputs.ipa_sha256 }}
+        run: |
+          [[ "$EXPECTED_SHA" =~ ^[a-f0-9]{64}$ ]]
+          ACTUAL_SHA="$(shasum -a 256 apps/mobile_webview/ios/build/export/ModernSecure.ipa | cut -d ' ' -f 1)"
+          test "$ACTUAL_SHA" = "$EXPECTED_SHA"
+          XCODE_PATH="$(find /Applications -maxdepth 1 -type d -name 'Xcode_26*.app' ! -iname '*beta*' ! -iname '*RC*' | sort -V | tail -n 1)"
+          test -n "$XCODE_PATH"
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+      - name: Validate with Apple without upload or App Review submission
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY_P8_BASE64: ${{ secrets.ASC_PRIVATE_KEY_P8_BASE64 }}
+        run: bash apps/mobile_webview/ios/scripts/upload-testflight.sh validate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ModernSecure-apple-validation
+          path: apps/mobile_webview/ios/build/altool-validate.log
+          if-no-files-found: ignore
+          retention-days: 7
