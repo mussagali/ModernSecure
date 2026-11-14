@@ -1,15 +1,13 @@
-DRAFT FOR VERSION 1.0.1 — verify the final build and dedicated demo account before saving these notes in App Store Connect. These notes have not been submitted.
+ModernSecure is the client and staff workspace of TOO "Sovremennaya Zashchita", a legal services company in Kazakhstan (BIN 220140025162). Version 1.0.1 (4) updates the company icon and interface while retaining the existing app identifier.
 
-ModernSecure is the client and staff workspace of TOO "Sovremennaya Zashchita", a legal services company in Kazakhstan (BIN 220140025162). This update retains the existing app identifier and introduces the company's current icon and interface.
+The app provides assigned cases, stages, tasks, document requests, uploads/downloads and case conversations. Access depends on account activation and role. The iOS container provides back gestures, system file/camera selection and native Quick Look document previews. An internet connection is required. The hosted workspace is https://modern-secure.vercel.app. Push delivery is not configured or advertised for this release.
 
-The app provides assigned legal cases, stages, tasks, document requests, document uploads/downloads and case conversations. Access depends on account activation and role. The iOS container provides back gestures, system file/camera selection and native Quick Look document previews. The hosted workspace is https://modern-secure.vercel.app. An internet connection is required. Push delivery is not configured or advertised for this release.
+Use the activated client credentials in the private review fields. This account is isolated to the synthetic case "ДЕМО APPLE — проверка приложения, не юридическая услуга" (MS-2026-000007). Required terms and privacy consent have been accepted for this demo account only. Use non-sensitive test attachments and messages. New registrations require email confirmation and company activation.
 
-Use the dedicated, activated client credentials in the private App Review fields. The review account must contain only synthetic demonstration data. Open the case titled "ДЕМО APPLE — проверка приложения, не юридическая услуга". New registrations require email confirmation and company activation; the supplied review account must be activated in advance.
+Account deletion can be requested inside the app through Profile → Delete account or the Delete account link below the login form, including before company activation. No phone call or separate email is required to initiate the request. The company processes requests within the published maximum of 30 calendar days, subject to legal-retention exceptions, and sends confirmation. Request submission does not immediately erase case records.
 
-Account deletion can be initiated within the app through Profile → Delete account, or the Delete account link below the login form. This is also available before company activation. It does not require a phone call or a separate email. Processing follows the published privacy policy, including its maximum 30-calendar-day deadline and specific legal-retention exceptions. The company sends confirmation after processing. The request itself does not immediately delete legal case records.
-
-Privacy policy: https://modern-secure.vercel.app/privacy
 Support: https://modern-secure.vercel.app/support
-Account deletion: https://modern-secure.vercel.app/delete-account
+Privacy: https://modern-secure.vercel.app/privacy
+Deletion: https://modern-secure.vercel.app/delete-account
 
-Release operator: remove this draft notice only after verifying the deployed deletion workflow, actual file operations, reviewer credentials, final TestFlight build and updated screenshots. Do not describe any untested scenario as verified.
+Validation: signed IPA passed Apple technical validation. Dedicated-client login and navigation through case overview, case list, tasks and documents passed on iPad Simulator. iPhone login and the first case screen passed; subsequent automated navigation hit the CI time limit. Private file upload/download transport passed, including a 6 MiB test file. Full physical-device TestFlight acceptance, camera and native file interactions remain to be verified.
