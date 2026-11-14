@@ -1,0 +1,18 @@
+{
+  "approvedOn": "2026-11-14",
+  "account": "apple-review-modernsecure@example.test",
+  "documents": [
+    {
+      "document_type": "privacy",
+      "version": 2,
+      "title": "Политика конфиденциальности «Современная защита»",
+      "bodySha256": "4a7d2121622677ba3655fe7104b56d89333a9589c3d44efed0d1fd774567b433"
+    },
+    {
+      "document_type": "terms",
+      "version": 2,
+      "title": "Условия использования приложения «Современная защита»",
+      "bodySha256": "54bbefbc27886a310e92ee68fa00f25deccef84e8c19e83a944ea7323ac451a8"
+    }
+  ]
+}

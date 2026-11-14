@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / 'build/store-screenshots'
 PRIVATE = ROOT / 'build/private-screenshot-tests'
 RUNNER_ID = 'kz.modernsecure.screenshot-tests.xctrunner'
-EXPECTED = ['01-cases.png', '02-case-overview.png', '03-tasks.png', '04-documents.png']
+EXPECTED = ['01-case-overview.png', '02-cases.png', '03-tasks.png', '04-documents.png']
 
 
 def simctl(*arguments, timeout=180):
@@ -41,7 +41,7 @@ def xcode(arguments, name, environment=None):
                     phase_file = Path(environment.get('TEST_RUNNER_SCREENSHOT_OUTPUT_DIRECTORY', str(PRIVATE))) / 'diagnostic-phase.txt'
                     if phase_file.is_file():
                         phase = phase_file.read_text(encoding='utf-8')
-                        if phase != last_phase and re.fullmatch(r'waiting-for-login|entering-dedicated-(?:email|password)(?:-\d+-of-\d+)?|waiting-for-synthetic-case-after-login|opening-(?:case|tasks|documents)', phase):
+                        if phase != last_phase and re.fullmatch(r'waiting-for-login|entering-dedicated-(?:email|password)(?:-\d+-of-\d+)?|waiting-for-synthetic-case-after-login|opening-(?:case|case-list|tasks|documents)', phase):
                             print(name + ': UI phase=' + phase, flush=True)
                             last_phase = phase
                     # A failed diagnostic must not interrupt XCTest or leave

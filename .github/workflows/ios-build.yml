@@ -7,6 +7,10 @@ on:
         description: Capture real authenticated demo screens for App Store (no upload)
         type: boolean
         default: false
+      accept_approved_demo_consents:
+        description: Apply only the exact demo terms/privacy approved on 2026-11-14 (no marketing)
+        type: boolean
+        default: false
       screenshot_runner:
         description: Standard Mac image for the screenshot capture job
         type: choice
@@ -128,6 +132,12 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_PRIVATE_KEY_P8_BASE64: ${{ secrets.ASC_PRIVATE_KEY_P8_BASE64 }}
         run: node apps/mobile_webview/ios/scripts/load-screenshot-access.mjs
+      - name: Apply explicitly approved demo terms and privacy
+        if: inputs.accept_approved_demo_consents
+        env:
+          ACCEPT_APPROVED_DEMO_CONSENTS: 'true'
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: node apps/mobile_webview/ios/scripts/prepare-demo-consents.mjs
       - name: Capture real synthetic-case screens on iPhone and iPad
         env:
           SCREENSHOT_DEVICE_FAMILY: ${{ inputs.screenshot_devices || 'both' }}
