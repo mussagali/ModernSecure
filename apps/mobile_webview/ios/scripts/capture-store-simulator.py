@@ -37,7 +37,14 @@ def xcode(arguments, name, environment=None):
             while result.poll() is None:
                 if time.monotonic() > deadline:
                     raise RuntimeError(name + ' exceeded bounded capture time')
-                if name != 'build' and time.monotonic() >= next_diagnostic:
+                if name == 'build' and time.monotonic() >= next_diagnostic:
+                    # Compile progress contains no typed login data. Keep UI-test
+                    # activity logs private, even when a simulator stalls.
+                    progress = (PRIVATE / (name + '.log')).read_text(encoding='utf-8', errors='replace').splitlines()
+                    safe_progress = [line for line in progress[-80:] if re.match(r'^(SwiftCompile|CompileC|Ld |Fetching|Cloning|Checking out|Resolve Package)', line)]
+                    print('build: ' + (safe_progress[-1][:240] if safe_progress else 'compiler/dependency resolution still running'), flush=True)
+                    next_diagnostic = time.monotonic() + 45
+                elif name != 'build' and time.monotonic() >= next_diagnostic:
                     phase_file = Path(environment.get('TEST_RUNNER_SCREENSHOT_OUTPUT_DIRECTORY', str(PRIVATE))) / 'diagnostic-phase.txt'
                     if phase_file.is_file():
                         phase = phase_file.read_text(encoding='utf-8')
