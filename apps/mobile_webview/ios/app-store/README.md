@@ -28,6 +28,10 @@ bash scripts/build.sh simulator
 
 `build.sh archive` дополнительно требует установленную подпись, `APPLE_TEAM_ID`, `IOS_PROFILE_UUID`. Сборка Release не использует localhost. `Signing.xcconfig` подключает необязательный `Local.xcconfig`, исключённый из Git.
 
+## Готовый проверенный IPA
+
+`artifacts/app-store-1.0.1-4/export/ModernSecure.ipa` — подписанный пакет. Его SHA-256 и ссылки на успешные сборку/проверку Apple находятся в `RELEASE-STATUS.ru.md`. Workflow **iOS validate existing IPA** проверяет выбранный артефакт по SHA-256 и отправляет его только на техническую валидацию Apple, без создания релиза.
+
 ## Проверка и материалы
 
 `metadata.ru.json` содержит готовые название, описание, ключевые слова и «Что нового». `review-notes.en.txt` — текст для закрытых заметок после проверки указанных условий; пароль в нём не хранится.
