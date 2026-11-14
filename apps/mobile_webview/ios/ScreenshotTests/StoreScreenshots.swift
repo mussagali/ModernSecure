@@ -108,7 +108,7 @@ final class StoreScreenshots: XCTestCase {
         // synthetic title and its known number before saving any store image.
         let demo = app.webViews.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "ДЕМО APPLE")).firstMatch
         guard demo.waitForExistence(timeout: 90),
-              app.webViews.staticTexts["MS2026000007"].exists,
+              app.webViews.staticTexts["MS-2026-000007"].exists,
               app.webViews.staticTexts["Моё дело"].exists
         else { throw CaptureError.demoCaseUnavailable }
         try capture("01-case-overview")
