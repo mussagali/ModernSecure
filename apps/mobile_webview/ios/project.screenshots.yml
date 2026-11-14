@@ -1,0 +1,26 @@
+# This test-only spec does not change the shipped app target or Release origin.
+include: project.yml
+targets:
+  ModernSecureScreenshots:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: ScreenshotTests
+    dependencies:
+      - target: ModernSecure
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: kz.modernsecure.screenshot-tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: ModernSecure
+schemes:
+  ModernSecureScreenshots:
+    build:
+      targets:
+        ModernSecure: all
+        ModernSecureScreenshots: [test]
+    test:
+      config: Release
+      gatherCoverageData: false
+      targets:
+        - name: ModernSecureScreenshots

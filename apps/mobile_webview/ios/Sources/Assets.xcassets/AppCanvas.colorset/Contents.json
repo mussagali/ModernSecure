@@ -4,9 +4,17 @@
       "idiom": "universal",
       "color": {
         "color-space": "srgb",
-        "components": { "red": "0xF4", "green": "0xF6", "blue": "0xF8", "alpha": "1.000" }
+        "components": {
+          "red": "0.953",
+          "green": "0.957",
+          "blue": "0.965",
+          "alpha": "1.000"
+        }
       }
     }
   ],
-  "info": { "author": "xcode", "version": 1 }
+  "info": {
+    "author": "xcode",
+    "version": 1
+  }
 }

@@ -10,11 +10,12 @@ on:
         options:
           - release/app-store-preparation
           - main
-        default: release/app-store-preparation
+          - release/app-store-update-20261114
+        default: release/app-store-update-20261114
       version:
         description: App version
         required: true
-        default: '1.0.0'
+        default: '1.0.1'
       build_number:
         description: Unique increasing build number in App Store Connect
         required: true
@@ -46,7 +47,7 @@ jobs:
           SOURCE_REF: ${{ inputs.source_ref }}
         run: |
           case "$SOURCE_REF" in
-            main|release/app-store-preparation) ;;
+            main|release/app-store-preparation|release/app-store-update-20261114) ;;
             *) echo 'Select a trusted source branch.' >&2; exit 1 ;;
           esac
       - uses: actions/checkout@v6
@@ -60,6 +61,14 @@ jobs:
           test -n "$XCODE_PATH"
           sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
           command -v xcodegen || brew install xcodegen
+      - name: Verify existing app and build number (read only)
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY_P8_BASE64: ${{ secrets.ASC_PRIVATE_KEY_P8_BASE64 }}
+        run: node apps/mobile_webview/ios/scripts/inspect-store.mjs
+      - name: Check release sources
+        run: python3 -m unittest discover -s apps/mobile_webview/ios/scripts -p 'test_*.py'
       - name: Install private signing material
         env:
           APPLE_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
@@ -81,6 +90,7 @@ jobs:
           path: |
             apps/mobile_webview/ios/build/export/*.ipa
             apps/mobile_webview/ios/build/*.xcarchive/dSYMs
+            apps/mobile_webview/ios/build/store-status.json
           if-no-files-found: error
           retention-days: 7
       - name: Remove runner signing material

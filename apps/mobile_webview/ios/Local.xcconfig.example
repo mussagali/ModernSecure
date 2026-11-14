@@ -1,0 +1,6 @@
+// Copy to Local.xcconfig on the Mac before running XcodeGen.
+// This file is NOT a place for passwords, certificates or private keys.
+// Verified in Apple Developer Membership details on 2026-11-02.
+DEVELOPMENT_TEAM = HRXCR95QG3
+// Bundle ID and production URL live in project.yml.
+// If the bundle ID changes, regenerate the project and recreate the profile.

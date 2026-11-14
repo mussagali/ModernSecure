@@ -49,7 +49,7 @@ final class WebController: UIViewController, WKNavigationDelegate, WKUIDelegate,
         if #available(iOS 16.4, *) { web.isInspectable = isDebug }
         web.translatesAutoresizingMaskIntoConstraints = false
         view.insertSubview(web, belowSubview: errorScroll)
-        NSLayoutConstraint.activate([web.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), web.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor), web.leadingAnchor.constraint(equalTo: view.leadingAnchor), web.trailingAnchor.constraint(equalTo: view.trailingAnchor)])
+        NSLayoutConstraint.activate([web.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor), web.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor), web.leadingAnchor.constraint(equalTo: view.leadingAnchor), web.trailingAnchor.constraint(equalTo: view.trailingAnchor)])
         progress.progressTintColor = NativePalette.accent
         progress.trackTintColor = NativePalette.line
         progress.isAccessibilityElement = false
@@ -280,33 +280,16 @@ final class WebController: UIViewController, WKNavigationDelegate, WKUIDelegate,
 }
 
 private enum NativePalette {
-    static let canvas = UIColor(red: 244 / 255, green: 246 / 255, blue: 248 / 255, alpha: 1)
-    static let ink = UIColor(red: 23 / 255, green: 43 / 255, blue: 54 / 255, alpha: 1)
+    static let canvas = UIColor(red: 243 / 255, green: 244 / 255, blue: 246 / 255, alpha: 1)
+    static let ink = UIColor(red: 31 / 255, green: 41 / 255, blue: 55 / 255, alpha: 1)
     static let muted = UIColor(red: 92 / 255, green: 109 / 255, blue: 121 / 255, alpha: 1)
     static let line = UIColor(red: 221 / 255, green: 228 / 255, blue: 232 / 255, alpha: 1)
-    static let accent = UIColor(red: 23 / 255, green: 107 / 255, blue: 91 / 255, alpha: 1)
+    static let accent = UIColor(red: 79 / 255, green: 79 / 255, blue: 160 / 255, alpha: 1)
 
     static func brandMark() -> UIImage {
-        UIGraphicsImageRenderer(size: CGSize(width: 40, height: 40)).image { context in
-            accent.setFill()
-            UIBezierPath(roundedRect: CGRect(x: 0, y: 0, width: 40, height: 40), cornerRadius: 10).fill()
-            context.cgContext.translateBy(x: 8, y: 6)
-            let shield = UIBezierPath()
-            shield.move(to: CGPoint(x: 12, y: 2))
-            shield.addLine(to: CGPoint(x: 3, y: 6))
-            shield.addLine(to: CGPoint(x: 3, y: 14))
-            shield.addCurve(to: CGPoint(x: 12, y: 25), controlPoint1: CGPoint(x: 3, y: 20), controlPoint2: CGPoint(x: 12, y: 25))
-            shield.addCurve(to: CGPoint(x: 21, y: 14), controlPoint1: CGPoint(x: 12, y: 25), controlPoint2: CGPoint(x: 21, y: 20))
-            shield.addLine(to: CGPoint(x: 21, y: 6))
-            shield.close()
-            shield.move(to: CGPoint(x: 8, y: 13))
-            shield.addLine(to: CGPoint(x: 11, y: 16))
-            shield.addLine(to: CGPoint(x: 16, y: 10))
-            shield.lineWidth = 1.8
-            shield.lineCapStyle = .round
-            shield.lineJoinStyle = .round
-            UIColor.white.setStroke()
-            shield.stroke()
+        guard let logo = UIImage(named: "CompanyMark") else { return UIImage() }
+        return UIGraphicsImageRenderer(size: CGSize(width: 40, height: 40)).image { _ in
+            logo.draw(in: CGRect(x: 0, y: 0, width: 40, height: 40))
         }
     }
 }
