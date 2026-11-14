@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Настройки | Совреме�
 export default async function StaffSettingsPage({ searchParams }: {
   searchParams: Promise<{ contactSaved?: string; faqSaved?: string; staleSaved?: string; error?: string }>;
 }) {
-  const { supabase } = await requireStaff(["admin"]);
+  const { supabase, staff } = await requireStaff(["admin"]);
   const [contactResult, faqResult, staleResult] = await Promise.all([
     supabase.from("contact_settings").select("phone, email, whatsapp_url, business_hours, response_expectation, payment_details, updated_at").eq("id", true).maybeSingle(),
     supabase.from("faq_entries").select("id, question, answer, position, published, updated_at").order("position").limit(100),
@@ -22,6 +22,7 @@ export default async function StaffSettingsPage({ searchParams }: {
     {(query.contactSaved || query.faqSaved || query.staleSaved) && <div className="staff-alert is-success" role="status">Изменения сохранены и записаны в журнал.</div>}
     {query.error && <div className="staff-alert is-error" role="alert">{query.error === "conflict" ? "Настройки уже изменились в другой вкладке. Обновите страницу и внесите изменения заново." : query.error === "invalid" ? "Проверьте заполнение и длину полей." : "Не удалось сохранить изменения. Обновите страницу и попробуйте снова."}</div>}
     <p><Link className="staff-text-link" href="/staff/settings/legal">Условия и согласия клиентов</Link></p>
+    {staff.is_primary_admin && <p><Link className="staff-text-link" href="/staff/settings/deletion-requests">Запросы на удаление аккаунтов</Link></p>}
     <section className="staff-form-panel"><div><h2>Контакты</h2><p>Укажите только действующие каналы связи. Эти данные доступны всем вошедшим клиентам.</p></div><form action={saveContactSettings} className="staff-form">
       <input type="hidden" name="expectedUpdatedAt" value={contact?.updated_at ?? ""} />
       <label>Телефон<input name="phone" type="tel" defaultValue={contact?.phone ?? ""} maxLength={40} /></label>

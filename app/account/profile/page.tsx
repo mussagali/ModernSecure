@@ -34,5 +34,6 @@ export default async function ProfilePage({ searchParams }: {
         {client ? <><dl className="account-identity-list"><div><dt>ФИО в карточке</dt><dd>{client.full_name}</dd></div>{client.iin && <div><dt>ИИН</dt><dd>•••• •••• {client.iin.slice(-4)}</dd></div>}</dl><p>Чтобы исправить ФИО или ИИН, <Link href="/account/contacts">свяжитесь с компанией</Link>. Эти данные меняет сотрудник после проверки личности.</p></>
           : <p>Карточка клиента пока не подключена. После проверки сотрудником здесь появятся ваши данные и дела.</p>}
       </details>
+      <section className="sovz-profile-identity"><h2>Управление аккаунтом</h2><p>Вы можете отправить запрос на удаление аккаунта и связанных персональных данных.</p><Link href="/delete-account" className="sovz-button sovz-button-outline">Удалить аккаунт</Link></section>
   </main>;
 }

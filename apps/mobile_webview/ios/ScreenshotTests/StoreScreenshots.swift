@@ -38,7 +38,12 @@ final class StoreScreenshots: XCTestCase {
     }
 
     private func tapLink(_ label: String) throws {
-        let link = app.webViews.links.matching(NSPredicate(format: "label == %@", label)).firstMatch
+        var link = app.webViews.links.matching(NSPredicate(format: "label == %@", label)).firstMatch
+        if !link.exists || !link.isHittable {
+            let menu = app.webViews.buttons["Открыть меню"]
+            if menu.exists && menu.isHittable { menu.tap() }
+            link = app.webViews.links.matching(NSPredicate(format: "label == %@", label)).firstMatch
+        }
         guard link.waitForExistence(timeout: 30) else { throw CaptureError.missingNavigation }
         for _ in 0..<3 where !link.isHittable { app.webViews.firstMatch.swipeUp() }
         guard link.isHittable else { throw CaptureError.missingNavigation }
@@ -99,14 +104,19 @@ final class StoreScreenshots: XCTestCase {
         phase = "waiting-for-synthetic-case-after-login"
 
         // Never capture an arbitrary account or a real client case.
-        let demo = app.webViews.links.matching(NSPredicate(format: "label CONTAINS %@", "ДЕМО APPLE")).firstMatch
-        guard demo.waitForExistence(timeout: 90) else { throw CaptureError.demoCaseUnavailable }
-        try capture("01-cases")
-        phase = "opening-case"
-        demo.tap()
-        guard app.webViews.staticTexts["Текущий этап"].waitForExistence(timeout: 45)
+        // The current home opens the latest case directly. Verify both the
+        // synthetic title and its known number before saving any store image.
+        let demo = app.webViews.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "ДЕМО APPLE")).firstMatch
+        guard demo.waitForExistence(timeout: 90),
+              app.webViews.staticTexts["MS2026000007"].exists,
+              app.webViews.staticTexts["Моё дело"].exists
+        else { throw CaptureError.demoCaseUnavailable }
+        try capture("01-case-overview")
+        phase = "opening-case-list"
+        try tapLink("Мои дела")
+        guard app.webViews.links.matching(NSPredicate(format: "label CONTAINS %@", "ДЕМО APPLE")).firstMatch.waitForExistence(timeout: 45)
         else { throw CaptureError.caseUnavailable }
-        try capture("02-case-overview")
+        try capture("02-cases")
 
         phase = "opening-tasks"
         try tapLink("Задачи")

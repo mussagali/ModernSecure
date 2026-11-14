@@ -1,4 +1,5 @@
 import { notificationReturn } from "../../lib/workspace-destination";
+import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { staffWorkspaceEnabled } from "../../lib/application-scope";
@@ -29,6 +30,7 @@ export default async function StaffSecurityPage({ searchParams }: { searchParams
     <section className="staff-security-content"><h1>Безопасность аккаунта</h1><p className="staff-security-intro">Код из приложения-аутентификатора защищает клиентские дела, документы и переписку даже если пароль стал известен другому человеку.</p>
       <StaffMfaPanel required={staff.mfa_required} passed={staff.mfa_passed} next={next} />
       <p className="staff-security-help">Потеряли устройство с кодами? Обратитесь к главному администратору или владельцу проекта. Пароль и доступ к почте сами по себе не отключают второй фактор.</p>
+      <p><Link href="/delete-account">Удаление аккаунта</Link></p>
     </section>
   </main>;
 }

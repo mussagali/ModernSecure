@@ -1,6 +1,6 @@
 {
-  "schemaVersion": "20261114010300",
-  "installSha256": "1a1162a565ed7b49c5cc989133e32bd006d14aa417c1c3431d456e44f9a4b81c",
+  "schemaVersion": "20261114010400",
+  "installSha256": "baebc7c8ae8cfefed2e8317b97722e9d7b8ce2659fc83d392f07523e5253dc90",
   "note": "Migration 008 owner-specific provisioning removed. Original migrations remain unchanged. Supabase CLI migration history is not modified.",
   "migrations": [
     {
@@ -516,6 +516,11 @@
     {
       "file": "20261114010300_public_legal_column_grants.sql",
       "sha256": "ccf478595f71bd48587ba6e4dcd3ac8b7c6178581919a9aab01e83ebcfec4514",
+      "adapted": false
+    },
+    {
+      "file": "20261114010400_account_deletion_requests.sql",
+      "sha256": "a2e4f058ba8f4bf5631c18ff5410b8774c1af8f35f8afbe52723222fd782115c",
       "adapted": false
     }
   ]

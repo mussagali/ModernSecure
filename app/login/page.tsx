@@ -13,6 +13,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   if (data?.claims) {
+    if (next === "/delete-account") redirect("/delete-account");
     const { staff, error } = await getStaffStatus(supabase);
     if (error) throw new Error("Не удалось проверить роль аккаунта");
     redirect(workspaceDestination(staff, next));

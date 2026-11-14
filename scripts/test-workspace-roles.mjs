@@ -75,3 +75,8 @@ assert.equal((await loginAction(null, form)).status, "error");
 assert.equal(signedOut, true);
 assert.equal(workspaceDestination({ role: "unknown", active: true, mfa_passed: true }), "/access-denied");
 console.log("PASS: all role destinations, invitations, MFA, disabled accounts, role boundaries and safe redirects");
+
+for (const role of [null, {role:'lawyer',active:false,mfa_passed:false}, {role:'admin',active:true,mfa_passed:false}]) {
+  assert.equal(workspaceDestination(role, '/delete-account'), '/delete-account');
+  assert.notEqual(workspaceDestination(role, '/delete-account?redirect=https://evil.test'), '/delete-account?redirect=https://evil.test');
+}

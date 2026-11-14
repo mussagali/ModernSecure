@@ -1,5 +1,7 @@
 # Android и iOS: весь сайт в приложении
 
+**Актуально для iOS, 14 ноября 2026:** подготовка обновления существующего приложения `kz.modernsecure.modernSecure` описана в [релизном статусе](ios/app-store/RELEASE-STATUS.ru.md) и [инструкции сборки](ios/app-store/README.md). Сайт — `https://modern-secure.vercel.app`, дизайн светлый с фиолетовым акцентом и бирюзовым логотипом. Ниже сохранены исторические результаты Android: готовый debug APK собран со старым доменом и требует пересборки перед распространением. Проверки октября не подтверждают исправность файлов или устройств в ноябре.
+
 Две нативные оболочки используют существующие страницы и серверные права: Android WebView (Java), iOS WKWebView (Swift). Старый `apps/client_mobile` сохранён, но не используется для этой сборки.
 
 ## Согласованный объём
@@ -20,11 +22,11 @@ Android debug APK собран и проверен на Pixel 7 / Android API 36
 
 iOS-проект сгенерирован XcodeGen, Swift-файлы прошли синтаксический разбор. Полного Xcode/iOS SDK на этом Mac нет: сборка IPA и работа на iPhone **не проверены**.
 
-Рабочий HTTPS-домен: `https://modernsecure.shpshka.work`. Проверяемый debug APK собран с `-PsiteUrl=https://modernsecure.shpshka.work` и запущен в Android-эмуляторе. Без параметра `siteUrl` debug-сборка использует `http://localhost:3000`. Firebase пока не настроен, push отключён конфигурацией. Фактическая доставка push, фоновые переходы по уведомлениям, загрузка/скачивание файлов на физических телефонах и выпуск в магазины ещё не проверены. Заготовка не считается готовым релизом App Store / Google Play.
+Рабочий HTTPS-домен: `https://modern-secure.vercel.app`. Проверяемый debug APK собран с `-PsiteUrl=https://modern-secure.vercel.app` и запущен в Android-эмуляторе. Без параметра `siteUrl` debug-сборка использует `http://localhost:3000`. Firebase пока не настроен, push отключён конфигурацией. Фактическая доставка push, фоновые переходы по уведомлениям, загрузка/скачивание файлов на физических телефонах и выпуск в магазины ещё не проверены. Заготовка не считается готовым релизом App Store / Google Play.
 
 ## Запуск готового APK на этом Mac
 
-Готовый APK закоммичен в `public/downloads/modernsecure-debug.apk` и доступен по [прямой ссылке](https://modernsecure.shpshka.work/downloads/modernsecure-debug.apk). Он использует `https://modernsecure.shpshka.work`: локальный сервер, USB и `adb reverse` для работы сайта не нужны. Нужен интернет. Это debug-сборка для проверки, не подписанный релиз Google Play.
+Готовый APK закоммичен в `public/downloads/modernsecure-debug.apk` и доступен по [прямой ссылке](https://modern-secure.vercel.app/downloads/modernsecure-debug.apk). Он использует `https://modern-secure.vercel.app`: локальный сервер, USB и `adb reverse` для работы сайта не нужны. Нужен интернет. Это debug-сборка для проверки, не подписанный релиз Google Play.
 
 Запуск эмулятора и установка:
 
@@ -41,7 +43,7 @@ export ANDROID_SDK_ROOT=/opt/homebrew/share/android-commandlinetools
 "$ANDROID_SDK_ROOT/platform-tools/adb" -e shell am start -n kz.modernsecure.app.debug/kz.modernsecure.app.MainActivity
 ```
 
-На физическом Android установите этот APK. Для установки через ADB подключите USB, разрешите отладку и замените `-e` на `-d`; после установки USB не требуется.
+После пересборки под текущий домен на физическом Android установите APK. Для установки через ADB подключите USB, разрешите отладку и замените `-e` на `-d`; после установки USB не требуется.
 
 Локальная сборка без `-PsiteUrl` использует `http://localhost:3000`. Только для неё нужны запущенный `npm run dev` и `adb reverse tcp:3000 tcp:3000`. Не распространяйте её как сборку с опубликованным сайтом.
 
@@ -53,7 +55,7 @@ export ANDROID_SDK_ROOT=/opt/homebrew/share/android-commandlinetools
 2. Скачайте исходники:
 
    ```sh
-   git clone --branch main https://github.com/shpshka/ModernSecure.git
+   git clone --branch main https://github.com/mussagali/ModernSecure.git
    cd ModernSecure
    ```
 
@@ -66,14 +68,14 @@ export ANDROID_SDK_ROOT=/opt/homebrew/share/android-commandlinetools
 
 ```powershell
 .\gradlew.bat --version
-.\gradlew.bat assembleDebug testDebugUnitTest lintDebug "-PsiteUrl=https://modernsecure.shpshka.work"
+.\gradlew.bat assembleDebug testDebugUnitTest lintDebug "-PsiteUrl=https://modern-secure.vercel.app"
 ```
 
 **macOS / Linux:**
 
 ```sh
 ./gradlew --version
-./gradlew assembleDebug testDebugUnitTest lintDebug -PsiteUrl=https://modernsecure.shpshka.work
+./gradlew assembleDebug testDebugUnitTest lintDebug -PsiteUrl=https://modern-secure.vercel.app
 ```
 
 Дождитесь `BUILD SUCCESSFUL`. Готовый файл от корня репозитория: `apps/mobile_webview/android/app/build/outputs/apk/debug/app-debug.apk`. Его можно скопировать на Android и установить. Ключ для debug-подписи создаётся автоматически. Наличие готового APK в `public/downloads` не требуется для пересборки из исходников.

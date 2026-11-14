@@ -254,7 +254,14 @@ final class WebController: UIViewController, WKNavigationDelegate, WKUIDelegate,
         } else if action == "settings" {
             if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
         } else if action == "disable" {
-            UserDefaults.standard.set(false, forKey: "pushEnabled"); Messaging.messaging().deleteToken(completion: nil); reply(["configured": true, "enabled": false])
+            UserDefaults.standard.set(false, forKey: "pushEnabled")
+            pushWaiting = false
+            Messaging.messaging().isAutoInitEnabled = false
+            Messaging.messaging().deleteToken { [weak self] error in
+                DispatchQueue.main.async {
+                    self?.reply(["configured": true, "enabled": false, "error": error != nil])
+                }
+            }
         }
     }
     private func sendPushToken() {

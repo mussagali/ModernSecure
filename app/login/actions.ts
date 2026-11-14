@@ -51,6 +51,7 @@ export async function loginAction(_previous: AuthState, formData: FormData): Pro
             : "Сервис входа сейчас недоступен. Попробуйте позже; если проблема повторится, сообщите администратору.",
     };
   }
+  if (formData.get("next") === "/delete-account") redirect("/delete-account");
   const { error: inviteError } = await supabase.rpc("claim_staff_invite");
   const { staff, error: staffError } = await getStaffStatus(supabase);
   if (inviteError || staffError) {

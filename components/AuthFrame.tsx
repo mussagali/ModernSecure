@@ -21,7 +21,7 @@ export function AuthFrame({ children, title, description, wide = false }: {
             {children}
           </div>
         </section>
-        <footer className="auth-footer"><nav aria-label="Правовая информация"><Link href="/terms">Условия использования</Link><Link href="/privacy">Конфиденциальность</Link></nav></footer>
+        <footer className="auth-footer"><nav aria-label="Правовая информация"><Link href="/terms">Условия использования</Link><Link href="/privacy">Конфиденциальность</Link><Link href="/support">Поддержка</Link><Link href="/delete-account">Удаление аккаунта</Link></nav></footer>
       </div>
     </div>
   </main>;

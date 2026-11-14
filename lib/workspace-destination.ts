@@ -8,6 +8,7 @@ export function notificationReturn(value: unknown): string | null {
 
 // A role is supplied by the database, never by a form or URL parameter.
 export function workspaceDestination(staff: WorkspaceRole, next?: unknown): string {
+  if (next === "/delete-account") return "/delete-account";
   const notice = notificationReturn(next);
   if (!staff) return notice ?? safeAccountReturn(next);
   if (!staff.active || !["lawyer", "manager", "admin"].includes(staff.role)) return "/access-denied";

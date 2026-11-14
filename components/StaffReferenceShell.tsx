@@ -20,7 +20,7 @@ export function StaffReferenceShell({ children, role, name, roleLabel, unreadCou
     <aside ref={sidebarRef} id="workspace-navigation" className={`sovz-sidebar staff-reference-sidebar${menuOpen ? " is-open" : ""}`} onClick={event => { if ((event.target as HTMLElement).closest("a")) setMenuOpen(false); }}>
       <Link href="/staff/overview" className="sovz-brand"><Image src="/reference/logo.png" width={40} height={40} alt="" unoptimized /><span>Современная<br />защита</span></Link>
       <StaffNav role={role} unreadCount={unreadCount} pendingCount={pendingCount} reference />
-      <div className="staff-reference-account"><form action={signOutAction}><button type="submit"><Icon name="LogOut" />Выход</button></form><div className="staff-reference-person"><span className="sovz-avatar">{name.trim().slice(0,1).toUpperCase()}</span><span>{name}<small>{roleLabel}</small></span></div></div>
+      <div className="staff-reference-account"><Link href="/delete-account" className="sovz-nav-link"><Icon name="User" /><span>Удаление аккаунта</span></Link><form action={signOutAction}><button type="submit"><Icon name="LogOut" />Выход</button></form><div className="staff-reference-person"><span className="sovz-avatar">{name.trim().slice(0,1).toUpperCase()}</span><span>{name}<small>{roleLabel}</small></span></div></div>
     </aside>
     <div className="sovz-workspace">
       <header className="sovz-topbar"><div className="staff-reference-search"><WorkspaceSearch /></div><Link className="sovz-button sovz-transfer" href={role === "lawyer" ? "/staff/tasks#create" : "/staff/clients?new=1"}><Icon name={role === "lawyer" ? "FileText" : "UserPlus"} size={16} />{role === "lawyer" ? "Добавить задачу" : "Добавить клиента"}</Link></header>
