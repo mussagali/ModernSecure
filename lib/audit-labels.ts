@@ -5,6 +5,7 @@ const actions: Record<string, string> = {
   installment_cancelled: "Платёж графика отменён",
   installment_updated: "Платёж графика изменён",
   voided: "Оплата аннулирована",
+  account_deleted: "Аккаунт удалён",
   account_linked: "Аккаунт привязан",
   acknowledged: "Ознакомление подтверждено",
   cancelled: "Отменено",

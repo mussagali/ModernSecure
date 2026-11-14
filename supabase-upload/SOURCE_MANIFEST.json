@@ -1,6 +1,6 @@
 {
-  "schemaVersion": "20261028009600",
-  "installSha256": "22d5a1c4bd76211f78dbad75361fb3942d4e6b198c3b9c6ecec6c87be9c384ed",
+  "schemaVersion": "20261114010300",
+  "installSha256": "1a1162a565ed7b49c5cc989133e32bd006d14aa417c1c3431d456e44f9a4b81c",
   "note": "Migration 008 owner-specific provisioning removed. Original migrations remain unchanged. Supabase CLI migration history is not modified.",
   "migrations": [
     {
@@ -481,6 +481,41 @@
     {
       "file": "20261028009600_client_account_email_lookup.sql",
       "sha256": "15ae0b1edc7dcf8934095634755b93c4ed4c8004b8ac730e35094ca9adb8c667",
+      "adapted": false
+    },
+    {
+      "file": "20261114009700_client_portal_requests.sql",
+      "sha256": "3f9357b15e807f0dca943a3421c2e2fa8c110603da8e422677dfc5bbce67a500",
+      "adapted": false
+    },
+    {
+      "file": "20261114009800_optional_client_mfa.sql",
+      "sha256": "e0898ca0e3b3ef19e8a97f4363c2b047c39c81a11f76ba4ad7cdd2ad4f21421e",
+      "adapted": false
+    },
+    {
+      "file": "20261114009900_disable_reference_portal_features.sql",
+      "sha256": "39239d5e9bb1882143797eef4233c1bc7d698c678340b4c384f46458eef72925",
+      "adapted": false
+    },
+    {
+      "file": "20261114010000_consent_and_file_access_guards.sql",
+      "sha256": "1f9508ecebfbb5a1a14ad3bd8fdf0604c387b12a222d55ecb7254359141d644f",
+      "adapted": false
+    },
+    {
+      "file": "20261114010100_primary_account_deletion.sql",
+      "sha256": "26aebd14820817c526236315dbddd13c0b8a52503431b72f120ea7d8bdf74ab3",
+      "adapted": false
+    },
+    {
+      "file": "20261114010200_public_legal_documents.sql",
+      "sha256": "ce6168b34111a84db13d89f1fef07c36cc623fe337fc7271a989946dab41f4aa",
+      "adapted": false
+    },
+    {
+      "file": "20261114010300_public_legal_column_grants.sql",
+      "sha256": "ccf478595f71bd48587ba6e4dcd3ac8b7c6178581919a9aab01e83ebcfec4514",
       "adapted": false
     }
   ]

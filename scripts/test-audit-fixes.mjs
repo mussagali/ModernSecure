@@ -127,5 +127,12 @@ try {
   assert.equal((await db.query("select private.enqueue_payment_deadline_reminders('2030-01-01') as n")).rows[0].n,0);
   assert.equal((await db.query("select private.enqueue_payment_deadline_reminders('2030-01-02') as n")).rows[0].n,1);
   assert.ok((await db.query("select body from public.notifications where kind='payment_deadline'")).rows.every(row=>row.body.includes('60.00')));
-  console.log('OK all migrations + deadline timezones, safe return, cancellations/roles/history, settings conflicts, versioned consents/privacy, partial payment reminders/deduplication');
+  // Retiring reference-only features must close the RPCs, not just hide their links.
+  for (const actor of [client, stranger, manager, admin]) {
+    await assert.rejects(as(actor, "select public.submit_portal_request('partner_signup','Test','Test',null,null)"), /permission denied/);
+    await assert.rejects(as(actor, 'select public.client_prepare_bki_upload($1)', [id(4)]), /permission denied/);
+  }
+  await assert.rejects(as(client,"insert into public.portal_requests(user_id,kind,subject,body) values($1,'director','x','x')",[stranger]),/permission denied/);
+  assert.equal((await db.query("select to_regclass('public.portal_requests') is not null as preserved")).rows[0].preserved, true);
+  console.log('OK all migrations, consents, retired portal RPC restrictions, payments and workflow guards');
 } finally { await db.close(); }

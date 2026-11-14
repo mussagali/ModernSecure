@@ -1,3 +1,4 @@
+import { ReferenceCaseView } from "../../components/ReferenceCaseView";
 import ClientCaseOverview from "./cases/[id]/CaseOverview";
 import { NavIcon } from "../../components/NavIcon";
 import { AccountHeader } from "../../components/AccountHeader";
@@ -32,6 +33,18 @@ export default async function AccountPage() {
     : { data: [], error: null, count: 0 };
   const hasError = Boolean(profileError || clientError || casesError);
   const name = profile?.display_name || client?.full_name;
+
+  if (!hasError && cases?.[0]) {
+    return <main className="account-page client-home">
+      <AccountHeader unreadCount={unreadCount ?? 0} />
+      <div className="account-content account-detail">
+        <ClientCaseOverview params={Promise.resolve({ id: cases[0].id })} />
+        {(caseCount ?? 0) > 1 && <Link className="client-all-cases" href="/account/select-case">Все дела <NavIcon name="arrow" size={18} /></Link>}
+      </div>
+    </main>;
+  }
+
+  if (!hasError && !cases?.length) return <main className="account-page client-home"><div className="account-content account-detail"><ReferenceCaseView caseNumber="" lawyers={[]} stages={[]} suspended={false} status="pending" />{!client && <section className="sovz-panel"><h2>Аккаунт пока не подключён</h2><p>Вы вошли как {email}. Сотрудник компании свяжет этот аккаунт с вашей карточкой, и здесь появятся дела.</p><form action={signOutAction}><button type="submit" className="sovz-button">Сменить аккаунт</button></form></section>}</div></main>;
 
   return <main className="account-page client-home">
     <AccountHeader unreadCount={unreadCount ?? 0} />

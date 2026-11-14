@@ -10,12 +10,9 @@ export async function GET(request: Request) {
 
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-  // Email confirmation happens in Supabase before the user returns here. When
-  // the link is opened in another browser (for example, Gmail's in-app
-  // browser), that browser does not have the PKCE verifier cookie created at
-  // registration. In that case only automatic sign-in fails; the email is
-  // already confirmed, so do not tell the user that the link is invalid.
-  if (error) return NextResponse.redirect(new URL("/login?notice=email-confirmed", url.origin));
+  // A missing verifier in another browser and an invalid/expired code can both
+  // fail here. An exchange failure alone does not prove email confirmation.
+  if (error) return NextResponse.redirect(new URL("/login?notice=link-sign-in-failed", url.origin));
   const { data: auth } = await supabase.auth.getClaims();
   const userId = auth?.claims?.sub;
   if (userId) {

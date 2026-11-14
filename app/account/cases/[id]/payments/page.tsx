@@ -1,4 +1,5 @@
 import { DirectUploadForm } from "../../../../../components/DirectUploadForm";
+import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { formatKzDate, requireClientCase } from "../../../../../lib/client-case";
 import { installmentPaidAmounts } from "../../../../../lib/payment-summary";
@@ -6,7 +7,7 @@ import { formatKzt, toKztCents } from "../../../../../lib/money";
 
 const previewableReceiptTypes = new Set(["application/pdf", "image/jpeg", "image/png", "image/heic", "image/heif"]);
 
-export default async function ClientPayments({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ receiptUploaded?: string; receiptError?: string }> }) {
+export default async function ClientPayments({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ receiptUploaded?: string; receiptError?: string; contract?: string }> }) {
   const { id } = await params;
   const { supabase, item } = await requireClientCase(id);
   const query = await searchParams;
@@ -35,8 +36,11 @@ export default async function ClientPayments({ params, searchParams }: { params:
   const isArchived = item.status !== "open";
   const nextDue = isArchived ? undefined : schedule.find((row) => !row.cancelled_at
     && (paidByInstallment.get(row.id) ?? BigInt(0)) < toKztCents(row.amount_kzt));
-  return <section className="account-detail-section case-workspace">
-    <h2>Договор и оплаты</h2>
+  const selectedContract = contracts.find(contract => contract.id === query.contract) ?? contracts[0];
+  const visibleSchedule = schedule.filter(row => !selectedContract || row.contract_id === selectedContract.id || (!row.contract_id && selectedContract.id === contracts[0]?.id));
+  return <section className="account-detail-section case-workspace sovz-payments">
+    <nav className="sovz-contract-tabs" aria-label="Версии договоров">{contracts.map(contract => <Link key={contract.id} href={`?contract=${contract.id}`} aria-current={contract.id === selectedContract?.id ? "page" : undefined}>Договор № {contract.contract_number} · версия {contract.version_no}</Link>)}</nav>
+    {selectedContract && <section className="sovz-invoice"><h2>Стоимость договора</h2><p>Договор № {selectedContract.contract_number}</p><strong>{formatKzt(toKztCents(selectedContract.price_kzt))}</strong><p><a href={`/api/contracts/${selectedContract.id}?preview=1`} target="_blank" rel="noopener noreferrer">Посмотреть договор</a></p></section>}
     {isArchived && <p className="case-safety-note">{item.status === "cancelled" ? "Дело отменено." : "Дело завершено."} Здесь сохранены договоры, график и история оплат. Новые оплаты через это дело не принимаются.</p>}
     {query.receiptUploaded && <p className="case-feedback" role="status">Чек отправлен на проверку. Он не считается оплатой до отдельного подтверждения поступления денег.</p>}
     {query.receiptError && <p className="case-feedback is-error" role="alert">{query.receiptError === "duplicate" ? "Этот файл уже есть в деле. Проверьте список чеков ниже." : query.receiptError === "storage" ? "Не удалось сохранить файл. Попробуйте ещё раз." : "Не удалось отправить чек. Проверьте файл и актуальный статус дела."}</p>}
@@ -45,11 +49,13 @@ export default async function ClientPayments({ params, searchParams }: { params:
     {contracts.length ? <div className="case-card-list">{contracts.map((contract, index) => <article className="case-work-card" key={contract.id}><h3>Договор № {contract.contract_number} · версия {contract.version_no}{index === 0 ? " · последняя" : ""}</h3><p>Сумма: {formatKzt(toKztCents(contract.price_kzt))}{contract.signed_on ? ` · подписан ${formatKzDate(contract.signed_on)}` : " · дата подписания не указана"}</p><a href={`/api/contracts/${contract.id}`}>Скачать PDF договора</a> <a href={`/api/contracts/${contract.id}?preview=1`} target="_blank" rel="noopener noreferrer">Просмотреть</a></article>)}</div> : <p className="account-muted">Договор ещё не добавлен; остаток по договору пока не рассчитывается.</p>}
     {!isArchived && !item.is_suspended && contactResult.data?.payment_details && <section className="case-work-card payment-details"><h3>Как оплатить</h3><p>{contactResult.data.payment_details}</p><p className="account-muted">После оплаты прикрепите чек ниже. Сотрудник проверит поступление денег.</p></section>}
     <h3 className="case-subheading">График платежей</h3>
-    {schedule.length ? <div className="case-card-list">{schedule.map((row) => {
+    {visibleSchedule.length ? <div className="sovz-payment-rows">{visibleSchedule.map((row) => {
       const paid = paidByInstallment.get(row.id) ?? BigInt(0);
       const amount = toKztCents(row.amount_kzt);
       const contract = row.contract_id ? contractsById.get(row.contract_id) : null;
-      return <article className="case-work-card" key={row.id}><div className="case-work-head"><h3>{formatKzDate(row.due_on)}</h3><span>{row.cancelled_at ? "Остаток отменён" : paid >= amount ? "Оплачено" : paid > BigInt(0) ? "Частично оплачено" : isArchived ? "Непогашено в архивном графике" : "Ожидается"}</span></div><p>{row.description ?? "Платёж по договору"}</p><p>{contract ? `Договор № ${contract.contract_number} · версия ${contract.version_no}` : row.contract_id ? "Версия договора недоступна" : "Ранее созданный срок · версия договора не указана"}</p><small>{formatKzt(paid)} из {formatKzt(amount)} подтверждено</small>{row.cancelled_at && <p>Причина отмены: {row.cancellation_reason}</p>}</article>;
+      const overdue = row.due_on < new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Almaty", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+      const state = row.cancelled_at || isArchived ? "cancelled" : paid >= amount ? "paid" : overdue ? "overdue" : "waiting";
+      return <article className="sovz-payment-row" key={row.id}><time dateTime={row.due_on}>{new Intl.DateTimeFormat("ru-RU", { dateStyle: "short", timeZone: "Asia/Almaty" }).format(new Date(row.due_on))}</time><div><span>{row.cancelled_at ? "Подтверждено: " : paid >= amount ? "Оплачено: " : isArchived ? "Остаток в архиве: " : "К оплате: "}</span>{formatKzt(row.cancelled_at || paid >= amount ? paid : amount - paid)}<details><summary>Подробности платежа</summary><p>{row.description ?? "Платёж по договору"}</p><p>{contract ? `Договор № ${contract.contract_number} · версия ${contract.version_no}` : "Версия договора не указана"}</p><small>{formatKzt(paid)} из {formatKzt(amount)} подтверждено</small>{row.cancelled_at && <p>Причина отмены: {row.cancellation_reason}</p>}</details></div><span className="sovz-payment-status" data-state={state}>{row.cancelled_at ? "Остаток отменён" : paid >= amount ? "Оплачен" : isArchived ? "Непогашено в архивном графике" : paid > BigInt(0) ? "Частично оплачен" : overdue ? "Просрочен" : "Ожидает оплаты"}</span></article>;
     })}</div> : <p className="account-muted">График платежей не добавлен.</p>}
     {!!payments.length && <><h3 className="case-subheading">Подтверждённые оплаты</h3><div className="case-card-list">{payments.map((payment) => <article className="case-work-card" key={payment.id}><strong>{formatKzt(toKztCents(payment.amount_kzt))}</strong><p>{formatKzDate(payment.paid_on)}{payment.client_note ? ` · ${payment.client_note}` : ""}</p>{allocations.filter((allocation) => allocation.payment_id === payment.id).map((allocation) => {
       const term = scheduleById.get(allocation.schedule_id);

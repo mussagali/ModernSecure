@@ -13,6 +13,7 @@ export default async function AwaitingApprovalPage() {
   const { data: auth } = await supabase.auth.getClaims();
   if (!auth?.claims?.sub) redirect("/login");
   const { data: status, error } = await supabase.rpc("account_access_status");
+  if (error?.code === "ACCOUNT_REMOVED") redirect("/auth/session-ended");
   if (error) throw new Error("Не удалось проверить активацию аккаунта");
   if (status === "approved") redirect("/account");
   if (status === "disabled") redirect("/access-denied");

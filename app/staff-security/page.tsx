@@ -22,6 +22,8 @@ export default async function StaffSecurityPage({ searchParams }: { searchParams
   if (error) throw new Error("Не удалось проверить защиту входа");
   if (!staff?.active) redirect("/account?staffAccess=denied");
 
+  if (staff.mfa_passed) redirect(next);
+
   return <main className="staff-security-page">
     <header className="staff-security-top"><Brand href={staff.mfa_passed ? "/staff" : "/staff-security"} /><form action={signOutAction}><button type="submit">Выйти</button></form></header>
     <section className="staff-security-content"><h1>Безопасность аккаунта</h1><p className="staff-security-intro">Код из приложения-аутентификатора защищает клиентские дела, документы и переписку даже если пароль стал известен другому человеку.</p>

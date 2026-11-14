@@ -6,6 +6,9 @@ import "./chat-screen.css";
 import "./client-design.css";
 import "./role-design.css";
 import "./workspace-design.css";
+import "./reference-design.css";
+import "./staff-reference.css";
+import "./auth-reference.css";
 
 export const metadata: Metadata = {
   title: "Современная защита | Рабочее пространство",

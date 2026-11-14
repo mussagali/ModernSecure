@@ -136,6 +136,7 @@ function appLoader(user, extra = {}, state = {}) {
     [path.join(root, 'lib/supabase/server')]: { createClient: async () => supabase },
     [path.join(root, 'lib/document-files')]: { ...localFileUtils, storageAdmin: () => admin },
     [path.join(root, 'lib/upload-request')]: { readBoundedFormData: request => request.formData(), UploadInputError: class extends Error {} },
+    [path.join(root, 'components/SubmitButton')]: { SubmitButton: ({ children }) => React.createElement('button', { type: 'submit' }, children) },
     [path.join(root, 'components/DirectUploadForm')]: { DirectUploadForm: ({ children }) => children },
     ...extra,
   });

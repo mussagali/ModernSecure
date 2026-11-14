@@ -14,6 +14,7 @@ export type StaffStatus = {
 
 export async function getStaffStatus(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data, error } = await supabase.rpc("staff_mfa_status");
+  if (error?.code === "ACCOUNT_REMOVED") redirect("/auth/session-ended");
   return { staff: data as StaffStatus | null, error };
 }
 

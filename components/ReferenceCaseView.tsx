@@ -1,0 +1,17 @@
+import Link from "next/link";
+import { ReferenceIcon as Icon } from "./ReferenceIcon";
+
+type Stage = { id: string; position: number; title: string; client_description: string | null };
+export function ReferenceCaseView({ caseId, caseNumber, caseTitle, serviceName, updatedAt, lawyers, currentStage, stages, suspended, status }: { caseId?: string; caseNumber: string; caseTitle?: string; serviceName?: string; updatedAt?: string; lawyers: string[]; currentStage?: Stage; stages: Stage[]; suspended: boolean; status: string }) {
+  return <>
+    <section className="sovz-panel"><h1>Моё дело</h1><div className="sovz-case-cards">
+      <article className="sovz-case-card"><div className="sovz-card-heading"><span className="sovz-icon sovz-icon-blue"><Icon name="ShieldCheck" /></span><h2>Мой юрист</h2></div><p className="sovz-card-main">{lawyers.length ? lawyers.join(", ") : "Юрист пока не назначен"}</p><p className="sovz-muted">{lawyers.length ? "Ответственный по вашему делу" : "По вопросам дела можно обратиться к команде."}</p><Link className="sovz-button" href={caseId ? `/account/cases/${caseId}/messages` : "/account/contacts"}><Icon name="MessageCircle" size={16} />{lawyers.length ? "Написать юристу" : "Связаться с командой"}</Link></article>
+      <article className="sovz-case-card"><div className="sovz-card-heading"><span className="sovz-icon sovz-icon-green"><Icon name="Landmark" /></span><h2>Статус дела</h2></div><span className="sovz-status">{!caseId ? "Дело ещё не создано" : suspended ? "Дело приостановлено" : status === "closed" ? "Дело завершено" : status === "cancelled" ? "Дело отменено" : "В работе"}</span><p className="sovz-card-main" style={{ marginBottom: ".5rem" }}>{currentStage?.title ?? "Этап ещё не назначен"}</p><p className="sovz-description">{currentStage?.client_description ?? "Информация о ходе дела появится после обновления сотрудником."}</p>{caseId ? <a className="sovz-button sovz-button-outline" href="#case-history">История статусов</a> : <Link className="sovz-button sovz-button-outline" href="/account/contacts">Связаться с компанией</Link>}</article>
+      <article className="sovz-case-card"><div className="sovz-card-heading"><span className="sovz-icon"><Icon name="FileText" /></span><h2>Информация</h2></div>{caseId ? <dl className="sovz-case-facts"><div><dt>Номер дела</dt><dd>{caseNumber}</dd></div>{caseTitle && <div><dt>Дело</dt><dd>{caseTitle}</dd></div>}{serviceName && <div><dt>Услуга</dt><dd>{serviceName}</dd></div>}{updatedAt && <div><dt>Последнее обновление</dt><dd>{updatedAt}</dd></div>}</dl> : <p className="sovz-muted">Номер, услуга и обновления появятся после создания дела.</p>}</article>
+    </div></section>
+    <section className="sovz-panel"><div className="sovz-stage-head"><h2>Этапы дела</h2><span className="sovz-count">{stages.length}</span></div><div className="sovz-stage-list">{stages.length ? stages.map((stage, index) => {
+      const current = stage.id === currentStage?.id;
+      return <details key={stage.id} className={`sovz-stage${current ? " is-current" : ""}`} open={current}><summary><span className="sovz-stage-index">{index + 1}</span><span className="sovz-stage-title">{stage.title}</span><span className="sovz-stage-control">Подробнее</span></summary><div className="sovz-stage-body">{current && <span className="sovz-status">Текущий этап</span>}<p>{stage.client_description ?? "Описание этапа появится после обновления сотрудником."}</p></div></details>;
+    }) : <p className="sovz-muted">Этапы дела ещё формируются.</p>}</div></section>
+  </>;
+}

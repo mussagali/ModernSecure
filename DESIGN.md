@@ -1,6 +1,6 @@
 ---
 name: "Modern Secure"
-description: "Searchable legal workspaces with stable navigation and clear records across every web role."
+description: "Role-separated casework and Kazakhstan authentication with reference typography and styling."
 colors:
   canvas: "#f5f7f9"
   surface: "#ffffff"
@@ -25,7 +25,65 @@ colors:
   rail-muted: "#afc3cc"
   rail-active-ink: "#174f45"
   brand-rail: "#345965"
+  client-canvas: "#f3f4f6"
+  client-ink: "#030712"
+  client-muted: "#6b7280"
+  client-line: "#e5e7eb"
+  client-line-strong: "#d1d5db"
+  client-accent: "#4c53a0"
+  client-accent-ink: "#414788"
+  client-accent-hover: "#373c6d"
+  client-accent-soft: "#eff0f9"
+  client-action: "#2b2b2b"
+  client-action-hover: "#1a1a1a"
+  client-focus: "#2563eb"
+  client-icon-soft: "#e0e2f2"
+  client-success: "#047857"
+  client-success-soft: "#d1fae5"
+  client-warning: "#b45309"
+  client-warning-soft: "#fef3c7"
+  client-danger: "#dc2626"
+  client-danger-soft: "#fee2e2"
+  auth-ink: "#111827"
+  auth-field: "#f8f9fb"
+  auth-label: "#4b5563"
+  auth-outline: "#a3a9d7"
 typography:
+  auth-brand:
+    fontFamily: "Garet, sans-serif"
+    fontSize: "38px"
+    fontWeight: 400
+    lineHeight: 1.25
+    letterSpacing: "-0.025em"
+  auth-brand-wide:
+    fontFamily: "Garet, sans-serif"
+    fontSize: "34px"
+    fontWeight: 400
+    lineHeight: 1.25
+  auth-location:
+    fontFamily: "Garet, sans-serif"
+    fontSize: "15px"
+    fontWeight: 400
+    lineHeight: 1.65
+  auth-title:
+    fontFamily: "Garet, sans-serif"
+    fontSize: "20px"
+    fontWeight: 400
+    lineHeight: 1.4
+  auth-body:
+    fontFamily: "Garet, sans-serif"
+    fontSize: "16px"
+    fontWeight: 400
+    lineHeight: 1.5
+  auth-description:
+    fontFamily: "Garet, sans-serif"
+    fontSize: "13px"
+    fontWeight: 400
+    lineHeight: 1.6
+  auth-footer:
+    fontFamily: "Garet, sans-serif"
+    fontSize: "12px"
+    fontWeight: 400
   headline:
     fontFamily: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
     fontSize: "28px"
@@ -68,6 +126,31 @@ typography:
     fontSize: "15px"
     fontWeight: 600
     lineHeight: 1.5
+  client-headline:
+    fontFamily: "Garet, sans-serif"
+    fontSize: "1.5rem"
+    fontWeight: 600
+    lineHeight: "2rem"
+  client-title:
+    fontFamily: "Garet, sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 600
+    lineHeight: "1.75rem"
+  client-body:
+    fontFamily: "Garet, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 400
+    lineHeight: "1.5"
+  client-label:
+    fontFamily: "Garet, sans-serif"
+    fontSize: ".875rem"
+    fontWeight: 400
+    lineHeight: "1.25rem"
+  client-action:
+    fontFamily: "Garet, sans-serif"
+    fontSize: ".875rem"
+    fontWeight: 600
+    lineHeight: "1.25rem"
 rounded:
   tag: "6px"
   small: "8px"
@@ -79,6 +162,10 @@ rounded:
   avatar: "50%"
   rail-link: "7px"
   message: "14px"
+  client-control: ".5rem"
+  client-card: ".75rem"
+  client-panel: "1rem"
+  client-status: ".375rem"
 spacing:
   compact: "4px"
   small: "8px"
@@ -88,7 +175,27 @@ spacing:
   panel: "24px"
   page: "28px"
   large: "32px"
+  client-gutter: "1rem"
+  client-card: "1.25rem"
+  client-panel: "1.75rem"
 components:
+  auth-submit:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.client-accent}"
+    typography: "{typography.auth-body}"
+    rounded: "{rounded.control}"
+    padding: "10px 16px"
+  auth-input:
+    backgroundColor: "{colors.auth-field}"
+    textColor: "{colors.auth-ink}"
+    typography: "{typography.auth-body}"
+    rounded: "{rounded.control}"
+    padding: "10px 14px 10px 42px"
+  auth-card:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.auth-ink}"
+    rounded: "{rounded.menu}"
+    padding: "28px"
   button-primary:
     backgroundColor: "{colors.accent}"
     textColor: "{colors.surface}"
@@ -150,136 +257,181 @@ components:
     textColor: "{colors.ink}"
     typography: "{typography.record}"
     padding: "16px 22px"
+  client-button-primary:
+    backgroundColor: "{colors.client-action}"
+    textColor: "{colors.surface}"
+    typography: "{typography.client-action}"
+    rounded: "{rounded.client-control}"
+    padding: ".5rem 1rem"
+  client-button-outline:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.client-accent-ink}"
+    typography: "{typography.client-action}"
+    rounded: "{rounded.client-control}"
+    padding: ".5rem 1rem"
+  client-input:
+    backgroundColor: "{colors.surface}"
+    textColor: "#111827"
+    typography: "{typography.client-label}"
+    rounded: "{rounded.client-control}"
+    padding: ".5rem 1rem"
+  client-navigation-active:
+    backgroundColor: "{colors.client-line}"
+    textColor: "{colors.client-ink}"
+    rounded: "{rounded.client-control}"
+    padding: ".625rem .875rem"
+  client-panel:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.client-ink}"
+    rounded: "{rounded.client-panel}"
+    padding: "1.75rem"
+  client-status:
+    backgroundColor: "{colors.client-warning-soft}"
+    textColor: "{colors.client-warning}"
+    rounded: "{rounded.client-status}"
+    padding: ".25rem .5rem"
+  staff-button-primary:
+    backgroundColor: "{colors.client-action}"
+    textColor: "{colors.surface}"
+    typography: "{typography.client-action}"
+    rounded: "{rounded.client-control}"
+    padding: ".5rem 1rem"
+  staff-navigation-active:
+    backgroundColor: "{colors.client-line}"
+    textColor: "{colors.client-ink}"
+    typography: "{typography.client-label}"
+    rounded: "{rounded.client-control}"
+    padding: ".625rem .875rem"
+  staff-directory-row:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.client-ink}"
+    typography: "{typography.client-label}"
+    padding: "1rem"
+  client-security-banner:
+    backgroundColor: "{colors.client-accent-soft}"
+    textColor: "{colors.client-ink}"
+    rounded: "{rounded.client-panel}"
+    padding: "1rem"
 ---
 
 # Design System: Modern Secure
 
 ## Overview
 
-**Creative North Star: "The searchable workspace"**
+**Creative North Star: "The casework portal"**
 
-«Современная защита» is a stable place for legal work: find a destination, narrow a directory, then open the relevant record. The searchable directory supplies the visual grammar—aligned information, quiet separators, compact controls, and details revealed in context. Familiar application navigation remains the durable commitment established by the user’s Instagram, Telegram, and ChatGPT references.
+The user retains the visual language of `https://sovz-lk.ru` for the authorized Kazakhstan subsidiary: Garet typography, light gray rails, white rounded panels, purple accents, dark buttons, original logo, and icon geometry. The corrected brief separates that styling from product scope. Client `/account` and staff `/staff` are distinct role-guarded workspaces; cabinet mode switches, advertising, and promotional photo rails are excluded.
 
-A dark slate rail anchors the light workspace. Restrained green marks actions and current location; system typography supports readable Russian copy. Authentication, client and staff spaces share the same visual world, with equal attention to every section. These responsive web pages also appear inside the existing WebView shells; this directory redesign does not retheme or rebuild native binaries. The legacy `apps/client_mobile` project remains outside this implementation.
+The reference world covers `.sovz` client pages and every `/staff` route. `app/reference-design.css` supplies shared primitives; `components/StaffReferenceShell.tsx` and `app/staff-reference.css` adapt role-aware staff navigation, forms, directories, and conversations to that same world. `app/staff/layout.tsx` selects the reference shell, retaining `lawyer-shell` where required. `AuthFrame`, `AuthForm`, and the last-imported `app/auth-reference.css` extend the reference language to Kazakhstan authentication. **Keys prefixed `client-` are shared reference tokens despite their historical name; `staff-` component keys record staff-specific variants. `auth-` keys describe the current entry surfaces. Unprefixed tokens retain the legacy base layer, not current staff or reference authentication appearance.** White `surface` is shared. CSS remains the implementation source, including component exceptions.
 
 **Key Characteristics:**
 
-- Stable navigation and a consistent search entry across client and staff workspaces.
-- Compact headings, aligned directory rows, and secondary controls disclosed within records.
-- URL-backed search, filters, and bounded lists with readable result counts.
-- Labeled mobile destinations, visible focus, and truthful loading, empty, and error states.
+- Separate client and staff navigation, with a full-width working area beside the light rail.
+- Real Supabase cases, tasks, documents, conversations, contracts, manual payments, and receipts in ₸.
+- Optional client MFA setup with a dismissible prompt; server-controlled staff security remains intact.
+- Role-aware staff search, bounded lists, and conversation behavior within the reference shell.
 
-The frontmatter is normative for the implemented web system. Base primitives come from `app/globals.css`; `app/workspace-design.css`, imported last in `app/layout.tsx`, supplies the current palette, density, shell, and directory overrides. Role styles and conversation modules retain their documented component exceptions. The sidecar contains behavior and self-contained component examples. Surface composition belongs in `.impeccable/surfaces/app-layout-tsx.md`; evidence and release limits belong in `PRODUCT.md`.
+This document records built source, not pixel-for-pixel acceptance. No current browser/render review was available. Earlier directory screenshots are historical evidence only. See the surface brief for the direction contract and bounded finish evidence. Native shell chrome and binaries were not redesigned in this pass; `apps/client_mobile` remains outside scope.
 
 ## Colors
 
 ### Primary
 
-Deep green marks primary actions, active tabs, links, and conversation authors. The darker accent is its hover state; soft green carries selection and outgoing messages. Rail selection uses a darker green ink to remain distinct within the pale selected item.
+Reference accents use the muted purple family for links, stage emphasis, and soft feedback. Primary buttons and selected case-section tabs are charcoal with white text. The selected light-rail destination uses neutral gray. Do not restore legacy green actions or the dark rail in `/staff`.
+
+Authentication uses purple outlined submit actions and the existing turquoise logo on white. Links and soft hover states share the reference purple palette.
 
 ### Neutral
 
-Dark slate anchors desktop navigation and the large-screen authentication companion panel. Pale rail text and muted rail text carry destinations and supporting identity; the lighter slate hover remains within that surface. The brand tile uses its own lighter slate. Cool gray canvas surrounds white work surfaces. Graphite ink carries primary content; muted slate supports metadata, help, and timestamps. Soft neutral surfaces group quiet controls and read-only fields. Light rules separate records, while stronger rules outline fields.
+The reference canvas and rail share light gray; panels are white, primary ink is near black, and supporting text is medium gray. Light gray borders separate panels and fields. Authentication uses a white canvas and card, pale gray icon fields, dark reading ink, gray labels, and a soft purple submit outline.
 
 ### Semantic feedback
 
-Success, warning, and danger retain their existing green, warm brown, and red pairs. Success tokens remain distinct from the refreshed action tokens. Written feedback establishes meaning; a colored dot or background never carries the status alone.
-
-**The Action Color Rule.** Use green for actionable or selected elements and named success states; keep ordinary records neutral and navigation chrome slate.
+Both scopes use written feedback with their own success, warning, and danger pairs. Client stage icons may use purple, blue, green, or pink backgrounds as implemented. Color alone does not establish payment, case, or request status.
 
 ## Typography
 
-Use the system sans stack for every text role. It follows platform UI typography and supports Cyrillic without downloading a display face. Establish hierarchy through scale, weight, placement, and spacing within this family.
+Reference typography uses self-hosted `public/fonts/garet/Garet-Book.otf`, declared as **Garet normal weight 400**, matching the available Book face. The implementation requests 500/600 for selected labels and headings; those are not separately supplied font files. Preserve the correct 400 declaration rather than declaring Book as a variable weight range. Headline, section, body, and control sizes are recorded in the client roles above.
 
-Page headlines use the frontmatter headline role, with the mobile role below 700px. Staff headings use an intermediate 26px size at 701–900px. Section titles generally use the title role; compact list headings use 17px. Record names are 15–16px at weight 600, supporting metadata 12–13px, and form labels 14px. Body text and ordinary field values are 16px. Directory search values are 15px on desktop and 16px on phones; the desktop header search is 14px. Bottom navigation uses 11–12px labels.
+Reference root sizing is 16px by default and `clamp(13px, calc(7px + .46875vw), 16px)` from 1024px. Rem-based dimensions scale together. At 700px and below, form controls explicitly use 16px.
 
-Authentication is a deliberate exception: the large-screen companion heading is 34px and form heading 30px; the compact phone form heading is 27px. Message text uses a 1.55 line height. Tabular numerals support counts, dates, and amounts where implemented. Supporting page copy normally stays within 65ch.
-
-**The Reading Hierarchy Rule.** Establish importance through size, weight, and placement within the same sans family; keep operational headings compact.
+Staff uses the same Garet headline, section, and control roles, with 1.125rem tertiary headings and .875rem directory text. Authentication uses Garet Book throughout; its brand, location, title, body, description, and footer roles are recorded above. The location is uppercase brand context; form labels remain sentence case.
 
 ## Layout
 
-Desktop client and staff spaces share a fixed slate navigation rail (240px), reducing to 216px between 901px and 1200px. The staff rail keeps its identity footer visible while destinations scroll independently. A white header (72px minimum on desktop) holds workspace search and account actions. Staff content is capped at 1480px with 32px horizontal padding, reducing to 24px at narrower desktop widths. Client content is capped at 1180px with 32px desktop gutters.
+Client desktop layout has a fixed light left rail and a single work column filling the remaining width. Rail width is `clamp(13.5rem,16.67vw,20rem)` and workspace padding is `1rem`. There is no centered cabinet switch or promotional column. Main panels use `1.75rem` padding and `1rem` corners; case cards use three columns where space permits.
 
-At 900px and below, both rails yield to labeled bottom navigation; the header exposes a 44px search icon linking to the search page. The staff header has a 68px minimum. Staff and client content use 20px side gutters, falling to 16px below 700px. Page bottoms reserve navigation height and the bottom safe-area inset. Staff secondary destinations open in the scrollable «Ещё» menu; clients use a dedicated «Ещё» list. At compact widths, a page title and its icon action occupy separate columns so long headings can wrap without colliding.
+At 1023px and below the client rail is 216px and case/profile layouts collapse. At 700px and below the light rail becomes a toggled drawer with backdrop, workspace margins disappear, main panel padding is `1.25rem`, and client buttons have a 44px minimum height. This drawer replaces the earlier client bottom navigation. Responsive rules are implemented but current rendered acceptance is pending.
 
-Directories place the page heading, section tabs, search and filters before one enclosing list surface. Desktop rows align identity, role or record metadata, status, and disclosure. Team rows have an 86px minimum height and 22px horizontal padding. Below 700px, column headings disappear and each record stacks its labeled information with 16px side padding. Details expand below the selected record. Lists use 25 records per page by default; result ranges and page links remain separate from record actions. Tabs can scroll horizontally without widening the page.
+Staff shares the light rail and full-width working area. Its top bar contains search and the existing role-specific action; navigation remains permission-scoped. Administrator/manager overview uses real profile and work data; lawyers retain their role-specific dashboard. Staff panels use 1.75rem outer or 1.25rem nested padding. At 1023px the overview lower grid collapses; at 700px the drawer and existing labeled staff bottom navigation remain available in reference colors. Search remains accessible from the top control and Cmd/Ctrl+K. Directory lists retain 25-record default pagination, URL-preserving search/filter controls, and inline disclosure.
 
-Authentication has a slate product companion and white form area at 1000px and above. The ordinary form area is capped at 500px; wide forms may expand to 720px. Below that breakpoint, the companion is hidden and the form uses a single centered column capped at 480px. Below 700px, the form joins the white page without an enclosing border. The phone viewport prioritizes the form and legal links.
+Staff conversation routes use a viewport-bounded flex chain through workspace, columns, page, lawyer wrapper, and conversation. The footer is hidden there so history can scroll while the composer remains visible. This structural behavior is source-reviewed; current browser confirmation is still pending.
 
-Conversations retain independently scrolling history and a persistent composer. Staff chat uses the available height below the desktop header, a 300px conversation list reduced to 260px below 1100px, and a list-or-conversation layout below 800px. Search and conversation tabs sit above the list, with page controls below it. Existing native shells continue to handle system bars, display cutouts, and keyboard insets; browser layout does not establish native runtime acceptance.
+Authentication centers a 840px grid of 376px brand and 400px form columns with a 64px gap. Wide consent uses a 984px grid with 280px and 640px columns. At 900px and below the brand hides; forms remain at most 400px, or 640px for consent. At 480px and below the card uses 24px 20px padding and the page accounts for the bottom safe-area inset. WebView behavior has not received renewed device acceptance.
 
 ## Elevation & Depth
 
-Work panels, directories, and messages are flat. Solid tones, borders, and spacing provide hierarchy. Only overlapping controls and menus use the existing shadows:
+Client ordinary panels use borders and tone. The mobile drawer uses `8px 0 30px #0002`; dialogs use `0 20px 25px #0003` with a `#0008` backdrop. Preserve these source-specific exceptions.
 
-- Shared case-chat jump control: `0 8px 28px rgb(23 43 54 / 12%)`.
-- Staff mobile «Ещё» menu: `0 8px 32px rgba(23,43,54,.18)`.
-- Staff-chat jump control: `0 4px 16px rgba(23,43,54,.14)`.
+Staff reference work panels, directory rows, and the mobile secondary-navigation panel remain flat; the latter uses a light border. Existing chat jump controls retain shadows: shared chat jump control `0 8px 28px rgb(23 43 54 / 12%)` and staff chat jump control `0 4px 16px rgba(23,43,54,.14)`.
 
-**The Floating Layer Rule.** Add elevation only when an element overlaps the work surface; ordinary panels remain shadow-free.
+Authentication cards use `0 12px 32px #1118270d` ambient depth on white, without a border.
+
+**The Borderless Entry Card Rule.** Authentication cards use soft shadow; gray borders belong to fields and purple outlines to submit actions.
 
 ## Shapes
 
-Controls use the control radius; grouped work surfaces use the panel radius. Rail links use their slightly tighter radius. Records stay rectangular inside the enclosing rounded list, separated by one rule. Avatars are circular; tags and pagination use smaller corners.
+Client controls and navigation use `.5rem` corners, nested cards/stages `.75rem`, main panels/dialogs `1rem`, and status labels `.375rem`. Avatars are circular. Dashed outlines remain part of financial fact containers.
 
-Message and composer exceptions remain intentional. Case-message bubbles use 14px corners with one 4px lower corner; staff messages use 16px with one 4px lower corner. The case composer retains 18px rounding and its attachment/send controls retain 14px corners. Authentication’s intermediate-width panel retains 16px rounding; large-screen and phone form areas are unframed.
+Staff reference controls and rail links use .5rem corners, nested panels .75rem, and page panels 1rem. Authentication cards use 16px corners; fields, submit actions, and feedback use 8px corners. Case composers retain 18px corners and 48px attachment/send controls; message bubbles retain their scoped exceptions. Do not globally replace either world's shape tokens with the other.
 
 ## Components
 
-### Buttons
+### Buttons and fields
 
-Primary actions use green and white; secondary actions use white, ink, and a light border. Shared buttons have a 44px minimum height, rising to 48px below 700px. Authentication submit buttons and conversation attachment/send controls are 48px high; conversation controls are also 48px wide. Compact heading actions deliberately use a 44px square on phones and retain an accessible name when their visible label is hidden. Hover changes color; disabled buttons use 0.55 opacity. Keyboard focus is a 3px accent outline with a 3px offset.
+Client primary buttons are charcoal; outlined buttons use white, light borders, and purple ink. Their desktop minimum height is `2.25rem`, rising to 44px on phones. Disabled client buttons use `.6` opacity. Client keyboard focus is a 2px blue outline with a 2px offset. Fields use a gray border and `.5rem` radius; focused borders turn purple. Errors have written copy and a red feedback treatment.
 
-### Inputs / Fields
+Authentication fields and submit actions have a 48px minimum height and 16px values. Icon fields reserve 42px at the left; password toggles are 44px square. Submit actions use a 1.5px purple outline, white background, soft purple hover, and `.65` disabled opacity. Keyboard focus uses a 2px purple outline with a 3px offset. Labels, password visibility, pending text, and written feedback remain explicit.
 
-Fields use white surfaces, a strong border, visible labels, and 16px values. Shared minimum height is 46px; authentication fields use 48px. Read-only fields use soft neutral and muted text. Password toggles retain accessible names and pressed states. Feedback uses semantic colors and a written explanation.
+### Navigation and panels
 
-### Navigation
+The client left rail groups original outline icons with Russian labels, gray active destinations, and dividers. Client and staff cabinets are separated by existing role guards, without a mode switch. Case section links retain the segmented pattern. Main content uses large white panels, case fact cards, stage disclosures, and real case-selection flows when more than one case is available.
 
-Desktop destinations combine authored SVG icons and text on the slate rail. Current destinations use soft green and darker green ink. Staff navigation can be filtered by its visible Russian label; its empty result has a clear message. Rail focus uses a pale green outline so it stays visible on the dark background, with a 1px offset within the staff destination list. Mobile destinations retain visible labels and current-location state. Staff bottom navigation highlights an icon capsule; client bottom navigation highlights the item. Preserve role-specific destinations and server-controlled availability.
+Staff uses charcoal primary buttons, purple outlined actions, gray active rail destinations, white rounded forms, and Garet controls. Desktop actions start at 2.25rem and phone buttons at 44px; phone fields use 16px values. Search, tabs, pagination, and directory disclosure retain their existing behavior. Cmd/Ctrl+K opens/focuses search; list queries stay permission-scoped. Obsolete page numbers recover to an available page.
 
-### Workspace and list search
+The primary administrator's `/staff/accounts` directory and deletion screen reuse the existing list search, pagination, white staff panels, fields, and submit control. The confirmation names the account, requires its email and a reason, explains which company records remain, and exposes protected-account or assignment blockers before submission. This adds no new visual system; rendered acceptance remains pending.
 
-The desktop header search is a bordered canvas field up to 550px wide. Cmd/Ctrl+K focuses it; where the field is hidden, the shortcut opens the search destination. The mobile icon uses the same destination. Staff search covers permission-scoped cases, clients, and available sections; client search opens the user’s case directory. List searches use a labeled GET form, optional filters, a submit action, and an explicit reset when active. Search terms are capped at 120 characters.
+### Security, consent, and conversations
 
-### Tabs, pagination, and directory disclosure
+Login, registration, password recovery/reset, pending approval, consent, and access denial share the entry frame. Login remains email/password; registration and reset retain password confirmation. Existing Server Actions, role assignment, approval, consent transitions, and MFA routing remain authoritative. No role chooser or simulated CAPTCHA is introduced.
 
-Tabs use a bottom rule with a green active underline. Team management separates employees, access requests, and invitations; access requests appear only for the main administrator. Member search filters by name, role, and access state. Rows show name, email, role, and written status before expansion; access and payment forms remain inside a second disclosure. Page links preserve query state. Counts use tabular numerals. An obsolete page request resolves to an available page, while empty results explain how to reset the search.
+The client MFA prompt appears on eligible case overview pages only when no second factor is present; «Позже» dismisses it and «Подключить» opens `/account-security`. MFA status comes from actual state. Optional client enrollment does not weaken staff MFA enforcement.
 
-### Chips / Counts
+Legal links preserve real publication state. The consent footer opens `/consent?view=1` for reading rather than forcing a new acceptance flow. Registration query handling remains separate from visual navigation. Existing case, document, contract, and manual payment flows use actual server data and permissions. Conversations show real messages and surface list/load/send errors. Never copy reference balances, case facts, or sample legal text into operational data.
 
-Role and status tags are small neutral rounded labels; semantic variants use their corresponding foreground/background pairs. Directory access state combines a small dot and written label. Unread counts use green pills with white text and supplement an explicit accessible label.
+### Imagery and motion
 
-### Cards / Containers
+Public reference HTML/CSS and Vite component extracts are cached in `.impeccable/reference/`, including `source.css`. The displayed reference logo is `public/reference/logo.png`; icon geometry is carried by `components/ReferenceIcon.tsx`, with its license in `public/reference/LUCIDE-LICENSE.txt`. Provenance is recorded in `public/reference/SOURCES.md`. The shared icon set also includes added semantic outline glyphs for search, menu, and staff destinations; these extend the reference style and are not all extracted from the reference site. Archived promotional rasters are not part of the active interface and must not be reintroduced as ads, photo rails, or product features.
 
-Containers use white, a light border, and the panel radius. Repeated records share one enclosing surface with separators. Empty states describe the actual absence of work and an available next action. The authentication companion names real capabilities—cases, documents, and communication—and does not invent activity or statistics.
+Reference reduced-motion CSS removes animations and smooth scrolling. Staff retains 140ms color transitions, 160ms disclosure entry, and 1.6s skeleton opacity, with its reduced-motion overrides.
 
-### Conversations, motion, and identity
-
-Incoming messages are white and outgoing messages soft green, with readable text and timestamps. Attachment cards show a filename and metadata. The composer retains attachment, text, send, queued-file, and feedback states. Focus-within turns its border green. Attachment, send, and queued-file removal targets retain their implemented 48px dimensions.
-
-Control color transitions last 140ms, disclosure entry 160ms, and skeleton opacity alternates over 1.6s. Reduced-motion preference removes animations and transitions. No new decorative raster imagery is part of this directory redesign.
-
-The shield/check artwork comes from `components/Brand.tsx`. Existing Android launcher/offline assets reuse that geometry. The previously generated iOS raster `apps/mobile_webview/ios/Sources/Assets.xcassets/AppIcon.appiconset/AppIcon.png` is produced by `apps/mobile_webview/ios/scripts/generate-app-icon.swift`, deriving its paths from that vector. Rebuild from the iOS directory with `swift scripts/generate-app-icon.swift`; iOS supplies its icon mask. This provenance is historical native asset evidence, not a claim that native chrome was updated in the directory pass.
+Native shield/check assets retain their older provenance from `components/Brand.tsx`; the iOS generator remains `apps/mobile_webview/ios/scripts/generate-app-icon.swift`. That native identity is separate from the new web reference logo.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- Do share the system sans, green actions, slate desktop rail, and light work surfaces across every web role.
-- Do keep search available from the header and preserve URL state when navigating list pages.
-- Do keep primary mobile destinations visible, labeled, and clear of the bottom safe area.
-- Do use aligned rows, separators, and inline disclosures to make real work easy to scan.
-- Do retain visible keyboard focus on both dark and light surfaces, readable values, and textual status feedback.
-- Do use actual data, useful empty states, and honest unpublished legal notices.
-- Do preserve the shield/check vector provenance when rebuilding native icons.
+- Do retain Garet Book, light rails, white panels, purple accents, charcoal actions, and original logo/icon geometry.
+- Do keep client `/account` and staff `/staff` separate under their existing role guards.
+- Do preserve staff permissions, search, pagination, and chat behavior within the light reference shell.
+- Do use real account data, ₸ amounts, permission checks, and honest errors or empty states.
+- Do retain visible focus, readable control values, and actual security/legal state.
 
 ### Don't:
 
-- Don't restore the discarded blue action accent, square controls, or serif authentication headline.
-- Don't place every administrative form above the directory or turn each record into a separate promotional card.
-- Don't invent statistics, records, or product capabilities to fill a workspace or the authentication companion panel.
-- Don't hide primary phone navigation behind a menu or let the composer overlap the bottom bar.
-- Don't add gradients, glass effects, or shadows to ordinary work surfaces.
-- Don't treat browser snapshots or build success as acceptance of populated case workflows, concurrent-user capacity, or native runtime.
+- Don't add cabinet mode switches, advertising, or promotional photo rails anywhere.
+- Don't turn reference-only features into product requirements; use `Sovremennaya_Zashchita_AI_Agent_Spec.md` for scope.
+- Don't restore the old slate/green staff shell or legacy authentication composition.
+- Don't invent balances, cases, receipts, or published legal documents to match screenshots.
+- Don't call source review, successful builds, or HTTP checks rendered or pixel-perfect acceptance.
+- Don't treat this pass as native release, load-test, or physical-device acceptance.

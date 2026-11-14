@@ -1,4 +1,4 @@
-.shell { display: grid; grid-template-columns: 300px minmax(0,1fr); height: 100%; min-height: 0; background: var(--surface); }
+.shell { display: grid; grid-template-columns: clamp(240px, 23vw, 300px) minmax(0,1fr); grid-template-rows: minmax(0,1fr); height: 100%; min-height: 0; min-width: 0; background: var(--surface); }
 .sidebar { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--line); background: var(--surface); }
 .sidebarHeader { padding: 20px 20px 12px; }
 .sidebarHeader h1 { font-size: 22px; letter-spacing: -.02em; }

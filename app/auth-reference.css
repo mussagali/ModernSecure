@@ -1,0 +1,58 @@
+/* Reference composition with the Kazakhstan application's existing auth flows. */
+.product-ui .auth-reference {
+  --font:Garet,sans-serif; --canvas:#fff; --surface:#fff; --surface-soft:#f8f9fb;
+  --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --line-strong:#d1d5db;
+  --accent:#4c53a0; --accent-ink:#414788; --accent-hover:#373c6d; --accent-soft:#eff0f9;
+  --radius:16px; --control-radius:8px;
+  display:flex; justify-content:center; min-height:100svh; padding:48px 28px;
+  background:white; color:var(--ink); font:16px/1.5 Garet,sans-serif;
+}
+.auth-reference-grid { display:grid; grid-template-columns:minmax(0,376px) minmax(0,400px); gap:64px; align-items:center; width:100%; max-width:840px; margin:auto; }
+.auth-reference-brand { text-align:center; padding-bottom:40px; }
+.auth-reference-brand > img { display:block; width:144px; height:160px; object-fit:contain; margin:0 auto 24px; }
+.auth-reference .auth-reference-name { margin:0; font-size:38px; font-weight:400; line-height:1.25; letter-spacing:-.025em; }
+.auth-reference .auth-reference-location { margin:20px 0 0; color:#4c53a0; font-size:15px; line-height:1.65; text-transform:uppercase; }
+.auth-reference-column { min-width:0; }
+.product-ui .auth-reference .auth-content { padding:28px; border:0; border-radius:16px; background:white; box-shadow:0 12px 32px #1118270d; }
+.auth-reference-mark { display:flex; width:64px; margin:0 auto 20px; }
+.auth-reference-mark img { display:block; width:64px; height:72px; object-fit:contain; }
+.product-ui .auth-reference .auth-content h1 { margin:0; font:400 20px/1.4 Garet,sans-serif; letter-spacing:normal; text-align:center; }
+.product-ui .auth-reference .auth-description { margin:10px 0 24px; color:var(--muted); font-size:13px; line-height:1.6; text-align:center; }
+.auth-reference .auth-form { gap:16px; }
+.auth-reference .auth-field label { font-size:14px; font-weight:400; color:#4b5563; }
+.auth-reference .auth-input-wrap { position:relative; }
+.auth-reference .auth-input-wrap > svg { position:absolute; left:12px; top:14px; display:block; width:20px; height:20px; color:#6b7280; pointer-events:none; }
+.product-ui .auth-reference .auth-field .auth-input-wrap input { min-height:48px; width:100%; min-width:0; padding:10px 14px 10px 42px; border:1px solid var(--line); border-radius:8px; background:#f8f9fb; color:var(--ink); font:16px/1.5 Garet,sans-serif; box-shadow:none; }
+.product-ui .auth-reference .auth-field .auth-password-field input { padding-right:48px; }
+.auth-reference input::placeholder { color:#6b7280; opacity:1; }
+.auth-reference .auth-password-field button { top:2px; right:2px; display:grid; place-items:center; width:44px; height:44px; min-height:44px; padding:10px; color:#6b7280; border:0; background:transparent; }
+.auth-reference .auth-password-field button:hover { color:var(--accent); background:var(--accent-soft); }
+.auth-reference .auth-password-field button svg { display:block; width:20px; height:20px; }
+.product-ui .auth-reference .auth-submit { display:flex; align-items:center; justify-content:center; gap:10px; min-height:48px; margin-top:4px; padding:10px 16px; border:1.5px solid #a3a9d7; border-radius:8px; color:var(--accent); background:white; font:400 16px/1.5 Garet,sans-serif; box-shadow:none; }
+.product-ui .auth-reference .auth-submit:hover:not(:disabled) { border-color:var(--accent); background:var(--accent-soft); }
+.auth-reference .auth-submit:disabled { opacity:.65; }
+.auth-reference :is(a,button,input,summary):focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.auth-reference input { caret-color:var(--accent); }
+.auth-reference ::selection { background:#e0e2f2; }
+.auth-reference .auth-switch { margin-top:16px; font-size:14px; }
+.auth-reference .auth-switch a { font-weight:400; }
+.auth-reference .auth-feedback { padding:14px 16px; border-radius:8px; font-size:14px; line-height:1.5; overflow-wrap:anywhere; }
+.product-ui .auth-reference .auth-footer { width:100%; margin:14px auto 0; padding:0; font-size:12px; }
+.auth-reference .auth-footer nav { gap:0 16px; }
+.auth-reference .auth-footer a { color:#6b7280; }
+.auth-reference.auth-page-wide .auth-reference-grid { grid-template-columns:minmax(0,280px) minmax(0,640px); max-width:984px; }
+.auth-reference.auth-page-wide .auth-reference-name { font-size:34px; }
+@media(max-width:900px) {
+  .product-ui .auth-reference { padding:40px 24px; }
+  .auth-reference .auth-reference-grid,.auth-reference.auth-page-wide .auth-reference-grid { grid-template-columns:minmax(0,1fr); max-width:400px; gap:0; }
+  .auth-reference.auth-page-wide .auth-reference-grid { max-width:640px; }
+  .auth-reference-brand { display:none; }
+}
+@media(max-width:480px) {
+  .product-ui .auth-reference { justify-content:flex-start; padding:28px 16px max(24px,env(safe-area-inset-bottom)); }
+  .auth-reference-grid { margin:0 auto; }
+  .product-ui .auth-reference .auth-content { padding:24px 20px; border-radius:16px; }
+  .auth-reference-mark { margin-bottom:18px; }
+  .auth-reference .auth-label-row { flex-wrap:wrap; column-gap:8px; row-gap:0; }
+  .auth-reference .auth-label-row a { margin-block:0; font-size:13px; }
+}

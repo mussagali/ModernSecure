@@ -3,6 +3,7 @@ import type { createClient } from "./supabase/server";
 
 export async function requireAccountApproval(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data, error } = await supabase.rpc("account_access_status");
+  if (error?.code === "ACCOUNT_REMOVED") redirect("/auth/session-ended");
   if (error) throw new Error("Не удалось проверить активацию аккаунта");
   if (data === "anonymous") redirect("/login");
   if (data === "disabled") redirect("/access-denied");

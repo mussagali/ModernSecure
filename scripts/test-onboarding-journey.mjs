@@ -59,7 +59,7 @@ function fixtureClient() {
   return {
     auth: {
       getClaims: async () => ({ data: { claims: actor.n ? { sub: uid(actor.n), email: `journey${actor.n}@example.test`, aal: actor.aal } : null } }),
-      signUp: async ({ email, options }) => { assert.equal(options.emailRedirectTo, 'https://fixture.invalid/auth/callback'); await addUser(10, false, email); return { error: null }; },
+      signUp: async ({ email, options }) => { assert.equal(options.emailRedirectTo, 'https://fixture.invalid/auth/callback'); await addUser(10, false, email); return { data: { user: { id: uid(10), identities: [{ provider: 'email' }] }, session: null }, error: null }; },
       signInWithPassword: async ({ email }) => {
         const { rows } = await db.query('select id,email_confirmed_at from auth.users where email=$1', [email]);
         if (!rows[0]?.email_confirmed_at) return { error: { code: 'email_not_confirmed' } };
@@ -235,7 +235,7 @@ try {
   session = { n: 10, aal: 'aal1' };
   const callback = load('app/auth/callback/route.ts');
   assert.equal((await callback.GET(new Request('https://fixture.invalid/auth/callback?code=fixture-valid-code'))).location, 'https://fixture.invalid/account');
-  assert.equal((await callback.GET(new Request('https://fixture.invalid/auth/callback?code=fixture-missing-code'))).location, 'https://fixture.invalid/login?notice=email-confirmed');
+  assert.equal((await callback.GET(new Request('https://fixture.invalid/auth/callback?code=fixture-missing-code'))).location, 'https://fixture.invalid/login?notice=link-sign-in-failed');
   await redirected(() => requireAccountApproval(fixtureClient()), '/awaiting-approval');
   const waiting = await resolveTree(await WaitingPage());
   assert.match(content(waiting), /Ожидаем активацию/);

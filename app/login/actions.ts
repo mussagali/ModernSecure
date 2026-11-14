@@ -21,6 +21,15 @@ function validEmail(email: string) {
   return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+const existingAccountMessage = "Письмо подтверждения не отправлено. Возможно, аккаунт с этой почтой уже существует. Войдите или восстановите пароль.";
+
+function emailErrorMessage(code?: string) {
+  if (code === "over_email_send_rate_limit") return "Сервис временно достиг лимита отправки писем. Попробуйте позже; если письмо не приходит, обратитесь в поддержку.";
+  if (code === "over_request_rate_limit" || code === "over_email_send_rate_limit_per_user") return "Слишком много запросов. Подождите минуту перед повторной отправкой.";
+  if (code === "email_address_not_authorized" || code === "unexpected_failure") return "Не удалось отправить письмо. Попробуйте позже или обратитесь в поддержку.";
+  return "Не удалось выполнить запрос. Попробуйте позже.";
+}
+
 export async function loginAction(_previous: AuthState, formData: FormData): Promise<AuthState> {
   const email = emailFrom(formData);
   const password = passwordFrom(formData);
@@ -62,13 +71,18 @@ export async function registerAction(_previous: AuthState, formData: FormData): 
   if (password !== repeat) return { status: "error", message: "Пароли не совпадают." };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: { emailRedirectTo: `${process.env.APP_ORIGIN}/auth/callback` },
   });
-  if (error) return { status: "error", message: "Не удалось создать аккаунт. Попробуйте позже." };
-  return { status: "success", message: "Проверьте почту и подтвердите email по ссылке в письме." };
+  if (error) return { status: "error", message: ["user_already_exists", "email_exists"].includes(error.code ?? "") ? existingAccountMessage : emailErrorMessage(error.code) };
+  if (data.session) redirect("/account");
+  // GoTrue can return an obfuscated user (no identities) for a confirmed
+  // address. No confirmation email is sent in that case.
+  if (data.user?.identities?.length === 0) return { status: "error", message: existingAccountMessage };
+  if (!data.user) return { status: "error", message: "Не удалось создать аккаунт. Попробуйте позже." };
+  return { status: "success", message: "Проверьте почту и папку «Спам»: для завершения регистрации откройте ссылку подтверждения. Если вы уже регистрировались, войдите или восстановите пароль." };
 }
 
 export async function forgotPasswordAction(_previous: AuthState, formData: FormData): Promise<AuthState> {
@@ -79,7 +93,7 @@ export async function forgotPasswordAction(_previous: AuthState, formData: FormD
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${process.env.APP_ORIGIN}/auth/recovery`,
   });
-  if (error) return { status: "error", message: "Не удалось отправить письмо. Попробуйте позже." };
+  if (error) return { status: "error", message: emailErrorMessage(error.code) };
   return { status: "success", message: "Если аккаунт существует, письмо для восстановления отправлено." };
 }
 

@@ -1,0 +1,40 @@
+.product-ui .legal-page.reference-legal {
+  --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#4c53a0;
+  width:100%; min-height:100svh; margin:0; padding:24px;
+  color:var(--ink); background:#f3f4f6; font:16px/1.65 Garet,sans-serif;
+}
+.reference-legal .legal-layout { width:100%; max-width:1040px; margin:0 auto; }
+.reference-legal .legal-header { display:flex; align-items:center; justify-content:space-between; gap:24px; margin-bottom:28px; }
+.reference-legal .legal-brand { display:flex; align-items:center; gap:10px; color:var(--ink); font-size:20px; line-height:1.25; text-decoration:none; }
+.reference-legal .legal-brand img { display:block; width:40px; height:44px; object-fit:contain; }
+.reference-legal .legal-return { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:8px 16px; border:1px solid var(--line); border-radius:8px; background:white; color:var(--accent); font-size:14px; text-decoration:none; }
+.reference-legal .legal-return svg { width:18px; height:18px; transform:rotate(180deg); }
+.reference-legal .legal-return:hover { border-color:#a3a9d7; background:#eff0f9; }
+.reference-legal .legal-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+.reference-legal .legal-tabs a { display:inline-flex; align-items:center; min-height:44px; padding:8px 16px; border-radius:8px; color:#4b5563; background:#e5e7eb; font-size:14px; text-decoration:none; }
+.reference-legal .legal-tabs a:hover { background:#dfe1e6; }
+.reference-legal .legal-tabs a[aria-current=page] { background:#2b2b2b; color:white; }
+.product-ui .reference-legal .legal-document { max-width:none; margin:0; padding:36px 48px 48px; background:white; border:1px solid var(--line); border-radius:16px; }
+.reference-legal .legal-document-heading { display:flex; align-items:flex-start; gap:16px; max-width:76ch; margin:0 auto; }
+.reference-legal .legal-document-icon { display:grid; place-items:center; flex:none; width:42px; height:42px; border-radius:8px; background:#e0e2f2; color:#414788; }
+.reference-legal .legal-document-icon svg { width:22px; height:22px; }
+.product-ui .reference-legal h1 { margin:2px 0 0; font:400 28px/1.35 Garet,sans-serif; letter-spacing:-.02em; overflow-wrap:anywhere; }
+.reference-legal .legal-version { max-width:76ch; margin:16px auto 28px; color:var(--muted); font-size:14px; }
+.reference-legal .legal-body { max-width:76ch; margin:0 auto; white-space:pre-wrap; overflow-wrap:anywhere; font-size:16px; line-height:1.85; }
+.reference-legal .legal-notice { max-width:76ch; margin:24px auto 0; color:#4b5563; }
+.reference-legal :focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.reference-legal ::selection { background:#e0e2f2; }
+@media(max-width:600px) {
+  .product-ui .legal-page.reference-legal { padding:20px 16px max(24px,env(safe-area-inset-bottom)); }
+  .reference-legal .legal-header { gap:12px; margin-bottom:24px; }
+  .reference-legal .legal-brand { gap:8px; font-size:16px; }
+  .reference-legal .legal-brand img { width:32px; height:36px; }
+  .reference-legal .legal-return { padding:8px 12px; }
+  .reference-legal .legal-tabs { display:grid; grid-template-columns:1fr; }
+  .reference-legal .legal-tabs a { justify-content:center; }
+  .product-ui .reference-legal .legal-document { padding:24px 20px 28px; }
+  .reference-legal .legal-document-heading { gap:12px; }
+  .reference-legal .legal-document-icon { width:36px; height:36px; }
+  .product-ui .reference-legal h1 { font-size:22px; }
+  .reference-legal .legal-body { line-height:1.75; }
+}

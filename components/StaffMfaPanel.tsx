@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
+// Enrollment is paused; existing factors still verify required sign-ins.
+const enrollmentEnabled = false;
+
 type Factor = { id: string; friendly_name?: string | null; status?: string };
 type PendingFactor = { id: string; qr: string; secret: string };
 
@@ -35,7 +38,7 @@ export function StaffMfaPanel({ required, passed, next = "/staff" }: { required:
   }, [supabase]);
 
   async function startEnrollment() {
-    if (working) return;
+    if (working || !enrollmentEnabled) return;
     setWorking(true);
     setError("");
     try {
@@ -86,7 +89,7 @@ export function StaffMfaPanel({ required, passed, next = "/staff" }: { required:
     setWorking(false);
   }
 
-  if (!factors) return <div className="staff-security-card" role="status">Проверяем способы подтверждения входа…</div>;
+  if (!factors) return <div className="staff-security-card" role={error ? "alert" : "status"}>{error || "Проверяем способы подтверждения входа…"}{error && <button type="button" onClick={() => window.location.reload()}>Повторить загрузку</button>}</div>;
 
   return <div className="staff-security-card">
     {error && <p className="staff-security-error" role="alert">{error}</p>}
@@ -100,8 +103,8 @@ export function StaffMfaPanel({ required, passed, next = "/staff" }: { required:
       <form onSubmit={verify} className="staff-security-form"><label htmlFor="mfa-code">Код из приложения</label><input id="mfa-code" autoComplete="one-time-code" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} required /><button type="submit" disabled={working || code.length !== 6}>{working ? "Проверяем…" : "Подключить и войти"}</button></form>
       <p className="staff-security-hint">После подтверждения остальные сеансы этого аккаунта завершатся. Не отправляйте ключ и QR-код коллегам.</p>
     </> : factors.length === 0 ? <>
-      <h2>Подключите второй фактор</h2><p>{required ? "Для доступа к панели сотрудника сначала подключите приложение-аутентификатор." : "Настройте дополнительную защиту. После подключения коды потребуются при каждом новом входе."}</p>
-      <button className="staff-security-primary" type="button" onClick={startEnrollment} disabled={working}>{working ? "Подготавливаем…" : "Подключить приложение"}</button>
+      <h2>{enrollmentEnabled ? "Подключите второй фактор" : "Обратитесь к администратору"}</h2><p>{!enrollmentEnabled ? "Подключение второго фактора временно недоступно. Для этого аккаунта требуется подтверждение входа; обратитесь к администратору для восстановления доступа." : required ? "Для доступа к панели сотрудника сначала подключите приложение-аутентификатор." : "Настройте дополнительную защиту. После подключения коды потребуются при каждом новом входе."}</p>
+      {enrollmentEnabled && <button className="staff-security-primary" type="button" onClick={startEnrollment} disabled={working}>{working ? "Подготавливаем…" : "Подключить приложение"}</button>}
     </> : !passed ? <>
       <h2>Введите код подтверждения</h2><p>Ваша учётная запись уже защищена. Возьмите шестизначный код из подключённого приложения.</p>
       <form onSubmit={verify} className="staff-security-form">
@@ -111,7 +114,7 @@ export function StaffMfaPanel({ required, passed, next = "/staff" }: { required:
     </> : <>
       <h2>Вход защищён</h2><p>Этот сеанс подтверждён кодом из приложения. Для восстановления доступа подключите резервное устройство, которое хранится отдельно от основного.</p>
       <ul className="staff-security-factors">{factors.map((factor, index) => <li key={factor.id}><span>{factor.friendly_name || `Устройство ${index + 1}`}</span>{factors.length > 1 && <button type="button" onClick={() => void removeBackup(factor.id)} disabled={working}>Удалить</button>}</li>)}</ul>
-      {factors.length < 2 && <button className="staff-security-secondary" type="button" onClick={startEnrollment} disabled={working}>{working ? "Подготавливаем…" : "Добавить резервное устройство"}</button>}
+      {enrollmentEnabled && factors.length < 2 && <button className="staff-security-secondary" type="button" onClick={startEnrollment} disabled={working}>{working ? "Подготавливаем…" : "Добавить резервное устройство"}</button>}
       <Link className="staff-security-return" href={next}>Вернуться в рабочую панель</Link>
     </>}
   </div>;

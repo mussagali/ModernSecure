@@ -87,6 +87,20 @@ try {
   await assert.rejects(asUser(newStaff, "aal2", "cases", gate), /Complete staff two-factor authentication/);
   const guardedTables = await pg.query("select count(*)::int as n from pg_policies where schemaname='public' and policyname='staff_mfa_guard'");
   assert.equal(guardedTables.rows[0].n, 2);
+  await pg.exec(readFileSync("supabase/migrations/20261016008200_mfa_missing_claim_guard.sql", "utf8"));
+  await pg.exec(readFileSync("supabase/migrations/20261114009800_optional_client_mfa.sql", "utf8"));
+  await pg.query("insert into auth.mfa_factors values(gen_random_uuid(),$1,'unverified')", [client]);
+  assert.equal((await asUser(client, "aal1", "cases", "select * from public.cases")).rowCount, 1);
+  await pg.query("update auth.mfa_factors set status='verified' where user_id=$1", [client]);
+  assert.equal((await asUser(client, "aal1", "cases", "select * from public.cases")).rowCount, 0);
+  await assert.rejects(asUser(client, "aal1", "cases", gate), /Complete staff two-factor authentication/);
+  await assert.rejects(asUser(client, undefined, "cases", gate), /Complete staff two-factor authentication/);
+  assert.equal((await asUser(client, "aal1", "rpc/staff_mfa_status", gate)).rowCount, 1);
+  assert.equal((await asUser(client, "aal1", "rpc/staff_mfa_status", status)).rows[0].state, null);
+  assert.equal((await asUser(client, "aal2", "cases", "select * from public.cases")).rowCount, 1);
+  assert.equal((await asUser(client, "aal2", "cases", gate)).rowCount, 1);
+  await pg.query("delete from auth.mfa_factors where user_id=$1", [client]);
+  assert.equal((await asUser(client, "aal1", "cases", "select * from public.cases")).rowCount, 1);
   console.log("OK staff MFA gate: staged rollout, Data API, RLS, Storage and stale factor revocation");
 } finally {
   await pg.close();

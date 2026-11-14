@@ -2,37 +2,53 @@
 version: 1
 slug: "app-layout-tsx"
 primary_target: "app/layout.tsx"
-related_targets: ["app/account", "app/staff", "components", "app/login", "app/workspace-design.css"]
+related_targets: ["app/account", "components/ClientShell.tsx", "components/ReferenceCaseView.tsx", "components/PortalShared.tsx", "app/reference-design.css", "app/staff", "components/StaffReferenceShell.tsx", "app/staff-reference.css", "app/login", "components/AuthFrame.tsx", "components/AuthForm.tsx", "app/auth-reference.css", "app/workspace-design.css"]
 ---
 
-# Directory workspace redesign, 28 October 2026
+# Role-separated casework portal, 14 November 2026
 
-This is the current surface direction for the whole web application. The user requested comfort and visual clarity with many users, with equal priority for every section. Familiar application navigation, Russian copy, and restrained green remain the durable brand commitments. Roles, account activation, MFA, legal publication state, authorization, and file-security behavior remain product constraints. Existing Android/iOS shells display these responsive pages; native binary changes are outside this pass.
+The user’s correction retains `sovz-lk.ru` styling while restoring the product scope in `Sovremennaya_Zashchita_AI_Agent_Spec.md`. Client `/account` and staff `/staff` remain separate under existing role guards. Cabinet mode switches, ads, and promotional photo rails are excluded everywhere. The preview entry point remains `http://localhost:3000/staff/overview`.
 
 ## Direction contract
 
-THESIS: A stable place for work, with searchable directories and details disclosed in context.
+THESIS: Role-separated casework without marketing, using the existing reference visual language.
 
-OWN-WORLD: A dark slate desktop rail anchors white work surfaces and cool gray canvas. Green marks actions and current location. System sans, compact headings, aligned columns, separators, and moderate corners define the world. The final normative palette and component tokens are in root `DESIGN.md`, extracted from the final overrides in `app/workspace-design.css`.
+OWN-WORLD: Garet Book; light gray canvas and navigation; white rounded panels; purple accents; charcoal primary actions; original logo and icon geometry. Shared reference tokens in `DESIGN.md` retain their historical `client-` prefix; staff-specific variants use `staff-`. Authentication extends this world with white canvas, Garet, the existing turquoise logo, gray icon fields, a softly shadowed borderless card, and purple outlined submit actions.
 
-STORY: Find a section or record, narrow the list, then open the case or member without losing the query context. Clients move from a recent list to their full case directory. Team management separates employees, access requests, and invitations. Secondary administrative forms expand within the relevant record.
+STORY: Home leads to the client’s actual case, tasks, documents, chat, contracts, manual payments, and receipts. Notifications, profile, contacts, and help support that work. Staff retain existing role menus, search, and permitted actions. Amounts use ₸ and actual records.
 
-FIRST VIEWPORT: Desktop has a 240px slate rail (216px at 901–1200px), a 72px search header, compact page heading, useful tabs/search, and readable rows. Both client and staff spaces share that grammar. At 900px and below, a search icon opens the search destination and labeled bottom navigation preserves the main destinations. At phone widths, 16px gutters and stacked record metadata replace desktop columns. Large-screen login uses the slate companion panel to describe actual capabilities beside the form; phones prioritize the form.
+FIRST VIEWPORT: Fixed light left navigation beside a workspace that fills the available width. There is no centered cabinet switch or right promotional rail. The client MFA prompt reflects actual enrollment state and can be dismissed. At 700px the sidebar becomes a drawer; staff retain their existing labeled bottom navigation. Staff search and role-specific actions remain in the top bar.
 
-FORM: Code-led direction. Concept seed 426eb9b9 assigned the searchable directory/archive index. Alternatives considered were the conversation inbox, file manager, bank workspace, calendar, case dossier, and transit wayfinding. The directory contributes stable columns, search before scrolling, bounded lists, and progressive disclosure. Familiar application references supersede literal physical motifs.
+FORM: Apply the reference typography, logo, icons, panels, and palette to existing server-backed functions only. `Sovremennaya_Zashchita_AI_Agent_Spec.md` controls feature scope. Reference HTML/CSS remain in `.impeccable/reference/`; asset provenance remains in `public/reference/SOURCES.md`. Archived promotional images do not authorize promotional UI or new functions.
 
-SIGNATURE INTERACTION: Permission-scoped search, URL-backed filters and pagination, keyboard search access, and compact expandable records. Team lists default to 25 records per page and recover from obsolete page requests. Desktop staff navigation has a local section filter. Chats have server-filtered lists and page controls. Reduced-motion preferences remain respected. Empty, error, denied, and loading states describe the real situation.
+SIGNATURE INTERACTION: Grouped light navigation, expandable case stages, existing document and manual payment flows, and real chat. Preserve permission checks, readable failures, honest empty states, and legal publication state. Client MFA is optional; staff MFA remains enforced by server state. Consent footer opens read mode through `/consent?view=1`.
 
-REACH: Staff shell, client shell, authentication, team, clients, cases, messages, documents, tasks, payments, calendar, services, and shared case details. This breadth records implementation scope; it does not claim that every populated state has passed visual acceptance.
+REACH: `ClientShell`, `ReferenceCaseView`, `PortalShared`, client account routes, and `app/reference-design.css`; `StaffReferenceShell`, `app/staff/layout.tsx`, and `app/staff-reference.css` cover staff routes. Staff permissions, role navigation, search, bounded lists, and conversation scrolling remain intact. Authentication now joins this scope through `AuthFrame`, `AuthForm`, and the last-imported `app/auth-reference.css`; native binaries/chrome remain outside this correction.
 
-## Current finish evidence
+## Kazakhstan authentication extension
 
-Desktop and phone screenshots, the original browser report, and the resume report are under `.impeccable/review/directory/`. The saved `browser-report.json` and `resume-browser-report.json` together cover 41 live route views across the owner, client, lawyer, and manager roles (29 and 12 respectively). Search, team role/access filters, browser Back, section filtering, the search shortcut, obsolete-page recovery, and selected chat navigation have been exercised. The repeat report records no JavaScript errors or horizontal overflow. A 25-row synthetic browser fixture is density evidence only and does not mutate the database.
+THESIS: A cohesive Kazakhstan entry preserves the existing signup/login logic.
 
-The independent finish review returned `ship` for available states and responsive layout after inspecting 40 desktop/mobile PNGs, source, and reports. All three material corrections passed: mobile heading layout, light focus on the dark rail (10.48:1 contrast with 4px list padding and 1px outline offset), and obsolete-page recovery. No UI findings remain within that scope. The last full pre-pause run passed all 38 local scripts, lint, and the production build including TypeScript; only the 1px focus-offset CSS changed afterward. The resumed pass changed capture harness/documentation only, and the reviewer independently reran the list-page test successfully. Current documentation records the directory system in `DESIGN.md` and `.impeccable/design.json`.
+FIRST VIEWPORT: Large brand and Kazakhstan location at left; a white, borderless card with the small existing logo, light gray icon inputs, and purple outline submit at right.
 
-The database has no cases, documents, or services; populated case/document/payment workflows have not received visual acceptance. Browser checks do not establish concurrent-user capacity, native runtime, physical-device behavior, open-keyboard behavior, or enlarged text coverage. Business data was not created for screenshots.
+FORM: The standard 840px grid uses 376px/400px columns and a 64px gap; wide consent uses 984px with 280px/640px columns. The brand hides at 900px; at 480px the card compacts to 24px 20px padding.
 
-## Historical context
+REACH: Login, registration, forgot/reset password, pending approval, consent, and access denial share the frame. Email/password, password confirmation, Server Actions, role assignment, approval, consent, and MFA retain their existing behavior. No role chooser or simulated CAPTCHA.
 
-The earlier pass used a light sidebar and a messenger-led workspace; its screenshots and bounded five-fix finish verdict remain in `.impeccable/review/redesign/`. That pass also exercised Android on Pixel 7 API 36 and performed iOS parse-only checks. Those are historical native facts, not acceptance of the current directory redesign. Native icon provenance remains the existing shield/check vector and its deterministic iOS generator, documented in `PRODUCT.md` and `DESIGN.md`.
+## Scope correction
+
+Removed reference-only partner, recommendation, post, BKI, director, Russian sample-document, and invoice-request routes/actions, plus their staff request inbox. Migration 099 revokes the two related RPCs while retaining data. Case document requests, contracts, and manual payment/receipt workflows remain in product scope.
+
+## Current evidence and limits
+
+The independent reviewer found no material source issues and returned **ship at source-review scope**. Lint, production build, migration audit, consent-transition tests, and MFA-routing tests passed. Authenticated HTTP checks on `localhost:3000` returned 200 for eight staff and six client pages without switches or promos; removed routes returned 404, cross-role cabinet redirects worked, and retired RPCs denied calls from both roles. The client test account had no visible cases, so case-detail HTTP checks were not run.
+
+For the authentication extension, source review returned **ship** without findings. Lint, production build, consent-transition and MFA-routing tests passed, as did HTTP checks of six public pages and protected-route redirects. The initial detector advisories in `.impeccable/review/auth-reference/detector.json` describe authentication typography/color additions. Documentation reflects the subsequent user-requested compact sizing in the final CSS; those source-evidenced rules are recorded in `DESIGN.md` and its sidecar.
+
+The browser was unavailable. No current rendered, responsive-overflow, keyboard, or 1:1 visual verification is claimed. Source, build, and HTTP evidence do not establish those results.
+
+## Historical context and limits
+
+Earlier client and staff HTTP reports remain in `.impeccable/review/reference/` and `.impeccable/review/staff-reference/`; they describe preceding implementations. Earlier directory, redesign, and workflow screenshots remain historical evidence, not acceptance of this corrected shell. Earlier native Android-emulator and iOS parse-only checks remain bounded to their original scope.
+
+This pass does not certify physical devices, open-keyboard layouts, enlarged text, concurrent-user capacity, push delivery, store readiness, or new production deployment. Native shield/check provenance remains separate from the reference web logo. Existing security, consent, file protection, and native constraints remain recorded in `PRODUCT.md`.

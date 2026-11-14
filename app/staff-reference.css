@@ -1,0 +1,157 @@
+/* All staff routes share the parent's reference UI, including /staff/overview.
+   Scoped specificity keeps lazy-loaded staff/lawyer CSS from restoring the old shell. */
+.product-ui .staff-reference { --rail:#f3f4f6; --rail-text:#1f2937; --rail-muted:#6b7280; --rail-hover:#e5e7eb; --rail-active-ink:#030712; --sidebar-width:var(--rail-width); }
+.product-ui .staff-reference :is(h1,h2,h3,h4,p,label,button,a,input,select,textarea,small,summary,th,td) { font-family:Garet,sans-serif; letter-spacing:normal; }
+.product-ui .staff-reference h1 { font-size:1.5rem; line-height:2rem; font-weight:600; }
+.product-ui .staff-reference h2 { font-size:1.25rem; line-height:1.75rem; font-weight:600; }
+.product-ui .staff-reference h3 { font-size:1.125rem; line-height:1.75rem; font-weight:600; }
+.product-ui .staff-reference a { color:var(--accent-ink); }
+.product-ui .staff-reference .sovz-brand { color:#111827; }
+.product-ui .staff-reference .staff-reference-sidebar { padding:0 1rem 1.5rem; background:#f3f4f6; }
+.product-ui .staff-reference .staff-nav { display:grid; gap:.125rem; }
+.product-ui .staff-reference .staff-nav-link { display:flex; align-items:center; gap:.625rem; min-height:2.5rem; padding:.625rem .875rem; border:0; border-radius:.5rem; color:#1f2937; background:transparent; font-size:.875rem; line-height:1.25rem; font-weight:500; }
+.product-ui .staff-reference .staff-nav-link:hover { background:#e5e7ebb3; color:#030712; }
+.product-ui .staff-reference .staff-nav-link.is-active { background:#e5e7eb; color:#030712; font-weight:500; box-shadow:none; }
+.product-ui .staff-reference .staff-nav-link.is-separated { margin-top:1rem; }
+.product-ui .staff-reference .staff-nav-link[href='/staff/notifications'] { margin-top:1rem; }
+.product-ui .staff-reference .staff-nav-icon { display:inline-flex; align-items:center; justify-content:center; flex:0 0 20px; width:20px; height:20px; padding:0; background:transparent; color:inherit; }
+.product-ui .staff-reference .staff-nav-icon svg { display:block; width:20px; height:20px; }
+.product-ui .staff-reference .staff-nav-link { min-height:44px; }
+.product-ui .staff-reference .staff-nav-count { min-width:1.125rem; height:1.125rem; padding:0 .25rem; font-size:.625rem; background:#4c53a0; color:white; }
+.product-ui .staff-reference .staff-reference-account { margin-top:1rem; padding-top:1rem; border-top:1px solid #e5e7eb; }
+.product-ui .staff-reference .staff-reference-account > a,.product-ui .staff-reference .staff-reference-account button { display:flex; align-items:center; gap:.625rem; padding:.625rem .875rem; min-height:2.5rem; width:100%; color:#1f2937; background:transparent; border:0; border-radius:.5rem; font-size:.875rem; font-weight:500; text-align:left; justify-content:flex-start; }
+.product-ui .staff-reference .staff-reference-account > a:hover,.product-ui .staff-reference .staff-reference-account button:hover { background:#e5e7eb; }
+.product-ui .staff-reference .staff-reference-account details { margin-top:1rem; font-size:.75rem; color:#6b7280; }
+.product-ui .staff-reference .staff-reference-account summary { display:flex; align-items:center; gap:.75rem; padding:.75rem; list-style:none; }
+.product-ui .staff-reference .staff-reference-account summary::-webkit-details-marker { display:none; }
+.product-ui .staff-reference .staff-reference-account summary .sovz-avatar { width:2rem; height:2rem; flex:none; }
+.product-ui .staff-reference .staff-reference-account summary small { display:block; font-size:.625rem; margin-top:.25rem; }
+.product-ui .staff-reference .staff-reference-account details > a { display:block; padding:.5rem .75rem; }
+.product-ui .staff-reference .sovz-topbar { gap:.75rem; }
+.product-ui .staff-reference .staff-reference-search { display:flex; align-items:center; }
+.product-ui .staff-reference .staff-reference-search .workspace-search { display:none; }
+.product-ui .staff-reference .staff-reference-search .workspace-search-mobile { display:grid; place-items:center; flex:none; width:44px; min-width:44px; height:44px; min-height:44px; padding:0; margin:0; line-height:1; color:#374151; border:1px solid #e5e7eb; border-radius:.5rem; background:white; }
+.product-ui .staff-reference .staff-reference-search .workspace-search-mobile:hover { color:#414788; background:#eff0f9; border-color:#c7caed; }
+.product-ui .staff-reference .staff-page { width:100%; min-width:0; margin:0; padding:0; }
+/* White, rounded page surfaces instead of the previous bare directory canvas. */
+.product-ui .staff-reference .staff-page:not(:has(> .staff-reference-overview, > .lawyer-dashboard, .case-conversation-screen, .staff-chat-root)) { padding:1.75rem; border:1px solid #e5e7eb; border-radius:1rem; background:white; min-height:calc(100dvh - 6rem); }
+.product-ui .staff-reference .staff-page-heading { margin:0 0 1.75rem; gap:1rem; align-items:center; }
+.product-ui .staff-reference .staff-page-heading p { margin-top:.5rem; color:#6b7280; font-size:.875rem; line-height:1.5rem; }
+.product-ui .staff-reference .staff-role-pill { padding:.375rem .625rem; border-radius:.375rem; background:#f3f4f6; color:#6b7280; font-size:.75rem; }
+.product-ui .staff-reference .staff-reference-welcome { margin-bottom:1rem; }
+.product-ui .staff-reference .staff-reference-welcome .staff-page-heading p { max-width:50rem; }
+.product-ui .staff-reference .staff-reference-person { display:flex; align-items:center; gap:1rem; margin-bottom:.5rem; }
+.product-ui .staff-reference .staff-reference-person .sovz-avatar { width:3.75rem; height:3.75rem; flex:none; }
+.product-ui .staff-reference .staff-reference-person h3 { font-size:1.125rem; overflow-wrap:anywhere; }
+.product-ui .staff-reference .sovz-case-card { min-height:22.5rem; }
+.product-ui .staff-reference .sovz-case-card h2 { font-size:1.125rem; }
+.product-ui .staff-reference .sovz-case-card .sovz-button + .sovz-button { margin-top:.75rem; }
+.product-ui .staff-reference .sovz-case-card .sovz-case-facts { margin-bottom:1.75rem; }
+.product-ui .staff-reference .staff-reference-case-counts { margin:.5rem 0 1.5rem; font-size:.75rem; color:#6b7280; }
+.product-ui .staff-reference .staff-reference-case-counts p { display:flex; justify-content:space-between; gap:.5rem; margin-top:.5rem; }
+.product-ui .staff-reference .staff-reference-case-counts strong { color:#030712; }
+.product-ui .staff-reference :is(.staff-panel,.staff-form-panel,.staff-empty-box,.staff-work-card,.staff-service-card,.staff-case-card,.staff-role-guide,.staff-payment-card,.lawyer-task-card) { background:white; border:1px solid #e5e7eb; border-radius:.75rem; box-shadow:none; }
+.product-ui .staff-reference :is(.staff-panel,.staff-form-panel) { padding:1.25rem; }
+.product-ui .staff-reference .staff-overview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; margin:1rem 0; }
+.product-ui .staff-reference .staff-overview-grid > .staff-panel { padding:1.75rem; border-radius:1rem; }
+.product-ui .staff-reference .staff-panel-head { border:0; padding:0; margin-bottom:1.25rem; }
+.product-ui .staff-reference .staff-panel-head a { min-height:2.25rem; font-size:.875rem; }
+.product-ui .staff-reference .staff-list-section { margin:1rem 0 0; }
+.product-ui .staff-reference .staff-reference-overview > .staff-list-section { padding:1.75rem; border:1px solid #e5e7eb; border-radius:1rem; background:white; }
+.product-ui .staff-reference .staff-section-heading { margin-bottom:1.25rem; }
+.product-ui .staff-reference .staff-section-heading h2 { font-size:1.25rem; }
+.product-ui .staff-reference :is(.staff-stats,.staff-attention-strip,.staff-admin-metrics,.staff-priority-stats) { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; margin:1rem 0; padding:1.25rem; background:white; border:1px solid #e5e7eb; border-radius:1rem; overflow:visible; }
+.product-ui .staff-reference :is(.staff-stats,.staff-attention-strip,.staff-admin-metrics,.staff-priority-stats) > a { padding:1rem; min-width:0; border:1px solid #e5e7eb; border-radius:.75rem; min-height:5rem; background:white; color:#030712; }
+.product-ui .staff-reference :is(.staff-stats,.staff-attention-strip,.staff-admin-metrics,.staff-priority-stats) > a:hover { border-color:#a3a9d7; background:#f9fafb; }
+.product-ui .staff-reference :is(.staff-stats,.staff-attention-strip,.staff-admin-metrics,.staff-priority-stats) span { color:#6b7280; font-size:.875rem; }
+.product-ui .staff-reference :is(.staff-stats,.staff-attention-strip,.staff-admin-metrics,.staff-priority-stats) strong { font-size:1.5rem; color:#414788; }
+.product-ui .staff-reference :is(.staff-stats,.staff-attention-strip,.staff-admin-metrics,.staff-priority-stats) small { color:#414788; font-size:.75rem; }
+.product-ui .staff-reference .staff-next-step { margin:1rem 0; padding:1.5rem; border:1px solid #c7caed; background:#eff0f9; color:#030712; border-radius:1rem; }
+.product-ui .staff-reference .staff-next-step h2 { font-size:1.125rem; }
+.product-ui .staff-reference :is(button,.primary-action,.lawyer-primary,.staff-primary-link,.lawyer-send):not(:where(.case-conversation-screen *, .staff-chat-root *)) { min-height:2.25rem; padding:.5rem 1rem; border:1px solid #2b2b2b; border-radius:.5rem; background:#2b2b2b; color:white; box-shadow:none; font-size:.875rem; font-weight:600; line-height:1.25rem; }
+.product-ui .staff-reference :is(button,.primary-action,.lawyer-primary,.staff-primary-link):not(:where(.case-conversation-screen *, .staff-chat-root *)):hover { background:#1a1a1a; color:white; }
+.product-ui .staff-reference :is(.staff-secondary-link,.secondary-action,.sovz-button-outline,.quiet-button,.staff-text-button) { border:1px solid #e5e7eb; border-radius:.5rem; background:white; color:#414788; font-size:.875rem; padding:.5rem 1rem; }
+.product-ui .staff-reference .sovz-button { color:white; }
+.product-ui .staff-reference .sovz-button-outline { color:#414788; }
+.product-ui .staff-reference button:disabled { opacity:.55; cursor:not-allowed; }
+.product-ui .staff-reference button.danger { color:#dc2626; border-color:#fecaca; background:#fff; }
+.product-ui .staff-reference input:not([type=checkbox]):not([type=radio]):not([type=hidden]),.product-ui .staff-reference :is(select,textarea):not(:where(.case-conversation-screen *, .staff-chat-root *)) { min-height:2.5rem; padding:.625rem .75rem; border:1px solid #d1d5db; border-radius:.5rem; background:white; color:#111827; font-size:.875rem; line-height:1.25rem; box-shadow:none; }
+.product-ui .staff-reference textarea:not(:where(.case-conversation-screen *, .staff-chat-root *)) { min-height:7rem; }
+.product-ui .staff-reference label { font-size:.875rem; font-weight:400; color:#374151; }
+.product-ui .staff-reference :is(input,select,textarea):focus { border-color:#5b62b4; }
+.product-ui .staff-reference :is(input,textarea)::placeholder { color:#9ca3af; }
+.product-ui .staff-reference :is(.workspace-tabs,.staff-case-nav,.staff-filter-tabs) { display:flex; flex-wrap:wrap; gap:.5rem; margin:1rem 0; padding:0; border:0; background:transparent; }
+.product-ui .staff-reference :is(.workspace-tabs,.staff-case-nav,.staff-filter-tabs) a { padding:.5rem 1rem; min-height:2.25rem; border:1px solid #e5e7eb; border-radius:.5rem; color:#4b5563; background:#f3f4f6; font-size:.875rem; }
+.product-ui .staff-reference :is(.workspace-tabs,.staff-case-nav) a[aria-current=page],.product-ui .staff-reference .staff-filter-tabs a.is-active { background:#2b2b2b; color:white; border-color:#2b2b2b; }
+.product-ui .staff-reference :is(.list-search,.staff-case-filter-panel,.staff-inbox-toolbar) { padding:1rem; background:#fff; border:1px solid #e5e7eb; border-radius:.75rem; }
+.product-ui .staff-reference :is(.staff-client-list,.staff-case-list,.team-directory,.staff-inbox-list,.lawyer-table-wrap,.staff-case-table) { border-color:#e5e7eb; border-radius:.75rem; background:white; overflow-x:auto; }
+.product-ui .staff-reference :is(.staff-client-row,.staff-case-list-row,.team-directory-row,.staff-inbox-row,.staff-case-table-row) { border-color:#f3f4f6; padding:1rem; color:#030712; font-size:.875rem; }
+.product-ui .staff-reference :is(.staff-case-list-head,.staff-case-table-head,.team-directory-head) { background:#f9fafb; color:#6b7280; font-size:.75rem; border-color:#e5e7eb; }
+.product-ui .staff-reference :is(.staff-inbox-row.has-unread,.staff-work-card.is-unread) { background:#eff0f9; }
+.product-ui .staff-reference :is(.directory-avatar,.staff-inbox-avatar,.lawyer-avatar,.lawyer-metric-icon) { background:#e0e2f2; color:#414788; }
+.product-ui .staff-reference .staff-service-grid { display:grid; grid-template-columns:1fr; gap:.75rem; border:0; background:transparent; }
+.product-ui .staff-reference .staff-service-card { padding:1.25rem; }
+.product-ui .staff-reference .staff-form-panel { grid-template-columns:1fr; gap:1.25rem; }
+.product-ui .staff-reference :is(.form-disclosure,.staff-pending-accounts .staff-work-card) { border:1px solid #e5e7eb; border-radius:.75rem; background:white; }
+.product-ui .staff-reference .form-disclosure > summary { padding:1rem; color:#414788; font-size:.875rem; }
+.product-ui .staff-reference .form-disclosure > .staff-form-panel { margin:0; border:0; }
+.product-ui .staff-reference :is(.staff-admin-activity,.staff-simple-list,.staff-event-list) { font-size:.875rem; }
+.product-ui .staff-reference :is(.staff-admin-activity a,.staff-simple-list li,.staff-event-list li) { border-color:#f3f4f6; }
+.product-ui .staff-reference :is(.staff-empty-text,.staff-form-hint,.staff-panel-copy,.staff-empty-box p,.lawyer-empty p) { color:#6b7280; font-size:.875rem; line-height:1.5rem; }
+.product-ui .staff-reference .staff-empty-box { padding:2rem; }
+.product-ui .staff-reference .lawyer-dashboard { padding:1.75rem; background:white; border:1px solid #e5e7eb; border-radius:1rem; }
+.product-ui .staff-reference .lawyer-dashboard-grid { grid-template-columns:1fr; gap:1rem; }
+.product-ui .staff-reference .lawyer-metrics { gap:.75rem; padding:0; border:0; background:transparent; }
+.product-ui .staff-reference .lawyer-metrics > a { padding:1rem; border:1px solid #e5e7eb; border-radius:.75rem; }
+.product-ui .staff-reference .lawyer-metric-copy > span { font-size:.875rem; }
+.product-ui .staff-reference .lawyer-table-wrap { max-width:100%; }
+.product-ui .staff-reference .staff-detail-grid { grid-template-columns:minmax(0,1fr); gap:1rem; }
+.product-ui .staff-reference :is(.case-conversation-screen,.staff-chat-root) { border:1px solid #e5e7eb; border-radius:1rem; overflow:hidden; background:white; }
+.product-ui .staff-reference :is(.staff-alert,.case-safety-note) { border-radius:.75rem; font-size:.875rem; }
+.product-ui .staff-reference .sovz-menu-toggle { padding:.5rem; color:#1f2937; background:transparent; border:0; }
+.product-ui .staff-reference .sovz-menu-backdrop { background:#0005; border:0; border-radius:0; }
+@media(min-width:1600px) { .product-ui .staff-reference :is(.staff-attention-strip,.staff-stats) { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+@media(max-width:1023px) { .product-ui .staff-reference .sovz-case-card { min-height:0; gap:.5rem; } .product-ui .staff-reference .staff-overview-grid { grid-template-columns:1fr; } }
+@media(min-width:701px) { .product-ui .staff-reference .staff-mobile-nav { display:none; } }
+@media(max-width:700px) {
+  .product-ui .staff-reference .sovz-workspace { padding-bottom:calc(6rem + env(safe-area-inset-bottom)); }
+  .product-ui .staff-reference .staff-page:not(:has(> .staff-reference-overview,.case-conversation-screen,.staff-chat-root)),.product-ui .staff-reference :is(.sovz-panel,.lawyer-dashboard) { padding:1.25rem; }
+  .product-ui .staff-reference .staff-page-heading { margin-bottom:1.25rem; }
+  .product-ui .staff-reference :is(.staff-stats,.staff-attention-strip,.staff-admin-metrics,.staff-priority-stats) { grid-template-columns:1fr; padding:1rem; }
+  .product-ui .staff-reference :is(.staff-form-grid,.staff-role-matrix article) { grid-template-columns:1fr; }
+  .product-ui .staff-reference .staff-mobile-nav { background:#f3f4f6; border-color:#e5e7eb; }
+  .product-ui .staff-reference .staff-mobile-primary-link { color:#4b5563; }
+  .product-ui .staff-reference .staff-mobile-primary-link.is-active { color:#414788; background:#e5e7eb; }
+  .product-ui .staff-reference .staff-mobile-primary-link.is-active .staff-nav-icon { background:transparent; }
+  .product-ui .staff-reference .staff-mobile-more-panel { padding:.5rem; border:1px solid #e5e7eb; border-radius:.75rem; background:white; box-shadow:none; }
+  .product-ui .staff-reference .staff-mobile-more-link { gap:.625rem; min-height:44px; padding:.625rem .875rem; border-radius:.5rem; color:#1f2937; font-size:.875rem; font-weight:500; }
+  .product-ui .staff-reference .staff-mobile-more-link:is(:hover,[aria-current=page]) { background:#e5e7eb; color:#030712; }
+  .product-ui .staff-reference :is(input,textarea,select) { font-size:16px!important; }
+  .product-ui .staff-reference :is(button,.primary-action,.staff-primary-link) { min-height:44px; }
+  .product-ui .staff-reference .staff-reference-search { margin-left:auto; }
+  .product-ui .staff-reference .sovz-transfer { margin-left:0; }
+
+}
+
+/* Constrain chats in the new shell so the history scrolls and composer stays visible. */
+.product-ui .staff-reference .sovz-workspace:has(.case-conversation-screen,.staff-chat-root) { display:flex; flex-direction:column; height:100dvh; min-height:0; }
+.product-ui .staff-reference .sovz-workspace:has(.case-conversation-screen,.staff-chat-root) > .sovz-topbar { flex:none; }
+.product-ui .staff-reference .sovz-columns:has(.case-conversation-screen,.staff-chat-root) { display:flex; flex-direction:column; align-items:stretch; flex:1; min-height:0; min-width:0; }
+.product-ui .staff-reference .staff-page:has(.case-conversation-screen,.staff-chat-root) { display:flex; flex-direction:column; flex:1; min-height:0; }
+.product-ui .staff-reference .lawyer-conversation-layout { display:flex; flex:1; min-height:0; min-width:0; }
+.product-ui .staff-reference :is(.case-conversation-screen,.staff-chat-root) { flex:1; min-height:0; height:auto; }
+.product-ui .staff-reference .sovz-workspace:has(.case-conversation-screen,.staff-chat-root) > .sovz-footer { display:none; }
+.product-ui .staff-reference .staff-page:has(.case-conversation-screen) > .staff-case-nav { flex:none; margin:0 0 .75rem; }
+@media(max-width:1023px) {
+  .product-ui .staff-reference .sovz-topbar { flex-wrap:wrap; }
+  .product-ui .staff-reference .staff-reference-search { margin-left:auto; }
+}
+
+@media(max-width:1200px) and (min-width:1024px) { .product-ui .staff-reference .sovz-case-cards { grid-template-columns:1fr; } .product-ui .staff-reference .sovz-case-card { min-height:0; gap:.5rem; } }
+
+/* Keep the chat search on one line despite shared form-label rules. */
+.product-ui .staff-reference .chat-directory-search > label { display:flex; flex-direction:row; align-items:center; gap:.5rem; padding:0 .625rem; min-height:44px; }
+.product-ui .staff-reference .chat-directory-search input[type=search] { flex:1; width:100%; min-width:0; padding:.625rem 0; }
+.product-ui .staff-reference .chat-directory-search svg { flex:none; }
+.product-ui .staff-reference .staff-reference-account > .staff-reference-person { display:flex; align-items:center; gap:.625rem; padding:.75rem; }
+.product-ui .staff-reference .staff-reference-account > .staff-reference-person small { display:block; font-size:.75rem; color:var(--muted); }

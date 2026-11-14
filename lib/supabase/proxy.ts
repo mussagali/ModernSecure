@@ -23,7 +23,7 @@ export async function updateSession(request: NextRequest) {
   );
 
   const { data } = await supabase.auth.getClaims();
-  if (!data?.claims?.sub && /^\/(?:account|staff|staff-security)(?:\/|$)/.test(request.nextUrl.pathname)) {
+  if (!data?.claims?.sub && /^\/(?:account|account-security|staff|staff-security)(?:\/|$)/.test(request.nextUrl.pathname)) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.search = "";
@@ -31,6 +31,28 @@ export async function updateSession(request: NextRequest) {
     const loginResponse = NextResponse.redirect(loginUrl);
     response.cookies.getAll().forEach((cookie) => loginResponse.cookies.set(cookie));
     return loginResponse;
+  }
+  // Auth can list the caller's factors before the database MFA gate opens.
+  // Redirect HTML workspace requests before their parallel server queries run.
+  if (data?.claims?.sub && /^\/(?:account|consent)(?:\/|$)/.test(request.nextUrl.pathname) && data.claims.aal !== "aal2") {
+    const { data: factors, error } = await supabase.auth.mfa.listFactors();
+    if (error?.code === "user_not_found") {
+      const recoveryUrl = request.nextUrl.clone();
+      recoveryUrl.pathname = "/auth/session-ended";
+      recoveryUrl.search = "";
+      const recoveryResponse = NextResponse.redirect(recoveryUrl);
+      response.cookies.getAll().forEach(cookie => recoveryResponse.cookies.set(cookie));
+      return recoveryResponse;
+    }
+    if (error) return new NextResponse("Не удалось проверить защиту входа. Повторите попытку.", { status: 503 });
+    if (factors.all.some(factor => factor.status === "verified")) {
+      const securityUrl = request.nextUrl.clone();
+      securityUrl.pathname = "/account-security";
+      securityUrl.search = "";
+      const securityResponse = NextResponse.redirect(securityUrl);
+      response.cookies.getAll().forEach(cookie => securityResponse.cookies.set(cookie));
+      return securityResponse;
+    }
   }
   return response;
 }

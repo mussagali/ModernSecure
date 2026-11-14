@@ -21,5 +21,5 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { error, notice } = await searchParams;
 
 
-  return <AuthFrame title="Вход в аккаунт" description="Для клиентов и сотрудников компании.">{notice === "email-confirmed" && <p className="auth-feedback" role="status">Email подтверждён. Войдите с паролем, указанным при регистрации.</p>}{error && <p className="auth-feedback is-error" role="alert">Ссылка недействительна или срок её действия истёк.</p>}<AuthForm mode="login" next={next} /></AuthFrame>;
+  return <AuthFrame title="Вход в аккаунт" description="Для клиентов и сотрудников компании.">{notice === "session-ended" && <p className="auth-feedback" role="status">Сеанс завершён: этот аккаунт больше недоступен. Можно войти с другим аккаунтом или обратиться к администратору.</p>}{notice === "link-sign-in-failed" && <p className="auth-feedback" role="status">Не удалось автоматически войти по ссылке. Попробуйте войти с паролем. Если email ещё не подтверждён, повторите регистрацию для получения нового письма.</p>}{error && <p className="auth-feedback is-error" role="alert">Ссылка недействительна или срок её действия истёк.</p>}<AuthForm mode="login" next={next} /></AuthFrame>;
 }

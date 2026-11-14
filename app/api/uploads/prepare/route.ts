@@ -11,6 +11,10 @@ export async function POST(request: Request) {
   const { data: access, error: accessError } = await supabase.rpc("account_access_status");
   const { data: staff, error: staffError } = await supabase.rpc("staff_mfa_status");
   if (accessError || staffError || access !== "approved" || (staff && !staff.mfa_passed)) return new Response(null, { status: 403 });
+  // Unlike the bootstrap RPCs above, this request passes the database MFA
+  // gate for clients too, before any service-role storage capability is issued.
+  const { data: consent, error: consentError } = await supabase.rpc("client_consent_status");
+  if (consentError || consent !== true) return new Response(null, { status: 403 });
   const admin = storageAdmin();
   if (!admin) return new Response(null, { status: 503 });
   try {
