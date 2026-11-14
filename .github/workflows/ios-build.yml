@@ -112,7 +112,8 @@ jobs:
           sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
           xcodebuild -version
           command -v xcodegen || brew install xcodegen
-      - name: Build unchanged Release app for Simulator
+      - name: Build unchanged Release app for idb capture
+        if: inputs.screenshot_engine == 'idb'
         env:
           IOS_VERSION: '1.0.1'
           IOS_BUILD_NUMBER: '4'

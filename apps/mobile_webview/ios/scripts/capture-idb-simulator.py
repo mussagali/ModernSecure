@@ -147,7 +147,7 @@ def main():
     inventory = json.loads(common.simctl('list', 'devices', 'available', '--json'))['devices']
     runtime = 'com.apple.CoreSimulator.SimRuntime.iOS-26-2'
     report = {'sourceCommit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
-              'version': '1.0.0', 'build': '2', 'origin': 'https://modern-secure.vercel.app',
+              'version': '1.0.1', 'build': '4', 'origin': 'https://modern-secure.vercel.app',
               'captureEngine': 'idb-native-accessibility', 'syntheticCaseOnly': True, 'devices': [], 'errors': []}
     for family, device_name, size in [('iphone', 'iPhone 17 Pro', (1206, 2622)),
                                       ('ipad', 'iPad Pro 13-inch (M5)', (2064, 2752))]:

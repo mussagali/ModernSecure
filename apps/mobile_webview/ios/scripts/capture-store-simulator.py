@@ -114,7 +114,7 @@ def main():
     subprocess.run(['xcodegen', 'generate', '--spec', 'project.screenshots.yml'], cwd=ROOT, check=True)
     common = ['-project', 'ModernSecure.xcodeproj', '-scheme', 'ModernSecureScreenshots',
               '-configuration', 'Release', '-derivedDataPath', 'build/simulator',
-              'CODE_SIGNING_ALLOWED=NO', 'MARKETING_VERSION=1.0.0', 'CURRENT_PROJECT_VERSION=2']
+              'CODE_SIGNING_ALLOWED=NO', 'MARKETING_VERSION=1.0.1', 'CURRENT_PROJECT_VERSION=4']
     print('Building test-only capture runner; shipping app sources unchanged.', flush=True)
     xcode([*common, '-destination', 'generic/platform=iOS Simulator', 'build-for-testing'], 'build')
     inventory = json.loads(simctl('list', 'devices', 'available', '--json'))['devices']
@@ -124,7 +124,7 @@ def main():
         raise RuntimeError('The required iOS 26.2 screenshot runtime is unavailable')
     runtimes = [runtime_id]
     source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-    report = {'sourceCommit': source, 'version': '1.0.0', 'build': '2',
+    report = {'sourceCommit': source, 'version': '1.0.1', 'build': '4',
               'origin': 'https://modern-secure.vercel.app', 'syntheticCaseOnly': True, 'devices': []}
     requested_family = os.environ.get('SCREENSHOT_DEVICE_FAMILY', 'both')
     if requested_family not in {'both', 'iphone', 'ipad'}:
