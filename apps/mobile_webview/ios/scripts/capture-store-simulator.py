@@ -31,7 +31,10 @@ def xcode(arguments, name, environment=None):
     with (PRIVATE / (name + '.log')).open('w', encoding='utf-8') as log:
         result = subprocess.Popen(['xcodebuild', *arguments], cwd=ROOT, env=environment,
                                   stdout=log, stderr=subprocess.STDOUT)
-        deadline = time.monotonic() + (900 if name == 'build' else 420)
+        # XCTest's own 240/300-second test limit starts after runner launch.
+        # Cold hosted simulators can spend several minutes starting that runner;
+        # allow startup separately instead of interrupting a successful login.
+        deadline = time.monotonic() + (900 if name == 'build' else 720)
         next_diagnostic = time.monotonic() + 30
         last_phase = None
         try:

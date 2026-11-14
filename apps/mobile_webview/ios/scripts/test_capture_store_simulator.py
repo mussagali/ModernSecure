@@ -29,7 +29,7 @@ class CaptureProcessTests(unittest.TestCase):
             output = io.StringIO()
             with patch.object(capture, 'ROOT', root), patch.object(capture, 'PRIVATE', root), \
                  patch.object(capture.subprocess, 'Popen', side_effect=start), \
-                 patch.object(capture.time, 'monotonic', side_effect=[0, 0, 421]), \
+                 patch.object(capture.time, 'monotonic', side_effect=[0, 0, 721]), \
                  patch('sys.stdout', output):
                 with self.assertRaisesRegex(RuntimeError, 'bounded capture time'):
                     capture.xcode([], 'iphone', {'SCREENSHOT_SIMULATOR_UDID': 'test-device'})
